@@ -1,74 +1,72 @@
 import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const RequestApproval = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showProfile, setShowProfile] = useState(false);
+  const isActive = (path) => location.pathname === path;
+  const handleLogout = () => {
+    navigate("/login");
+  };
   return (
-    <div className="bg-background-light min-h-screen">
-      <div className="flex min-h-screen">
-        <aside className="w-60 bg-white border-r border-[#e6eee9] flex flex-col fixed h-full z-10">
-          <div className="p-5 flex flex-col h-full">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="flex items-center justify-center rounded-full size-12 bg-[#e9f9f0] text-[#12c76a]">
-                <span className="material-symbols-outlined text-[26px]">
-                  volunteer_activism
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <h1 className="text-[#111814] text-sm font-bold leading-none uppercase tracking-wider">
-                  {t("ShareBite")}
-                </h1>
-                <p className="text-[#8aa19a] text-[11px] font-medium">
-                  {t("Donor Dashboard")}
-                </p>
-              </div>
+    <div className="bg-transparent min-h-screen">
+      <div className="flex flex-col min-h-screen">
+        <main className="flex-1">
+          <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
+            <div className="flex items-center gap-2 font-bold text-lg">
+              <span className="material-symbols-outlined text-green-500">
+                volunteer_activism
+              </span>
+              {t("ShareBite")}
             </div>
-            <nav className="flex flex-col gap-2">
-              <a
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[#7a9087] hover:bg-[#f3f6f4] transition-all"
-                href="/donor/donate"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  add_circle
-                </span>
-                <span className="text-xs font-semibold">{t("Donate Food")}</span>
-              </a>
-              <a
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#12c76a] text-white font-semibold shadow-sm"
-                href="/donor/approvals"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  verified
-                </span>
-                <span className="text-xs">{t("Request Approval")}</span>
-              </a>
-              <a
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[#7a9087] hover:bg-[#f3f6f4] transition-all"
-                href="/donor/feedback"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  forum
-                </span>
-                <span className="text-xs font-semibold">
+          </header>
+          <div className="flex flex-col sm:flex-row">
+            <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e6eee9] w-full sm:w-64 shrink-0">
+              <nav className="flex flex-col gap-2 text-lg font-extrabold text-[#7a9087]">
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/donate") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/donate"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/donate") ? "text-green-600" : ""}`}>
+                    add_circle
+                  </span>
+                  {t("Donate Food")}
+                </Link>
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/approvals") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/approvals"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/approvals") ? "text-green-600" : ""}`}>
+                    verified
+                  </span>
+                  {t("Request Approval")}
+                </Link>
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/feedback") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/feedback"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/feedback") ? "text-green-600" : ""}`}>
+                    forum
+                  </span>
                   {t("Community Feedback")}
-                </span>
-              </a>
-            </nav>
-          </div>
-        </aside>
-        <main className="flex-1 ml-60">
-          <div className="max-w-5xl mx-auto py-10 px-8">
-            <div className="flex items-start justify-between mb-8">
+                </Link>
+              </nav>
+            </aside>
+            <div className="flex-1">
+              <div className="max-w-5xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
               <div>
-                <h2 className="text-3xl font-bold text-[#111814] tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-bold text-[#111814] tracking-tight">
                   {t("Incoming Requests")}
                 </h2>
                 <p className="text-[#8aa19a] mt-1 text-sm">
                   {t("Incoming Requests Subtitle")}
                 </p>
               </div>
-              <div className="flex items-center gap-4 relative">
+              <div className="flex items-center gap-4 relative flex-wrap">
                 <button
                   className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
                   onClick={() => setShowProfile((prev) => !prev)}
@@ -109,14 +107,18 @@ const RequestApproval = () => {
                         >
                           {t("Cancel")}
                         </button>
-                        <button className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50">
+                        <button
+                          className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
+                          onClick={handleLogout}
+                          type="button"
+                        >
                           {t("Logout")}
                         </button>
                       </div>
                     </div>
                   </div>
                 )}
-                <div className="bg-white border border-[#e6eee9] rounded-2xl p-4 flex items-center gap-4">
+                <div className="bg-white border border-[#e6eee9] rounded-2xl p-4 flex items-center gap-4 w-full sm:w-auto">
                   <div className="size-12 rounded-full border-4 border-[#eef4f1] border-t-[#12c76a] flex items-center justify-center">
                     <span className="text-xs font-bold text-[#12c76a]">50%</span>
                   </div>
@@ -132,7 +134,7 @@ const RequestApproval = () => {
               </div>
             </div>
             <div className="space-y-4">
-              <div className="bg-white rounded-2xl shadow-sm border border-[#e6eee9] p-6 flex items-center justify-between transition-all">
+              <div className="bg-white rounded-2xl shadow-sm border border-[#e6eee9] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all">
                 <div className="flex items-center gap-6">
                   <div className="size-14 bg-[#f3f6f4] rounded-xl flex items-center justify-center text-[#12c76a]">
                     <span className="material-symbols-outlined text-2xl">
@@ -169,7 +171,7 @@ const RequestApproval = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                   <button className="px-5 py-2 rounded-xl text-xs font-bold text-[#8aa19a] hover:bg-[#f3f6f4] transition-all">
                     {t("Decline")}
                   </button>
@@ -182,7 +184,7 @@ const RequestApproval = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl shadow-sm border border-[#e6eee9] p-6 flex items-center justify-between transition-all">
+              <div className="bg-white rounded-2xl shadow-sm border border-[#e6eee9] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all">
                 <div className="flex items-center gap-6">
                   <div className="size-14 bg-[#f3f6f4] rounded-xl flex items-center justify-center text-[#12c76a]">
                     <span className="material-symbols-outlined text-2xl">
@@ -219,7 +221,7 @@ const RequestApproval = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                   <button className="px-5 py-2 rounded-xl text-xs font-bold text-[#8aa19a] hover:bg-[#f3f6f4] transition-all">
                     {t("Decline")}
                   </button>
@@ -232,7 +234,7 @@ const RequestApproval = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl shadow-sm border border-[#e6eee9] p-6 flex items-center justify-between transition-all opacity-90">
+              <div className="bg-white rounded-2xl shadow-sm border border-[#e6eee9] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all opacity-90">
                 <div className="flex items-center gap-6">
                   <div className="size-14 bg-[#f3f6f4] rounded-xl flex items-center justify-center text-[#12c76a]">
                     <span className="material-symbols-outlined text-2xl">
@@ -269,7 +271,7 @@ const RequestApproval = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                   <button className="px-5 py-2 rounded-xl text-xs font-bold text-[#8aa19a] hover:bg-[#f3f6f4] transition-all">
                     {t("Decline")}
                   </button>
@@ -288,6 +290,8 @@ const RequestApproval = () => {
               </span>
               {t("Approval Notice")}
             </p>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -296,3 +300,6 @@ const RequestApproval = () => {
 };
 
 export default RequestApproval;
+
+
+

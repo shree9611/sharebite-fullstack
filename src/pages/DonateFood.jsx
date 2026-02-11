@@ -1,68 +1,65 @@
 import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const DonateFood = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showProfile, setShowProfile] = useState(false);
+  const isActive = (path) => location.pathname === path;
+  const handleLogout = () => {
+    navigate("/login");
+  };
   return (
-    <div className="bg-background-light min-h-screen">
-      <div className="flex min-h-screen">
-        <aside className="w-60 bg-white border-r border-[#e6eee9] flex flex-col fixed h-full z-10">
-          <div className="p-5 flex flex-col h-full">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="flex items-center justify-center rounded-2xl size-11 bg-[#e9f9f0] text-[#12c76a]">
-                <span className="material-symbols-outlined text-[26px]">
-                  volunteer_activism
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <h1 className="text-[#111814] text-sm font-bold leading-none uppercase tracking-wider">
-                  {t("ShareBite")}
-                </h1>
-                <p className="text-[#8aa19a] text-[11px] font-medium">
-                  {t("Donor Dashboard")}
-                </p>
-              </div>
+    <div className="bg-transparent min-h-screen">
+      <div className="flex flex-col min-h-screen">
+        <main className="flex-1">
+          <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
+            <div className="flex items-center gap-2 font-bold text-lg">
+              <span className="material-symbols-outlined text-green-500">
+                volunteer_activism
+              </span>
+              {t("ShareBite")}
             </div>
-            <nav className="flex flex-col gap-2">
-              <a
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#12c76a] text-white font-semibold shadow-sm"
-                href="/donor/donate"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  add_circle
-                </span>
-                <span className="text-xs">{t("Donate Food")}</span>
-              </a>
-              <a
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[#7a9087] hover:bg-[#f3f6f4] transition-all"
-                href="/donor/approvals"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  verified
-                </span>
-                <span className="text-xs font-semibold">{t("Request Approval")}</span>
-              </a>
-              <a
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[#7a9087] hover:bg-[#f3f6f4] transition-all"
-                href="/donor/feedback"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  forum
-                </span>
-                <span className="text-xs font-semibold">
+          </header>
+          <div className="flex flex-col sm:flex-row">
+            <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e6eee9] w-full sm:w-64 shrink-0">
+              <nav className="flex flex-col gap-2 text-lg font-extrabold text-[#7a9087]">
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/donate") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/donate"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/donate") ? "text-green-600" : ""}`}>
+                    add_circle
+                  </span>
+                  {t("Donate Food")}
+                </Link>
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/approvals") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/approvals"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/approvals") ? "text-green-600" : ""}`}>
+                    verified
+                  </span>
+                  {t("Request Approval")}
+                </Link>
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/feedback") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/feedback"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/feedback") ? "text-green-600" : ""}`}>
+                    forum
+                  </span>
                   {t("Community Feedback")}
-                </span>
-              </a>
-            </nav>
-          </div>
-        </aside>
-
-        <main className="flex-1 ml-60">
-          <div className="max-w-4xl mx-auto py-10 px-8">
-            <div className="mb-6 flex items-start justify-between">
+                </Link>
+              </nav>
+            </aside>
+            <div className="flex-1">
+              <div className="max-w-4xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-[#111814]">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#111814]">
                   {t("Donate Surplus Food")}
                 </h2>
                 <p className="text-[#8aa19a] text-sm mt-1">
@@ -110,7 +107,11 @@ const DonateFood = () => {
                         >
                           {t("Cancel")}
                         </button>
-                        <button className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50">
+                        <button
+                          className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
+                          onClick={handleLogout}
+                          type="button"
+                        >
                           {t("Logout")}
                         </button>
                       </div>
@@ -120,7 +121,7 @@ const DonateFood = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-[#e6eee9] p-6">
+            <div className="bg-white rounded-2xl border border-[#e6eee9] p-5 sm:p-6">
               <form className="space-y-6">
                 <div className="flex items-center gap-2 pb-4 border-b border-[#eef4f1]">
                   <span className="material-symbols-outlined text-[#12c76a] text-[18px]">
@@ -140,7 +141,7 @@ const DonateFood = () => {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
                     <label className="text-xs font-semibold text-[#6b7f77]">
                       {t("Food Title")}
@@ -236,24 +237,49 @@ const DonateFood = () => {
                         </div>
                       </label>
                     </div>
-                    <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#fff7ed] border border-[#fde2c2]">
+                    <div className="flex flex-col gap-3 px-4 py-3 rounded-xl bg-[#fff7ed] border border-[#fde2c2]">
                       <div className="flex items-center gap-3">
                         <span className="material-symbols-outlined text-[#f97316] text-[18px]">
                           bakery_dining
                         </span>
                         <div>
                           <p className="text-xs font-bold text-[#111814] leading-none">
-                            {t("Baked Goods")}
+                            {t("Baked Type")}
                           </p>
                           <p className="text-[10px] text-[#8aa19a] mt-1 uppercase tracking-wider">
-                            {t("Baked Goods Subtitle")}
+                            {t("Baked Type Subtitle")}
                           </p>
                         </div>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input className="sr-only peer" type="checkbox" />
-                        <div className="w-10 h-5 bg-[#d7e0dc] rounded-full peer-checked:bg-[#f97316] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
-                      </label>
+                      <div className="flex gap-3">
+                        <label className="flex-1 relative cursor-pointer">
+                          <input
+                            defaultChecked
+                            className="sr-only peer"
+                            name="bakedType"
+                            type="radio"
+                            value="baked"
+                          />
+                          <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-[#e6eee9] bg-white peer-checked:border-[#f97316] peer-checked:bg-[#fff7ed] transition-all">
+                            <span className="text-xs font-bold text-[#111814]">
+                              {t("Baked")}
+                            </span>
+                          </div>
+                        </label>
+                        <label className="flex-1 relative cursor-pointer">
+                          <input
+                            className="sr-only peer"
+                            name="bakedType"
+                            type="radio"
+                            value="non-baked"
+                          />
+                          <div className="flex items-center justify-between px-3 py-2 rounded-xl border border-[#e6eee9] bg-white peer-checked:border-[#f97316] peer-checked:bg-[#fff7ed] transition-all">
+                            <span className="text-xs font-bold text-[#111814]">
+                              {t("Non Baked")}
+                            </span>
+                          </div>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -268,7 +294,7 @@ const DonateFood = () => {
                       send
                     </span>
                   </button>
-                  <p className="text-center text-[#a4b2ac] text-xs mt-5 px-10">
+                  <p className="text-center text-[#a4b2ac] text-xs mt-5 px-2 sm:px-10">
                     {t("Donation Disclaimer")}
                   </p>
                 </div>
@@ -278,6 +304,8 @@ const DonateFood = () => {
               {t("Donation Thanks")}
             </p>
           </div>
+            </div>
+          </div>
         </main>
       </div>
     </div>
@@ -285,3 +313,6 @@ const DonateFood = () => {
 };
 
 export default DonateFood;
+
+
+

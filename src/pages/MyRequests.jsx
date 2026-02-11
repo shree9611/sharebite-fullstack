@@ -1,18 +1,23 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const MyRequests = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const [showProfile, setShowProfile] = useState(false);
+  const [openContact, setOpenContact] = useState(null);
   const isAvailable = location.pathname === "/dashboard";
   const isMyRequests = location.pathname === "/my-requests";
   const isFeedback = location.pathname === "/receiver/feedback";
+  const handleLogout = () => {
+    navigate("/login");
+  };
   return (
     <div className="bg-background-light text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
-        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[#e5e9e7] bg-white px-6 py-3 lg:px-10">
+        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[#e5e9e7] bg-white px-4 sm:px-6 md:px-10 py-5">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="text-primary flex items-center">
@@ -66,7 +71,11 @@ const MyRequests = () => {
                     >
                       {t("Cancel")}
                     </button>
-                    <button className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50">
+                    <button
+                      className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
+                      onClick={handleLogout}
+                      type="button"
+                    >
                       {t("Logout")}
                     </button>
                   </div>
@@ -75,8 +84,8 @@ const MyRequests = () => {
             )}
           </div>
         </header>
-        <div className="flex flex-1">
-          <aside className="w-64 border-r border-[#e5e9e7] bg-white p-4 flex flex-col gap-6 sticky top-[65px] h-[calc(100vh-65px)]">
+        <div className="flex flex-1 flex-col lg:flex-row">
+          <aside className="w-full lg:w-64 border-b lg:border-r border-[#e5e9e7] bg-white p-4 flex flex-col gap-6 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)]">
             <nav className="flex flex-col gap-1">
               <a
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
@@ -120,9 +129,9 @@ const MyRequests = () => {
             </nav>
           </aside>
           <main className="flex-1 bg-white">
-            <div className="p-8 lg:p-12 max-w-6xl mx-auto">
+            <div className="p-4 sm:p-6 lg:p-12 max-w-6xl mx-auto">
               <div className="flex flex-col mb-10 gap-2">
-                <h1 className="text-[#111814] text-3xl font-bold tracking-tight">
+                <h1 className="text-[#111814] text-2xl sm:text-3xl font-bold tracking-tight">
                   {t("My Requests Title")}
                 </h1>
                 <p className="text-[#618972]">
@@ -130,8 +139,8 @@ const MyRequests = () => {
                 </p>
               </div>
               <div className="flex flex-col gap-3">
-                <div className="group flex items-center justify-between p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all">
-                  <div className="flex items-center gap-4 w-1/3">
+                <div className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all">
+                  <div className="flex items-center gap-4 w-full sm:w-1/3">
                     <div className="size-12 rounded-xl bg-[#f0f4f2] flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-primary text-2xl">
                         bakery_dining
@@ -148,11 +157,11 @@ const MyRequests = () => {
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
                         </div>
-                        {t("In Transit")}
+                        {t("On the way")}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-12 w-1/3">
+                  <div className="flex items-center gap-6 sm:gap-12 w-full sm:w-1/3">
                     <div className="flex flex-col">
                       <span className="text-[10px] uppercase tracking-wider text-[#9fb8a9] font-bold">
                         {t("Donor")}
@@ -170,21 +179,38 @@ const MyRequests = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 justify-end w-1/3">
-                    <button className="px-4 py-2 text-primary hover:bg-primary/5 text-sm font-bold rounded-lg transition-colors flex items-center gap-2">
+                  <div className="flex items-center gap-3 justify-start sm:justify-end w-full sm:w-1/3">
+                    <div className="relative">
+                      <button
+                        className="px-4 py-2 text-primary hover:bg-primary/5 text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+                        type="button"
+                        onClick={() =>
+                          setOpenContact(openContact === 1 ? null : 1)
+                        }
+                      >
                       <span className="material-symbols-outlined text-lg">
                         chat_bubble
                       </span>
                         {t("Contact")}
-                    </button>
-                    <button className="px-4 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 text-sm font-bold rounded-lg transition-colors">
-                      {t("Cancel")}
-                    </button>
+                      </button>
+                      {openContact === 1 && (
+                        <div className="absolute right-0 mt-2 w-56 rounded-xl border border-[#e5e9e7] bg-white shadow-lg p-3 text-xs text-[#4a6b57]">
+                          <div className="flex flex-col gap-2">
+                            <a className="hover:text-primary" href="tel:+918245550187">
+                              {t("Donor")}: +91 824-555-0187
+                            </a>
+                            <a className="hover:text-primary" href="tel:+918245550288">
+                              {t("Volunteer")}: +91 824-555-0288
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="group flex items-center justify-between p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all">
-                  <div className="flex items-center gap-4 w-1/3">
+                <div className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all">
+                  <div className="flex items-center gap-4 w-full sm:w-1/3">
                     <div className="size-12 rounded-xl bg-[#f0f4f2] flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-primary text-2xl">
                         lunch_dining
@@ -205,7 +231,7 @@ const MyRequests = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-12 w-1/3">
+                  <div className="flex items-center gap-6 sm:gap-12 w-full sm:w-1/3">
                     <div className="flex flex-col">
                       <span className="text-[10px] uppercase tracking-wider text-[#9fb8a9] font-bold">
                         {t("Donor")}
@@ -223,21 +249,18 @@ const MyRequests = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 justify-end w-1/3">
+                  <div className="flex items-center gap-3 justify-start sm:justify-end w-full sm:w-1/3">
                     <button className="px-4 py-2 text-gray-400 cursor-not-allowed opacity-50 text-sm font-bold rounded-lg flex items-center gap-2">
                       <span className="material-symbols-outlined text-lg">
                         chat_bubble
                       </span>
                       {t("Contact")}
                     </button>
-                    <button className="px-4 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 text-sm font-bold rounded-lg transition-colors">
-                      {t("Cancel")}
-                    </button>
                   </div>
                 </div>
 
-                <div className="group flex items-center justify-between p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all">
-                  <div className="flex items-center gap-4 w-1/3">
+                <div className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all">
+                  <div className="flex items-center gap-4 w-full sm:w-1/3">
                     <div className="size-12 rounded-xl bg-[#f0f4f2] flex items-center justify-center shrink-0">
                       <span className="material-symbols-outlined text-primary text-2xl">
                         skillet
@@ -254,11 +277,11 @@ const MyRequests = () => {
                           <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
                           <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
                         </div>
-                        {t("In Transit")}
+                        {t("On the way")}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-12 w-1/3">
+                  <div className="flex items-center gap-6 sm:gap-12 w-full sm:w-1/3">
                     <div className="flex flex-col">
                       <span className="text-[10px] uppercase tracking-wider text-[#9fb8a9] font-bold">
                         {t("Donor")}
@@ -276,15 +299,12 @@ const MyRequests = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 justify-end w-1/3">
+                  <div className="flex items-center gap-3 justify-start sm:justify-end w-full sm:w-1/3">
                     <button className="px-4 py-2 text-gray-400 cursor-not-allowed opacity-50 text-sm font-bold rounded-lg flex items-center gap-2">
                       <span className="material-symbols-outlined text-lg">
                         chat_bubble
                       </span>
                       {t("Contact")}
-                    </button>
-                    <button className="px-4 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 text-sm font-bold rounded-lg transition-colors">
-                      {t("Cancel")}
                     </button>
                   </div>
                 </div>
@@ -298,3 +318,6 @@ const MyRequests = () => {
 };
 
 export default MyRequests;
+
+
+

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const UserDashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const role = location.state?.role;
   const showReceiver = !role || role === "Receiver";
@@ -12,12 +13,15 @@ const UserDashboard = () => {
   const isAvailable = location.pathname === "/dashboard";
   const isMyRequests = location.pathname === "/my-requests";
   const isFeedback = location.pathname === "/receiver/feedback";
+  const handleLogout = () => {
+    navigate("/login");
+  };
 
   return (
-    <div className="bg-background-light text-[#111814] min-h-screen">
+    <div className="bg-transparent text-[#111814] min-h-screen">
       {showReceiver ? (
         <div className="relative flex h-auto min-h-screen w-full flex-col">
-          <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-[#dbe6e0] bg-white px-6 py-3 lg:px-10">
+          <header className="sticky top-0 z-50 flex items-center justify-between border-b border-solid border-orange-100 bg-white px-4 sm:px-6 md:px-10 py-5 shadow-sm">
             <div className="flex items-center gap-4 text-[#111814]">
               <div className="flex items-center gap-2">
                 <div className="size-6 text-primary">
@@ -71,7 +75,11 @@ const UserDashboard = () => {
                       >
                         {t("Cancel")}
                       </button>
-                      <button className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50">
+                      <button
+                        className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
+                        onClick={handleLogout}
+                        type="button"
+                      >
                         {t("Logout")}
                       </button>
                     </div>
@@ -81,15 +89,15 @@ const UserDashboard = () => {
             </div>
           </header>
 
-          <div className="flex flex-1">
-            <aside className="w-56 border-r border-[#dbe6e0] bg-white p-4 flex flex-col gap-6">
+          <div className="flex flex-1 flex-col lg:flex-row">
+            <aside className="w-full lg:w-60 border-b lg:border-r border-[#dbe6e0] bg-white/90 p-4 flex flex-col gap-6 shadow-sm">
               <div className="flex flex-col gap-2">
                 <nav className="flex flex-col gap-1">
                   <a
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                       isAvailable
-                        ? "text-[#12c76a] bg-[#e9f9f0]"
-                        : "text-[#7a9087] hover:text-[#111814] hover:bg-[#f3f6f4]"
+                        ? "text-emerald-700 bg-emerald-50"
+                        : "text-[#7a9087] hover:text-[#111814] hover:bg-slate-50"
                     }`}
                     href="/dashboard"
                   >
@@ -101,8 +109,8 @@ const UserDashboard = () => {
                   <a
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                       isMyRequests
-                        ? "text-[#12c76a] bg-[#e9f9f0]"
-                        : "text-[#7a9087] hover:text-[#111814] hover:bg-[#f3f6f4]"
+                        ? "text-emerald-700 bg-emerald-50"
+                        : "text-[#7a9087] hover:text-[#111814] hover:bg-slate-50"
                     }`}
                     href="/my-requests"
                   >
@@ -114,8 +122,8 @@ const UserDashboard = () => {
                   <a
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                       isFeedback
-                        ? "text-[#12c76a] bg-[#e9f9f0]"
-                        : "text-[#7a9087] hover:text-[#111814] hover:bg-[#f3f6f4]"
+                        ? "text-emerald-700 bg-emerald-50"
+                        : "text-[#7a9087] hover:text-[#111814] hover:bg-slate-50"
                     }`}
                     href="/receiver/feedback"
                   >
@@ -129,10 +137,10 @@ const UserDashboard = () => {
             </aside>
 
             <main className="flex-1 flex flex-col min-h-screen">
-              <div className="p-6 lg:p-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+              <div className="p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 rounded-2xl bg-white border border-slate-200/70 p-5 shadow-sm">
                   <div>
-                    <h1 className="text-[#111814] tracking-light text-[24px] font-bold leading-tight">
+                    <h1 className="text-[#111814] tracking-light text-[22px] sm:text-[24px] font-bold leading-tight">
                       {t("Receiver Dashboard")}
                     </h1>
                     <p className="text-[#7a9087] text-sm">
@@ -614,6 +622,9 @@ const UserDashboard = () => {
 };
 
 export default UserDashboard;
+
+
+
 
 
 

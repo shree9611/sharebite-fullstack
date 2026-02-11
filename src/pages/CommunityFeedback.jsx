@@ -1,70 +1,74 @@
 import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 const CommunityFeedback = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showProfile, setShowProfile] = useState(false);
+  const isActive = (path) => location.pathname === path;
+  const feedback = location.state?.feedback;
+  const handleLogout = () => {
+    navigate("/login");
+  };
   return (
-    <div className="bg-background-light min-h-screen">
-      <div className="flex min-h-screen">
-        <aside className="w-72 bg-white border-r border-zinc-200 flex flex-col fixed h-full">
-          <div className="p-6 flex flex-col h-full">
-            <div className="flex items-center gap-3 mb-10">
-              <div className="flex items-center justify-center rounded-full size-12 bg-[#e9f9f0] text-[#12c76a]">
-                <span className="material-symbols-outlined text-[26px]">
-                  volunteer_activism
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <h1 className="text-zinc-900 text-lg font-bold leading-none font-display">
-                  {t("ShareBite")}
-                </h1>
-                <p className="text-zinc-500 text-xs font-normal">
-                  {t("Donor Dashboard")}
-                </p>
-              </div>
+    <div className="bg-transparent min-h-screen">
+      <div className="flex flex-col min-h-screen">
+        <main className="flex-1">
+          <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
+            <div className="flex items-center gap-2 font-bold text-lg">
+              <span className="material-symbols-outlined text-green-500">
+                volunteer_activism
+              </span>
+              {t("ShareBite")}
             </div>
-            <nav className="flex flex-col gap-2">
-              <a
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-600 hover:bg-zinc-100 transition-all"
-                href="/donor/donate"
-              >
-                <span className="material-symbols-outlined">add_circle</span>
-                <span className="text-sm">{t("Donate Food")}</span>
-              </a>
-              <a
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-600 hover:bg-zinc-100 transition-all"
-                href="/donor/approvals"
-              >
-                <span className="material-symbols-outlined">verified</span>
-                <span className="text-sm">{t("Request Approval")}</span>
-              </a>
-              <a
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#12c76a] text-white font-semibold shadow-sm"
-                href="/donor/feedback"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  forum
-                </span>
-                <span className="text-xs">{t("Community Feedback")}</span>
-              </a>
-            </nav>
-            <div className="mt-auto pt-6"></div>
-          </div>
-        </aside>
-        <main className="flex-1 ml-72">
-          <div className="max-w-4xl mx-auto py-12 px-8">
-            <div className="mb-10 flex items-center justify-between">
+          </header>
+          <div className="flex flex-col sm:flex-row">
+            <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e6eee9] w-full sm:w-64 shrink-0">
+              <nav className="flex flex-col gap-2 text-lg font-extrabold text-[#7a9087]">
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/donate") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/donate"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/donate") ? "text-green-600" : ""}`}>
+                    add_circle
+                  </span>
+                  {t("Donate Food")}
+                </Link>
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/approvals") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/approvals"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/approvals") ? "text-green-600" : ""}`}>
+                    verified
+                  </span>
+                  {t("Request Approval")}
+                </Link>
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/feedback") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/feedback"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/feedback") ? "text-green-600" : ""}`}>
+                    forum
+                  </span>
+                  {t("Community Feedback")}
+                </Link>
+              </nav>
+            </aside>
+            <div className="flex-1">
+              <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+            <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="material-symbols-outlined text-green-500 text-3xl">
                     volunteer_activism
                   </span>
-                  <h2 className="text-4xl font-black text-zinc-900 tracking-tight font-display">
+                  <h2 className="text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight font-display">
                     {t("Community Feedback")}
                   </h2>
                 </div>
-                <p className="text-zinc-500 text-lg">
+                <p className="text-zinc-500 text-base sm:text-lg">
                   {t("Community Feedback Subtitle")}
                 </p>
               </div>
@@ -109,7 +113,11 @@ const CommunityFeedback = () => {
                         >
                           {t("Cancel")}
                         </button>
-                        <button className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50">
+                        <button
+                          className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
+                          onClick={handleLogout}
+                          type="button"
+                        >
                           {t("Logout")}
                         </button>
                       </div>
@@ -118,8 +126,41 @@ const CommunityFeedback = () => {
                 )}
               </div>
             </div>
+            {feedback && (
+              <div className="mb-8 rounded-2xl border border-emerald-100 bg-emerald-50/40 p-6">
+                <h3 className="text-lg font-bold text-zinc-900 mb-3">
+                  {t("Latest Receiver Feedback")}
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="flex-1 space-y-2 text-sm text-zinc-700">
+                    <div>
+                      <span className="font-semibold">{t("Food Quality")}: </span>
+                      {feedback.foodRating}/5
+                    </div>
+                    <div>
+                      <span className="font-semibold">{t("Delivery Service")}: </span>
+                      {feedback.deliveryRating}/5
+                    </div>
+                    {feedback.comments && (
+                      <div>
+                        <span className="font-semibold">{t("Comments")}: </span>
+                        {feedback.comments}
+                      </div>
+                    )}
+                  </div>
+                  {feedback.photoPreview && (
+                    <img
+                      src={feedback.photoPreview}
+                      alt="Feedback"
+                      className="h-24 w-24 rounded-xl object-cover"
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-              <div className="bg-white p-8 rounded-2xl shadow-sm border border-zinc-100 flex items-center justify-between">
+              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-zinc-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <p className="text-zinc-500 text-sm font-medium mb-1">
                     {t("Food Quality")}
@@ -146,7 +187,7 @@ const CommunityFeedback = () => {
                   </span>
                 </div>
               </div>
-              <div className="bg-white p-8 rounded-2xl shadow-sm border border-zinc-100 flex items-center justify-between">
+              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-zinc-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <p className="text-zinc-500 text-sm font-medium mb-1">
                     {t("Service & Timing")}
@@ -179,7 +220,7 @@ const CommunityFeedback = () => {
                 {t("Recent Reviews")}
               </h4>
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md">
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                   <div className="flex items-center gap-4">
                     <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center text-primary">
                       <span className="material-symbols-outlined">
@@ -218,7 +259,7 @@ const CommunityFeedback = () => {
                 </p>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md">
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                   <div className="flex items-center gap-4">
                     <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center text-primary">
                       <span className="material-symbols-outlined">school</span>
@@ -255,7 +296,7 @@ const CommunityFeedback = () => {
                 </p>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md">
-                <div className="flex justify-between items-start mb-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                   <div className="flex items-center gap-4">
                     <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center text-primary">
                       <span className="material-symbols-outlined">
@@ -297,6 +338,8 @@ const CommunityFeedback = () => {
             <p className="text-center text-zinc-400 text-sm mt-12 pb-12">
               {t("Feedback Footnote")}
             </p>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -305,3 +348,6 @@ const CommunityFeedback = () => {
 };
 
 export default CommunityFeedback;
+
+
+

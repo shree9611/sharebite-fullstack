@@ -11,8 +11,8 @@ export default function Home() {
     <div className="overflow-x-hidden font-[Poppins] bg-white text-slate-900">
 
       {/* HEADER */}
-      <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-20 flex items-center justify-between">
+      <header className="sticky top-0 z-50 w-full bg-white border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-lg">
             <span className="material-symbols-outlined text-green-500">
               volunteer_activism
@@ -44,8 +44,12 @@ export default function Home() {
               <button
                 onClick={() => setOpenLang(!openLang)}
                 className="flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-emerald-500 transition"
+                aria-label={t("Language")}
+                title={`${t("Language")}: ${language}`}
               >
-                {t("Language")}: {language}
+                <span className="material-symbols-outlined text-base">
+                  language
+                </span>
                 <span className="material-symbols-outlined text-base">
                   expand_more
                 </span>
@@ -82,8 +86,8 @@ export default function Home() {
       </header>
 
       {/* HERO */}
-      <section className="py-24 md:py-32">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center gap-12">
+      <section className="py-16 sm:py-24 md:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 flex flex-col md:flex-row items-center gap-12">
 
           <div className="flex-1 text-center md:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-500 text-xs font-bold mb-6">
@@ -91,14 +95,14 @@ export default function Home() {
               {t("Zero Hunger Movement")}
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold leading-tight mb-6">
               {t("Share Food.")} <br />
               <span className="text-emerald-500">{t("Reduce Waste.")}</span>{" "}
               <br />
               {t("Spread Care.")}
             </h1>
 
-            <p className="text-lg text-slate-600 mb-10 max-w-xl mx-auto md:mx-0">
+            <p className="text-base sm:text-lg text-slate-600 mb-10 max-w-xl mx-auto md:mx-0">
               {t("Hero Description")}
             </p>
 
@@ -131,55 +135,57 @@ export default function Home() {
       </section>
 
 {/* HOW IT WORKS */}
-<section id="how-it-works" className="py-24 bg-accent-gray scroll-mt-24">
-  <div className="max-w-7xl mx-auto px-4 md:px-8">
+<section id="how-it-works" className="py-24 bg-slate-50 scroll-mt-24">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
     <div className="text-center mb-16">
-      <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+      <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
         {t("How It Works Title")}
       </h2>
-      <p className="text-slate-600 max-w-2xl mx-auto">
+      <p className="text-slate-500 text-sm md:text-base max-w-2xl mx-auto">
         {t("How It Works Subtitle")}
       </p>
     </div>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mt-12">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mt-10">
       {[
         {
           icon: "inventory_2",
           title: t("List Surplus"),
           desc: t("List Surplus Desc"),
-          color: "text-primary",
+          color: "text-emerald-500",
         },
         {
           icon: "distance",
           title: t("Match Local"),
           desc: t("Match Local Desc"),
-          color: "text-secondary",
+          color: "text-orange-500",
         },
         {
           icon: "calendar_month",
           title: t("Planned Feeding"),
           desc: t("Planned Feeding Desc"),
-          color: "text-primary",
+          color: "text-emerald-500",
         },
         {
           icon: "local_shipping",
           title: t("Fast Pickup"),
           desc: t("Fast Pickup Desc"),
-          color: "text-secondary",
+          color: "text-orange-500",
         },
       ].map((item, i) => (
         <div key={i} className="flex flex-col items-center text-center">
           <div
-            className={`w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center mb-6 border border-slate-100 transition-transform hover:-translate-y-2 ${item.color}`}
+            className={`w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center mb-5 border border-slate-100 ${item.color}`}
           >
-            <span className="material-symbols-outlined text-4xl">
+            <span className="material-symbols-outlined text-2xl">
               {item.icon}
             </span>
           </div>
 
-          <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-          <p className="text-sm text-slate-500 leading-relaxed px-4">
+          <h3 className="text-base font-bold mb-2 text-slate-900">
+            {item.title}
+          </h3>
+          <p className="text-xs text-slate-500 leading-relaxed px-4">
             {item.desc}
           </p>
         </div>
@@ -195,15 +201,15 @@ export default function Home() {
   className="py-24 bg-white scroll-mt-24"
 >
 
-  <div className="max-w-7xl mx-auto px-4 md:px-8">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
     <div className="text-center mb-16">
-      <span className="text-primary font-bold tracking-widest text-xs uppercase">
+      <span className="text-emerald-500 font-bold tracking-widest text-[11px] uppercase">
         {t("Platform Features")}
       </span>
-      <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2 mb-4">
+      <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2 mb-3">
         {t("Core Technology Features")}
       </h2>
-      <p className="text-slate-600 max-w-2xl mx-auto">
+      <p className="text-slate-500 text-sm md:text-base max-w-2xl mx-auto">
         {t("Core Features Subtitle")}
       </p>
     </div>
@@ -214,47 +220,47 @@ export default function Home() {
           icon: "category",
           title: t("Dynamic Categories"),
           desc: t("Dynamic Categories Desc"),
-          color: "text-primary",
-          hover: "hover:border-primary/20 hover:bg-emerald-50/30",
+          color: "text-emerald-500",
+          hover: "hover:border-emerald-200 hover:bg-emerald-50/40",
         },
         {
           icon: "psychology",
           title: t("Smart Matching"),
           desc: t("Smart Matching Desc"),
-          color: "text-secondary",
-          hover: "hover:border-secondary/20 hover:bg-orange-50/30",
+          color: "text-orange-500",
+          hover: "hover:border-orange-200 hover:bg-orange-50/40",
         },
         {
           icon: "event_available",
           title: t("Planned Feeding"),
           desc: t("Planned Feeding Desc"),
-          color: "text-primary",
-          hover: "hover:border-primary/20 hover:bg-emerald-50/30",
+          color: "text-emerald-500",
+          hover: "hover:border-emerald-200 hover:bg-emerald-50/40",
         },
         {
           icon: "analytics",
           title: t("Impact Reporting"),
           desc: t("Impact Reporting Desc"),
-          color: "text-secondary",
-          hover: "hover:border-secondary/20 hover:bg-orange-50/30",
+          color: "text-orange-500",
+          hover: "hover:border-orange-200 hover:bg-orange-50/40",
         },
       ].map((feature, i) => (
         <div
           key={i}
-          className={`group bg-accent-gray p-8 rounded-3xl border border-transparent transition-all ${feature.hover}`}
+          className={`group bg-slate-50 p-8 rounded-3xl border border-slate-100 shadow-sm transition-all ${feature.hover}`}
         >
-          <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 bg-white rounded-2xl border border-slate-100 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
             <span
-              className={`material-symbols-outlined text-3xl ${feature.color}`}
+              className={`material-symbols-outlined text-2xl ${feature.color}`}
             >
               {feature.icon}
             </span>
           </div>
 
-          <h4 className="text-lg font-bold text-slate-900 mb-3">
+          <h4 className="text-base font-bold text-slate-900 mb-2">
             {feature.title}
           </h4>
-          <p className="text-sm text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-500 leading-relaxed">
             {feature.desc}
           </p>
         </div>
@@ -266,7 +272,7 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="border-t border-slate-100 bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-1 gap-10">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2 font-bold text-slate-900">
@@ -275,7 +281,7 @@ export default function Home() {
                 </span>
                 {t("ShareBite")}
               </div>
-              <p className="text-sm text-slate-500 whitespace-nowrap">
+              <p className="text-sm text-slate-500 text-center sm:text-left">
                 {t("Footer Description")}
               </p>
               <div className="flex items-center gap-3 text-slate-400">
@@ -308,3 +314,6 @@ export default function Home() {
     </div>
   );
 }
+
+
+

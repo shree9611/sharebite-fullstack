@@ -4,19 +4,19 @@ const FoodRequest = () => {
   const [logistics, setLogistics] = useState("pickup");
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#f8fafc]">
-      <div className="max-w-2xl w-full py-12">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-transparent">
+      <div className="max-w-2xl w-full py-8 sm:py-12">
         <div className="text-center mb-8">
           <div className="flex justify-center items-center gap-2 mb-2">
             <span className="material-symbols-outlined text-[#10b981] text-4xl">
               volunteer_activism
             </span>
-            <h1 className="text-3xl font-bold text-slate-800">ShareBite</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">ShareBite</h1>
           </div>
           <p className="text-slate-500 font-medium">Food Request Form</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-8 md:p-12">
+        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-6 sm:p-8 md:p-12">
           <form className="space-y-10">
             <div className="space-y-3">
               <label
@@ -210,3 +210,6 @@ const FoodRequest = () => {
 };
 
 export default FoodRequest;
+
+
+

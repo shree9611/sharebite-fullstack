@@ -7,9 +7,9 @@ export default function Disclaimer() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-[#f4f7f6] text-[#111814]">
+    <div className="min-h-screen bg-transparent text-[#111814]">
       <div className="min-h-screen w-full">
-        <header className="bg-white border-b border-[#e6eee9] px-8 py-4">
+        <header className="bg-white border-b border-[#e6eee9] px-4 sm:px-6 md:px-10 py-5">
           <div className="max-w-[1100px] mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2 font-bold text-lg">
               <span className="material-symbols-outlined text-green-500">
@@ -17,24 +17,20 @@ export default function Disclaimer() {
               </span>
               {t("ShareBite")}
             </div>
-            <button className="flex items-center justify-center rounded-full h-9 w-9 bg-[#f3f6f4] text-[#7a9087]">
-              <span className="material-symbols-outlined text-[18px]">
-                notifications
-              </span>
-            </button>
+            <div />
           </div>
         </header>
 
-        <main className="flex items-center justify-center px-6 py-16">
+        <main className="flex items-center justify-center px-4 sm:px-6 py-12 sm:py-16">
           <div className="w-full max-w-[520px]">
-            <div className="bg-white rounded-2xl shadow-lg border border-[#e6eee9] p-8">
+            <div className="bg-white rounded-2xl shadow-lg border border-[#e6eee9] p-6 sm:p-8">
               <div className="flex flex-col items-center text-center">
                 <div className="w-14 h-14 rounded-full bg-[#e9f9f0] flex items-center justify-center text-[#12c76a] mb-3">
                   <span className="material-symbols-outlined text-3xl">
                     gpp_maybe
                   </span>
                 </div>
-                <h1 className="text-xl font-bold">
+                <h1 className="text-lg sm:text-xl font-bold">
                   {t("Disclaimer Agreement")}
                 </h1>
                 <div className="flex justify-center gap-2 mt-3 mb-5">
@@ -102,3 +98,6 @@ export default function Disclaimer() {
     </div>
   );
 }
+
+
+
