@@ -6,7 +6,6 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 export default function Home() {
   const { language, setLanguage, t } = useLanguage();
   const [openLang, setOpenLang] = useState(false);
-  const [openMenu, setOpenMenu] = useState(false);
 
   return (
     <div className="overflow-x-hidden font-[Poppins] bg-white text-slate-900">
@@ -21,7 +20,7 @@ export default function Home() {
             {t("ShareBite")}
           </div>
 
-          <nav className="hidden lg:flex items-center gap-10">
+          <nav className="flex flex-wrap items-center gap-4 sm:gap-6 md:gap-8">
             <span className="text-sm font-semibold text-emerald-500">
               {t("Home")}
             </span>
@@ -75,78 +74,13 @@ export default function Home() {
             </div>
           </nav>
 
-
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/login"
-              className="hidden sm:block text-sm font-semibold text-slate-600"
-            >
-              {t("Log In")}
-            </Link>
-            <button
-              type="button"
-              onClick={() => setOpenMenu((prev) => !prev)}
-              className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50"
-              aria-label={t("Open Menu")}
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                menu
-              </span>
-            </button>
-          </div>
+          <Link
+            to="/login"
+            className="text-sm font-semibold text-slate-600"
+          >
+            {t("Log In")}
+          </Link>
         </div>
-        {openMenu && (
-          <div className="lg:hidden border-t border-slate-100 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-4 flex flex-col gap-4">
-              <a
-                href="#how-it-works"
-                className="text-sm font-semibold text-slate-700 hover:text-emerald-500"
-                onClick={() => setOpenMenu(false)}
-              >
-                {t("How It Works")}
-              </a>
-              <a
-                href="#core-features"
-                className="text-sm font-semibold text-slate-700 hover:text-emerald-500"
-                onClick={() => setOpenMenu(false)}
-              >
-                {t("Features")}
-              </a>
-              <div className="flex flex-col gap-2">
-                <span className="text-xs font-semibold text-slate-500">
-                  {t("Language")}
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {["English", "Kannada", "Hindi"].map((lang) => (
-                    <button
-                      key={lang}
-                      onClick={() => {
-                        setLanguage(lang);
-                        setOpenMenu(false);
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                        language === lang
-                          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                          : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}
-                      type="button"
-                    >
-                      {lang}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <Link
-                to="/login"
-                className="text-sm font-semibold text-slate-700 hover:text-emerald-500"
-                onClick={() => setOpenMenu(false)}
-              >
-                {t("Log In")}
-              </Link>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* HERO */}
