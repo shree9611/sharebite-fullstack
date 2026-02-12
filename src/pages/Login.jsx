@@ -110,7 +110,7 @@ const Login = () => {
 
         {/* RIGHT FORM */}
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10 lg:py-0">
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-md bg-white border border-teal-200 shadow-lg shadow-teal-100/50 rounded-2xl p-6 sm:p-8">
 
             <h2 className="text-2xl sm:text-3xl font-bold mb-2">{t("Welcome Back")}</h2>
             <p className="text-gray-600 mb-8">
