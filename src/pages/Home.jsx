@@ -12,7 +12,7 @@ export default function Home() {
 
       {/* HEADER */}
       <header className="sticky top-0 z-50 w-full bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-4 sm:h-20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 font-bold text-lg">
             <span className="material-symbols-outlined text-green-500">
               volunteer_activism
@@ -20,21 +20,21 @@ export default function Home() {
             {t("ShareBite")}
           </div>
 
-          <nav className="flex flex-wrap items-center gap-4 sm:gap-6 md:gap-8">
+          <nav className="flex flex-wrap items-center gap-3 sm:gap-6 md:gap-8">
             <span className="text-sm font-semibold text-emerald-500">
               {t("Home")}
             </span>
 
             <a
               href="#how-it-works"
-              className="text-sm text-slate-600 hover:text-emerald-500 transition"
+              className="text-xs sm:text-sm text-slate-600 hover:text-emerald-500 transition"
             >
               {t("How It Works")}
             </a>
 
             <a
               href="#core-features"
-              className="text-sm text-slate-600 hover:text-emerald-500 transition"
+              className="text-xs sm:text-sm text-slate-600 hover:text-emerald-500 transition"
             >
               {t("Features")}
             </a>
@@ -43,7 +43,7 @@ export default function Home() {
             <div className="relative">
               <button
                 onClick={() => setOpenLang(!openLang)}
-                className="flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-emerald-500 transition"
+                className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-slate-600 hover:text-emerald-500 transition"
                 aria-label={t("Language")}
                 title={`${t("Language")}: ${language}`}
               >
@@ -76,7 +76,7 @@ export default function Home() {
 
           <Link
             to="/login"
-            className="text-sm font-semibold text-slate-600"
+            className="text-xs sm:text-sm font-semibold text-slate-600"
           >
             {t("Log In")}
           </Link>
