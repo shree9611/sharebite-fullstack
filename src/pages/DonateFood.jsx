@@ -115,10 +115,6 @@ const DonateFood = () => {
       if (!token) {
         throw new Error("Please login first. Missing auth token.");
       }
-      if (!hasGpsLocation) {
-        throw new Error("Please tap 'Use Current Location' before submitting.");
-      }
-
       const now = new Date();
       const [hours = "00", minutes = "00"] = formData.bestBefore.split(":");
       const expiryTime = new Date(now);
@@ -133,13 +129,32 @@ const DonateFood = () => {
       payload.append("longitude", String(formData.pickupLongitude));
       if (photoFile) payload.append("image", photoFile);
 
-      const response = await fetch(buildApiUrl("/api/donations"), {
+      let response = await fetch(buildApiUrl("/api/donations"), {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: payload,
       });
+
+      // Fallback for backends still expecting JSON payload.
+      if (!response.ok && response.status === 400) {
+        response = await fetch(buildApiUrl("/api/donations"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            foodName: formData.title,
+            quantity: Number(formData.quantity),
+            location: formData.pickupLocation,
+            expiryTime: expiryTime.toISOString(),
+            latitude: formData.pickupLatitude,
+            longitude: formData.pickupLongitude,
+          }),
+        });
+      }
 
       const data = await response.json().catch(() => ({}));
 
@@ -507,18 +522,18 @@ const DonateFood = () => {
                   <button
                     className="w-full bg-[#12c76a] hover:bg-[#0fbf63] text-white font-bold py-3 rounded-xl text-sm shadow-sm transition-all flex items-center justify-center gap-2"
                     type="submit"
-                    disabled={isSubmitting || isLocating || !hasGpsLocation}
+                    disabled={isSubmitting || isLocating}
                   >
                     {isSubmitting ? "Submitting..." : t("Submit Donation")}
                     <span className="material-symbols-outlined text-[18px]">
                       send
                     </span>
                   </button>
-                  {!hasGpsLocation ? (
-                    <p className="text-center text-[#7a9087] text-xs mt-2">
-                      Use Current Location to enable submission.
-                    </p>
-                  ) : null}
+                  <p className="text-center text-[#7a9087] text-xs mt-2">
+                    {hasGpsLocation
+                      ? "GPS detected for better nearby matching."
+                      : "You can submit without GPS, but nearby matching may be less accurate."}
+                  </p>
                   {submitError && (
                     <p className="text-center text-red-600 text-xs mt-3">{submitError}</p>
                   )}
