@@ -6,8 +6,15 @@ import { setCurrentProfile, upsertProfile } from "../lib/profile.js";
 
 const RegistrationStep2 = () => {
   const location = useLocation();
-  const role = location.state?.role;
-  const accountData = location.state?.accountData;
+  const storedAccountData = (() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("sharebite.accountData") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const role = location.state?.role || sessionStorage.getItem("sharebite.roleLabel") || "Receiver";
+  const accountData = location.state?.accountData || storedAccountData;
   const navigate = useNavigate();
   const { t } = useLanguage();
   const inputRefs = useRef([]);
@@ -137,7 +144,7 @@ const RegistrationStep2 = () => {
       return;
     }
     if (!accountData?.password) {
-      setSubmitError("Please complete Step 1 again.");
+      setSubmitError("Step 1 data missing. Please complete Account Details again.");
       return;
     }
 
@@ -178,6 +185,8 @@ const RegistrationStep2 = () => {
       if (profile) {
         setCurrentProfile(profile);
       }
+      sessionStorage.removeItem("sharebite.accountData");
+      sessionStorage.removeItem("sharebite.roleLabel");
       navigate("/login", { state: { role } });
     } catch (error) {
       setSubmitError(error.message || "Unable to register.");

@@ -98,6 +98,8 @@ const AccountDetails = () => {
         password: passwordValue,
         role: userRole,
       };
+      sessionStorage.setItem("sharebite.accountData", JSON.stringify(accountData));
+      sessionStorage.setItem("sharebite.roleLabel", role || "Receiver");
 
       if (role === "Volunteer") {
         setIsSubmitting(true);

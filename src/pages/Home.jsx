@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function Home() {
-  const { language, setLanguage, t } = useLanguage();
-  const [openLang, setOpenLang] = useState(false);
+  const { t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
 
@@ -71,39 +70,6 @@ export default function Home() {
               {t("Features")}
             </a>
 
-            <div className="relative">
-              <button
-                onClick={() => setOpenLang((prev) => !prev)}
-                className="flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-emerald-500 transition"
-                aria-label={t("Language")}
-                title={`${t("Language")}: ${language}`}
-                type="button"
-              >
-                <span className="material-symbols-outlined text-base">language</span>
-                <span className="material-symbols-outlined text-base">expand_more</span>
-              </button>
-              {openLang && (
-                <div className="absolute right-0 mt-3 w-36 bg-white rounded-xl shadow-lg border overflow-hidden z-50">
-                  {["English", "Kannada", "Hindi"].map((lang) => (
-                    <button
-                      key={lang}
-                      onClick={() => {
-                        setLanguage(lang);
-                        setOpenLang(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-emerald-50 transition"
-                      type="button"
-                    >
-                      {lang}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Link to="/login" className="rounded-full bg-emerald-500 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-600">
-              {t("Login")}
-            </Link>
             <Link
               to="/account-details"
               className="rounded-full border border-emerald-500 px-5 py-2 text-sm font-bold text-emerald-600 hover:bg-emerald-50"
@@ -137,30 +103,6 @@ export default function Home() {
               {t("Features")}
             </a>
 
-            <div className="rounded-xl border border-slate-200 p-2">
-              <p className="px-2 pb-2 text-xs font-semibold text-slate-500 uppercase">{t("Language")}</p>
-              <div className="grid grid-cols-3 gap-2">
-                {["English", "Kannada", "Hindi"].map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => {
-                      setLanguage(lang);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`rounded-lg px-2 py-2 text-xs font-semibold ${
-                      language === lang ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-700"
-                    }`}
-                    type="button"
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="rounded-xl bg-emerald-500 px-4 py-3 text-center text-base font-bold text-white">
-              {t("Login")}
-            </Link>
             <Link
               to="/account-details"
               onClick={() => setMobileMenuOpen(false)}
@@ -300,4 +242,3 @@ export default function Home() {
     </div>
   );
 }
-
