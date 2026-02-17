@@ -158,6 +158,10 @@ const RegistrationStep2 = () => {
         throw new Error(data?.message || "Registration failed");
       }
       const locationParts = [streetAddress.trim(), city.trim(), pincode.trim()].filter(Boolean);
+      const exactLocation =
+        coords?.latitude && coords?.longitude
+          ? `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`
+          : "";
       const profile = upsertProfile({
         name: fullName.trim(),
         email: emailValue.trim(),
@@ -167,6 +171,7 @@ const RegistrationStep2 = () => {
         city: city.trim(),
         pincode: pincode.trim(),
         location: locationParts.join(", "),
+        exactLocation,
         latitude: coords?.latitude ?? null,
         longitude: coords?.longitude ?? null,
       });
@@ -387,6 +392,21 @@ const RegistrationStep2 = () => {
                         onKeyDown={(event) => handleEnterNext(event, 7)}
                       />
                     </div>
+                  </div>
+                  <div className="flex flex-col w-full">
+                    <label className="text-sm font-semibold text-[#111815] mb-2">
+                      Exact Location (GPS)
+                    </label>
+                    <input
+                      className="form-input w-full rounded-full border border-[#e7eeeb] bg-white h-11 px-4 text-sm placeholder:text-[#8aa19a] focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300"
+                      value={
+                        coords
+                          ? `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`
+                          : ""
+                      }
+                      placeholder="Tap Detect My Location"
+                      readOnly
+                    />
                   </div>
                   <div className="relative w-full aspect-video rounded-2xl border border-[#e7eeeb] bg-[#e7efe9] overflow-hidden">
                     {coords ? (

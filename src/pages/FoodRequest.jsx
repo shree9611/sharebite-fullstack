@@ -13,6 +13,7 @@ const FoodRequest = () => {
   const profile = getCurrentProfile();
   const receiverLocation =
     profile?.location ||
+    profile?.exactLocation ||
     profile?.address ||
     profile?.streetAddress ||
     [profile?.city, profile?.pincode].filter(Boolean).join(", ");
