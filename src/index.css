@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
   body {
     @apply overflow-x-hidden bg-white text-slate-900;
   }

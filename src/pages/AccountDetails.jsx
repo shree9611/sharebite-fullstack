@@ -1,10 +1,13 @@
 import React, { useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { buildApiUrl } from "../lib/api.js";
+import { setCurrentProfile, upsertProfile } from "../lib/profile.js";
 
 
 const AccountDetails = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const role = location.state?.role;
     const { t } = useLanguage();
     const inputRefs = useRef([]);
@@ -13,6 +16,10 @@ const AccountDetails = () => {
     const [phoneValue, setPhoneValue] = useState("");
     const [passwordValue, setPasswordValue] = useState("");
     const [confirmValue, setConfirmValue] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [submitError, setSubmitError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [touched, setTouched] = useState({
       fullName: false,
       email: false,
@@ -45,6 +52,75 @@ const AccountDetails = () => {
           next.focus();
         }
       }
+    };
+
+    const roleMap = {
+      Donor: "donor",
+      Receiver: "receiver",
+      Volunteer: "admin",
+    };
+
+    const handleContinue = async (event) => {
+      event.preventDefault();
+      setSubmitError("");
+      setTouched({
+        fullName: true,
+        email: true,
+        phone: true,
+        password: true,
+        confirm: true,
+      });
+
+      const isValid =
+        validate.fullName &&
+        validate.email &&
+        validate.phone &&
+        validate.password &&
+        validate.confirm;
+      if (!isValid) {
+        setSubmitError("Please fix the form errors.");
+        return;
+      }
+
+      const userRole = roleMap[role] || "receiver";
+      const profile = upsertProfile({
+        name: fullName.trim(),
+        email: emailValue.trim(),
+        phone: phoneValue.trim(),
+        role,
+      });
+      if (profile) {
+        setCurrentProfile(profile);
+      }
+      const accountData = {
+        name: fullName.trim(),
+        email: emailValue.trim(),
+        password: passwordValue,
+        role: userRole,
+      };
+
+      if (role === "Volunteer") {
+        setIsSubmitting(true);
+        try {
+          const response = await fetch(buildApiUrl("/api/auth/register"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(accountData),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data?.message || "Registration failed");
+          }
+          navigate("/login", { state: { role } });
+        } catch (error) {
+          setSubmitError(error.message || "Unable to register.");
+        } finally {
+          setIsSubmitting(false);
+        }
+        return;
+      }
+
+      navigate("/registration-step-2", { state: { role, accountData } });
     };
 
   return (
@@ -87,7 +163,7 @@ const AccountDetails = () => {
           )}
 
           {/* Form */}
-          <form className="flex flex-col gap-4 sm:gap-5">
+          <form className="flex flex-col gap-4 sm:gap-5" onSubmit={handleContinue}>
 
             {/* Full Name */}
             <div>
@@ -209,9 +285,9 @@ const AccountDetails = () => {
                   lock
                 </span>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder={t("Password Strong Placeholder")}
-                  className={`w-full h-12 sm:h-14 pl-12 pr-4 border rounded-xl text-sm focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300 ${
+                  className={`w-full h-12 sm:h-14 pl-12 pr-12 border rounded-xl text-sm focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300 ${
                     showError.password ? "border-red-400" : ""
                   }`}
                   minLength={6}
@@ -224,6 +300,16 @@ const AccountDetails = () => {
                   ref={(el) => (inputRefs.current[3] = el)}
                   onKeyDown={(event) => handleEnterNext(event, 3)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#618979] hover:text-[#111815]"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    {showPassword ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
                 {showError.password ? (
                   <p className="mt-1 text-[11px] text-red-500">
                     {t("Minimum 6 characters, one number & special character")}
@@ -245,9 +331,9 @@ const AccountDetails = () => {
       lock
     </span>
     <input
-      type="password"
+      type={showConfirmPassword ? "text" : "password"}
       placeholder={t("Confirm Password Placeholder")}
-      className={`w-full h-12 sm:h-14 pl-12 pr-4 border rounded-xl text-sm focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300 ${
+      className={`w-full h-12 sm:h-14 pl-12 pr-12 border rounded-xl text-sm focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300 ${
         showError.confirm ? "border-red-400" : ""
       }`}
       required
@@ -259,6 +345,16 @@ const AccountDetails = () => {
       ref={(el) => (inputRefs.current[4] = el)}
       onKeyDown={(event) => handleEnterNext(event, 4)}
     />
+    <button
+      type="button"
+      onClick={() => setShowConfirmPassword((prev) => !prev)}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#618979] hover:text-[#111815]"
+      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+    >
+      <span className="material-symbols-outlined text-[20px]">
+        {showConfirmPassword ? "visibility_off" : "visibility"}
+      </span>
+    </button>
     {showError.confirm ? (
       <p className="mt-1 text-[11px] text-red-500">
         {t("Must match password")}
@@ -284,13 +380,16 @@ const AccountDetails = () => {
 
 
             {/* Continue */}
-            <Link
-              to={role === "Volunteer" ? "/login" : "/registration-step-2"}
-              state={{ role }}
-              className="w-full bg-[#12c76a] hover:bg-[#0fbf63] text-white px-6 sm:px-8 py-3 rounded-xl font-bold text-center transition-colors"
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-[#12c76a] hover:bg-[#0fbf63] disabled:opacity-60 text-white px-6 sm:px-8 py-3 rounded-xl font-bold text-center transition-colors"
             >
-              {t("Continue")}
-            </Link>
+              {isSubmitting ? "Please wait..." : t("Continue")}
+            </button>
+            {submitError ? (
+              <p className="text-xs text-red-600 text-center">{submitError}</p>
+            ) : null}
 
 
             {/* Back */}

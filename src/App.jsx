@@ -15,6 +15,7 @@ import RequestApproval from "./pages/RequestApproval";
 import CommunityFeedback from "./pages/CommunityFeedback";
 import VolunteerAcceptMission from "./pages/VolunteerAcceptMission";
 import ReceiverFeedback from "./pages/ReceiverFeedback";
+import RoleProtectedRoute from "./components/RoleProtectedRoute.jsx";
 
 export default function App() {
   return (
@@ -26,14 +27,70 @@ export default function App() {
         <Route path="/account-details" element={<AccountDetails />} />
         <Route path="/registration-step-2" element={<RegistrationStep2 />} />
         <Route path="/registration-success" element={<RegistrationSuccess />} />
-        <Route path="/dashboard" element={<UserDashboard />} />
-        <Route path="/my-requests" element={<MyRequests />} />
-        <Route path="/food-request" element={<FoodRequest />} />
-        <Route path="/donor/donate" element={<DonateFood />} />
-        <Route path="/donor/approvals" element={<RequestApproval />} />
-        <Route path="/donor/feedback" element={<CommunityFeedback />} />
-        <Route path="/volunteer/acceptmission" element={<VolunteerAcceptMission />} />
-        <Route path="/receiver/feedback" element={<ReceiverFeedback />} />
+        <Route
+          path="/dashboard"
+          element={
+            <RoleProtectedRoute allowedRoles={["Receiver"]}>
+              <UserDashboard />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-requests"
+          element={
+            <RoleProtectedRoute allowedRoles={["Receiver"]}>
+              <MyRequests />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/food-request"
+          element={
+            <RoleProtectedRoute allowedRoles={["Receiver"]}>
+              <FoodRequest />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/donor/donate"
+          element={
+            <RoleProtectedRoute allowedRoles={["Donor"]}>
+              <DonateFood />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/donor/approvals"
+          element={
+            <RoleProtectedRoute allowedRoles={["Donor"]}>
+              <RequestApproval />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/donor/feedback"
+          element={
+            <RoleProtectedRoute allowedRoles={["Donor"]}>
+              <CommunityFeedback />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/volunteer/acceptmission"
+          element={
+            <RoleProtectedRoute allowedRoles={["Volunteer"]}>
+              <VolunteerAcceptMission />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/receiver/feedback"
+          element={
+            <RoleProtectedRoute allowedRoles={["Receiver"]}>
+              <ReceiverFeedback />
+            </RoleProtectedRoute>
+          }
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/register-access" element={<RegisterAccess />} />
 

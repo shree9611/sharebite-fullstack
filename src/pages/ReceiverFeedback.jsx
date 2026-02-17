@@ -1,6 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { buildApiUrl, getAuthHeaders } from "../lib/api.js";
 
 const ReceiverFeedback = () => {
   const location = useLocation();
@@ -11,6 +12,10 @@ const ReceiverFeedback = () => {
   const [deliveryRating, setDeliveryRating] = useState(5);
   const [comments, setComments] = useState("");
   const [photoPreview, setPhotoPreview] = useState("");
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requestId, setRequestId] = useState(location.state?.requestId || "");
   const fileInputRef = useRef(null);
   const isAvailable = location.pathname === "/dashboard";
   const isMyRequests = location.pathname === "/my-requests";
@@ -18,6 +23,36 @@ const ReceiverFeedback = () => {
   const handleLogout = () => {
     navigate("/login");
   };
+
+  useEffect(() => {
+    if (requestId) return;
+
+    const loadLatestApprovedRequest = async () => {
+      try {
+        const response = await fetch(buildApiUrl("/api/requests"), {
+          headers: { ...getAuthHeaders() },
+        });
+        const data = await response.json().catch(() => []);
+        if (!response.ok || !Array.isArray(data)) {
+          return;
+        }
+        const approved = data
+          .filter((item) => item?.status === "approved")
+          .sort((a, b) => {
+            const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+            const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+            return bTime - aTime;
+          });
+        if (approved[0]?._id) {
+          setRequestId(approved[0]._id);
+        }
+      } catch {
+        // Keep silent here; submit will show actionable error if requestId is missing.
+      }
+    };
+
+    loadLatestApprovedRequest();
+  }, [requestId]);
 
   const handlePhotoClick = () => {
     if (fileInputRef.current) {
@@ -37,17 +72,42 @@ const ReceiverFeedback = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmitFeedback = () => {
-    navigate("/donor/feedback", {
-      state: {
-        feedback: {
-          foodRating,
-          deliveryRating,
-          comments,
-          photoPreview,
+  const handleSubmitFeedback = async () => {
+    setSubmitError("");
+    setSubmitSuccess("");
+    if (!requestId) {
+      setSubmitError("No approved request found. Please request and get approval first.");
+      return;
+    }
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(buildApiUrl("/api/feedback"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
-      },
-    });
+        body: JSON.stringify({
+          requestId,
+          rating: Math.round((foodRating + deliveryRating) / 2),
+          comment: comments,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message || "Feedback submit failed");
+      }
+      setSubmitSuccess("Feedback submitted.");
+      setComments("");
+      setPhotoPreview("");
+      setFoodRating(4);
+      setDeliveryRating(5);
+    } catch (error) {
+      setSubmitError(error.message || "Unable to submit feedback.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   return (
     <div className="bg-transparent min-h-screen text-[#111815]">
@@ -299,16 +359,23 @@ const ReceiverFeedback = () => {
                     <button
                       className="flex-1 bg-green-600 hover:bg-green-600/90 text-[#111815] font-black text-base sm:text-lg py-4 rounded-xl transition-all shadow-lg shadow-green-200 flex items-center justify-center gap-2"
                       type="button"
+                      disabled={isSubmitting}
                       onClick={handleSubmitFeedback}
                     >
                       <span className="material-symbols-outlined">send</span>
-                      {t("Submit Feedback")}
+                      {isSubmitting ? "Submitting..." : t("Submit Feedback")}
                     </button>
                     <button className="w-full sm:w-auto px-8 bg-[#f0f4f3] text-[#111815] font-bold py-4 rounded-xl transition-all">
                       {t("Cancel")}
                     </button>
                   </div>
                 </div>
+                {submitError ? (
+                  <p className="text-sm text-red-600">{submitError}</p>
+                ) : null}
+                {submitSuccess ? (
+                  <p className="text-sm text-green-600">{submitSuccess}</p>
+                ) : null}
               </div>
               <div className="flex items-center gap-4 p-6 bg-green-50 rounded-xl border border-green-100 italic text-[#111815]">
                 <span className="material-symbols-outlined text-green-600 text-3xl">

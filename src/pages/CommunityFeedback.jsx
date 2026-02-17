@@ -1,16 +1,74 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { buildApiUrl } from "../lib/api.js";
+import { clearSession } from "../lib/auth.js";
+import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
 const CommunityFeedback = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [showProfile, setShowProfile] = useState(false);
+  const [profile, setProfile] = useState(() => getCurrentProfile());
+  const [feedbackItems, setFeedbackItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const isActive = (path) => location.pathname === path;
   const feedback = location.state?.feedback;
   const handleLogout = () => {
+    clearSession();
+    clearCurrentProfile();
     navigate("/login");
+  };
+  useEffect(() => {
+    setProfile(getCurrentProfile());
+  }, []);
+
+  useEffect(() => {
+    const loadFeedback = async () => {
+      setIsLoading(true);
+      setLoadError("");
+      const token = localStorage.getItem("sharebite.token");
+      if (!token) {
+        setLoadError("Please login first.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(buildApiUrl("/api/feedback"), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json().catch(() => []);
+        if (!response.ok) {
+          throw new Error(data?.message || "Failed to load feedback.");
+        }
+        setFeedbackItems(Array.isArray(data) ? data : []);
+      } catch (error) {
+        setLoadError(error.message || "Unable to load feedback.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFeedback();
+  }, []);
+
+  const averageRating = feedbackItems.length
+    ? (feedbackItems.reduce((sum, item) => sum + (Number(item?.rating) || 0), 0) / feedbackItems.length).toFixed(1)
+    : "0.0";
+
+  const renderStars = (rating) => {
+    const value = Math.max(0, Math.min(5, Number(rating) || 0));
+    return [1, 2, 3, 4, 5].map((star) => (
+      <span
+        key={star}
+        className={`material-symbols-outlined text-xl ${star <= Math.round(value) ? "text-[#11d483] fill-1" : "text-zinc-200"}`}
+      >
+        star
+      </span>
+    ));
   };
   return (
     <div className="bg-transparent min-h-screen">
@@ -92,17 +150,17 @@ const CommunityFeedback = () => {
                         </span>
                       </div>
                       <p className="mt-2 font-bold text-[#111814]">
-                        {t("User Name")}
+                        {profile?.name || t("User Name")}
                       </p>
                       <p className="text-xs text-[#7a9087]">
-                        {t("User Email")}
+                        {profile?.email || t("User Email")}
                       </p>
                     </div>
                     <div className="px-4 pb-4 text-xs text-[#7a9087]">
                       <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
                         <span>{t("Phone")}</span>
                         <span className="font-semibold text-[#111814]">
-                          +91 XXXXX XXXXX
+                          {profile?.phone || "N/A"}
                         </span>
                       </div>
                       <div className="mt-3 flex gap-2">
@@ -159,33 +217,17 @@ const CommunityFeedback = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
               <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-zinc-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <p className="text-zinc-500 text-sm font-medium mb-1">
                     {t("Food Quality")}
                   </p>
                   <h3 className="text-4xl font-black text-zinc-900 font-display">
-                    4.9<span className="text-xl text-zinc-400 font-normal">/5.0</span>
+                    {averageRating}<span className="text-xl text-zinc-400 font-normal">/5.0</span>
                   </h3>
                 </div>
-                <div className="flex gap-1">
-                  <span className="material-symbols-outlined text-3xl text-[#11d483] fill-1">
-                    star
-                  </span>
-                  <span className="material-symbols-outlined text-3xl text-[#11d483] fill-1">
-                    star
-                  </span>
-                  <span className="material-symbols-outlined text-3xl text-[#11d483] fill-1">
-                    star
-                  </span>
-                  <span className="material-symbols-outlined text-3xl text-[#11d483] fill-1">
-                    star
-                  </span>
-                  <span className="material-symbols-outlined text-3xl text-[#11d483] fill-1">
-                    star
-                  </span>
-                </div>
+                <div className="flex gap-1">{renderStars(averageRating)}</div>
               </div>
               <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-zinc-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -193,147 +235,44 @@ const CommunityFeedback = () => {
                     {t("Service & Timing")}
                   </p>
                   <h3 className="text-4xl font-black text-zinc-900 font-display">
-                    4.7<span className="text-xl text-zinc-400 font-normal">/5.0</span>
+                    {averageRating}<span className="text-xl text-zinc-400 font-normal">/5.0</span>
                   </h3>
                 </div>
-                <div className="flex gap-1">
-                  <span className="material-symbols-outlined text-3xl text-[#11d483] fill-1">
-                    star
-                  </span>
-                  <span className="material-symbols-outlined text-3xl text-[#11d483] fill-1">
-                    star
-                  </span>
-                  <span className="material-symbols-outlined text-3xl text-[#11d483] fill-1">
-                    star
-                  </span>
-                  <span className="material-symbols-outlined text-3xl text-[#11d483] fill-1">
-                    star
-                  </span>
-                  <span className="material-symbols-outlined text-3xl text-zinc-200">
-                    star
-                  </span>
-                </div>
+                <div className="flex gap-1">{renderStars(averageRating)}</div>
               </div>
             </div>
             <div className="space-y-6">
               <h4 className="text-xl font-bold text-zinc-900 font-display mb-4">
                 {t("Recent Reviews")}
               </h4>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined">
-                        corporate_fare
-                      </span>
-                    </div>
-                    <div>
-                      <h5 className="font-bold text-zinc-900">
-                        {t("Sunshine Care Home")}
-                      </h5>
-                      <p className="text-xs text-zinc-400">
-                        {t("Received 2 hours ago")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-0.5">
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                  </div>
+              {isLoading ? <p className="text-sm text-zinc-500">Loading feedback...</p> : null}
+              {loadError ? <p className="text-sm text-red-600">{loadError}</p> : null}
+              {!isLoading && !loadError && feedbackItems.length === 0 ? (
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 text-sm text-zinc-500">
+                  No community feedback yet.
                 </div>
-                <p className="text-zinc-600 leading-relaxed italic">
-                  {t("Review 1")}
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined">school</span>
+              ) : null}
+              {feedbackItems.map((item) => (
+                <div key={item._id} className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center text-primary">
+                        <span className="material-symbols-outlined">reviews</span>
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-zinc-900">Receiver Feedback</h5>
+                        <p className="text-xs text-zinc-400">
+                          {new Date(item?.createdAt || Date.now()).toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h5 className="font-bold text-zinc-900">
-                        {t("Central Youth Center")}
-                      </h5>
-                      <p className="text-xs text-zinc-400">
-                        {t("Received 1 day ago")}
-                      </p>
-                    </div>
+                    <div className="flex gap-0.5">{renderStars(item?.rating)}</div>
                   </div>
-                  <div className="flex gap-0.5">
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-zinc-200">
-                      star
-                    </span>
-                  </div>
+                  <p className="text-zinc-600 leading-relaxed italic">
+                    {item?.comment || "No comments provided."}
+                  </p>
                 </div>
-                <p className="text-zinc-600 leading-relaxed italic">
-                  {t("Review 2")}
-                </p>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center text-primary">
-                      <span className="material-symbols-outlined">
-                        home_health
-                      </span>
-                    </div>
-                    <div>
-                      <h5 className="font-bold text-zinc-900">
-                        {t("Grace Shelter Foundation")}
-                      </h5>
-                      <p className="text-xs text-zinc-400">
-                        {t("Received 3 days ago")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-0.5">
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                    <span className="material-symbols-outlined text-xl text-[#11d483] fill-1">
-                      star
-                    </span>
-                  </div>
-                </div>
-                <p className="text-zinc-600 leading-relaxed italic">
-                  {t("Review 3")}
-                </p>
-              </div>
+              ))}
             </div>
             <p className="text-center text-zinc-400 text-sm mt-12 pb-12">
               {t("Feedback Footnote")}

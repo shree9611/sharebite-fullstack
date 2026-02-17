@@ -1,22 +1,27 @@
 import React, { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { buildApiUrl } from "../lib/api.js";
+import { setCurrentProfile, upsertProfile } from "../lib/profile.js";
 
 const RegistrationStep2 = () => {
   const location = useLocation();
   const role = location.state?.role;
+  const accountData = location.state?.accountData;
   const navigate = useNavigate();
   const { t } = useLanguage();
   const inputRefs = useRef([]);
   const formRef = useRef(null);
-  const [fullName, setFullName] = useState("");
-  const [emailValue, setEmailValue] = useState("");
+  const [fullName, setFullName] = useState(accountData?.name || "");
+  const [emailValue, setEmailValue] = useState(accountData?.email || "");
   const [phoneValue, setPhoneValue] = useState("");
   const [streetAddress, setStreetAddress] = useState("");
   const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
   const [locationStatus, setLocationStatus] = useState("");
   const [coords, setCoords] = useState(null);
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [touched, setTouched] = useState({
     fullName: false,
     email: false,
@@ -91,8 +96,61 @@ const RegistrationStep2 = () => {
     );
   };
 
-  const handleSubmit = () => {
-    navigate("/login", { state: { role } });
+  const handleSubmit = async () => {
+    setSubmitError("");
+    setTouched({
+      fullName: true,
+      email: true,
+      phone: true,
+    });
+    const isValid = validate.fullName && validate.email && validate.phone;
+    if (!isValid) {
+      setSubmitError("Please fill required fields correctly.");
+      return;
+    }
+    if (!accountData?.password) {
+      setSubmitError("Please complete Step 1 again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(buildApiUrl("/api/auth/register"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fullName.trim(),
+          email: emailValue.trim(),
+          password: accountData.password,
+          role: accountData.role,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message || "Registration failed");
+      }
+      const locationParts = [streetAddress.trim(), city.trim(), pincode.trim()].filter(Boolean);
+      const profile = upsertProfile({
+        name: fullName.trim(),
+        email: emailValue.trim(),
+        phone: phoneValue.trim(),
+        role,
+        streetAddress: streetAddress.trim(),
+        city: city.trim(),
+        pincode: pincode.trim(),
+        location: locationParts.join(", "),
+        latitude: coords?.latitude ?? null,
+        longitude: coords?.longitude ?? null,
+      });
+      if (profile) {
+        setCurrentProfile(profile);
+      }
+      navigate("/login", { state: { role } });
+    } catch (error) {
+      setSubmitError(error.message || "Unable to register.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   return (
     <div className="bg-transparent min-h-screen">
@@ -355,11 +413,15 @@ const RegistrationStep2 = () => {
               <button
                 type="button"
                 onClick={handleSubmit}
+                disabled={isSubmitting}
                 className="h-12 w-full sm:w-auto min-w-[220px] rounded-full bg-[#12c76a] text-white text-sm font-bold shadow hover:bg-[#0fbf63] inline-flex items-center justify-center transition-colors"
               >
-                {t("Submit")}
+                {isSubmitting ? "Submitting..." : t("Submit")}
               </button>
             </div>
+            {submitError ? (
+              <p className="mt-3 text-xs text-red-600">{submitError}</p>
+            ) : null}
           </main>
         </div>
       </div>

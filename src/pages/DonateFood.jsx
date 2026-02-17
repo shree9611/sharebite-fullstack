@@ -1,15 +1,170 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { buildApiUrl } from "../lib/api.js";
+import { clearSession } from "../lib/auth.js";
+import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
 const DonateFood = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [showProfile, setShowProfile] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
+  const [formData, setFormData] = useState({
+    title: "",
+    quantity: "",
+    bestBefore: "",
+    pickupLocation: "",
+    pickupLatitude: null,
+    pickupLongitude: null,
+    dietary: "veg",
+    bakedType: "baked",
+  });
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationStatus, setLocationStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
+  const [profile, setProfile] = useState(() => getCurrentProfile());
+  const hasGpsLocation =
+    formData.pickupLatitude !== null && formData.pickupLongitude !== null;
   const isActive = (path) => location.pathname === path;
   const handleLogout = () => {
+    clearSession();
+    clearCurrentProfile();
     navigate("/login");
+  };
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  const photoInputRef = useRef(null);
+
+  const handlePhotoChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setSubmitError("Please upload a valid image file.");
+      return;
+    }
+    setPhotoFile(file);
+    setSubmitError("");
+  };
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus("Geolocation is not supported in this browser.");
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationStatus("Detecting current location...");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData((prev) => ({
+          ...prev,
+          pickupLatitude: position.coords.latitude,
+          pickupLongitude: position.coords.longitude,
+        }));
+        setIsLocating(false);
+        setLocationStatus("Current location detected for nearby matching.");
+      },
+      (error) => {
+        setIsLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationStatus("Location permission denied.");
+          return;
+        }
+        if (error.code === error.POSITION_UNAVAILABLE) {
+          setLocationStatus("Location unavailable.");
+          return;
+        }
+        if (error.code === error.TIMEOUT) {
+          setLocationStatus("Location detection timed out.");
+          return;
+        }
+        setLocationStatus("Unable to detect location.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  useEffect(() => {
+    if (!photoFile) {
+      setPhotoPreviewUrl("");
+      return;
+    }
+    const objectUrl = URL.createObjectURL(photoFile);
+    setPhotoPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [photoFile]);
+
+  useEffect(() => {
+    setProfile(getCurrentProfile());
+  }, []);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitError("");
+    setSubmitSuccess("");
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("sharebite.token");
+      if (!token) {
+        throw new Error("Please login first. Missing auth token.");
+      }
+      if (!hasGpsLocation) {
+        throw new Error("Please tap 'Use Current Location' before submitting.");
+      }
+
+      const now = new Date();
+      const [hours = "00", minutes = "00"] = formData.bestBefore.split(":");
+      const expiryTime = new Date(now);
+      expiryTime.setHours(Number(hours), Number(minutes), 0, 0);
+
+      const payload = new FormData();
+      payload.append("foodName", formData.title);
+      payload.append("quantity", String(formData.quantity));
+      payload.append("location", formData.pickupLocation);
+      payload.append("expiryTime", expiryTime.toISOString());
+      payload.append("latitude", String(formData.pickupLatitude));
+      payload.append("longitude", String(formData.pickupLongitude));
+      if (photoFile) payload.append("image", photoFile);
+
+      const response = await fetch(buildApiUrl("/api/donations"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: payload,
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to submit donation.");
+      }
+
+      setSubmitSuccess(data?.message || "Donation submitted successfully.");
+      setFormData({
+        title: "",
+        quantity: "",
+        bestBefore: "",
+        pickupLocation: "",
+        pickupLatitude: null,
+        pickupLongitude: null,
+        dietary: "veg",
+        bakedType: "baked",
+      });
+      setPhotoFile(null);
+      setLocationStatus("");
+    } catch (error) {
+      setSubmitError(error.message || "Unable to connect to backend.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   return (
     <div className="bg-transparent min-h-screen">
@@ -86,17 +241,17 @@ const DonateFood = () => {
                         </span>
                       </div>
                       <p className="mt-2 font-bold text-[#111814]">
-                        {t("User Name")}
+                        {profile?.name || t("User Name")}
                       </p>
                       <p className="text-xs text-[#7a9087]">
-                        {t("User Email")}
+                        {profile?.email || t("User Email")}
                       </p>
                     </div>
                     <div className="px-4 pb-4 text-xs text-[#7a9087]">
                       <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
                         <span>{t("Phone")}</span>
                         <span className="font-semibold text-[#111814]">
-                          +91 XXXXX XXXXX
+                          {profile?.phone || "N/A"}
                         </span>
                       </div>
                       <div className="mt-3 flex gap-2">
@@ -122,7 +277,7 @@ const DonateFood = () => {
             </div>
 
             <div className="bg-white rounded-2xl border border-[#e6eee9] p-5 sm:p-6">
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="flex items-center gap-2 pb-4 border-b border-[#eef4f1]">
                   <span className="material-symbols-outlined text-[#12c76a] text-[18px]">
                     restaurant_menu
@@ -133,12 +288,35 @@ const DonateFood = () => {
                 </div>
 
                 <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#e6eee9] rounded-xl p-5 bg-[#f8fbf9]">
-                  <span className="material-symbols-outlined text-3xl text-[#9fb3aa] mb-2">
-                    photo_camera
-                  </span>
-                  <p className="text-xs text-[#8aa19a] font-medium">
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handlePhotoChange}
+                  />
+                  {photoPreviewUrl ? (
+                    <img
+                      src={photoPreviewUrl}
+                      alt="Food preview"
+                      className="h-36 w-full max-w-sm rounded-xl object-cover mb-3"
+                    />
+                  ) : (
+                    <span className="material-symbols-outlined text-3xl text-[#9fb3aa] mb-2">
+                      photo_camera
+                    </span>
+                  )}
+                  <p className="text-xs text-[#8aa19a] font-medium mb-3">
                     {t("Add Food Photo")}
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    className="rounded-lg bg-[#12c76a] px-4 py-2 text-xs font-semibold text-white hover:bg-[#0fbf63]"
+                  >
+                    {photoPreviewUrl ? "Retake / Change Photo" : "Open Camera"}
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -148,8 +326,12 @@ const DonateFood = () => {
                     </label>
                     <input
                       className="w-full h-10 rounded-xl border-[#e6eee9] text-sm focus:ring-[#12c76a] focus:border-[#12c76a]"
+                      name="title"
+                      onChange={handleChange}
                       placeholder={t("Food Title Placeholder")}
                       type="text"
+                      value={formData.title}
+                      required
                     />
                   </div>
                   <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
@@ -158,8 +340,13 @@ const DonateFood = () => {
                     </label>
                     <input
                       className="w-full h-10 rounded-xl border-[#e6eee9] text-sm focus:ring-[#12c76a] focus:border-[#12c76a]"
+                      name="quantity"
+                      onChange={handleChange}
                       placeholder={t("Quantity Placeholder")}
-                      type="text"
+                      type="number"
+                      min="1"
+                      value={formData.quantity}
+                      required
                     />
                   </div>
                   <div className="flex flex-col gap-2 col-span-2 md:col-span-1">
@@ -172,7 +359,11 @@ const DonateFood = () => {
                       </span>
                       <input
                         className="w-full h-10 pl-10 rounded-xl border-[#e6eee9] text-sm focus:ring-[#12c76a] focus:border-[#12c76a]"
+                        name="bestBefore"
+                        onChange={handleChange}
                         type="time"
+                        value={formData.bestBefore}
+                        required
                       />
                     </div>
                   </div>
@@ -186,10 +377,32 @@ const DonateFood = () => {
                       </span>
                       <input
                         className="w-full h-10 pl-10 rounded-xl border-[#e6eee9] text-sm focus:ring-[#12c76a] focus:border-[#12c76a]"
-                      placeholder={t("Pickup Placeholder")}
+                        name="pickupLocation"
+                        onChange={handleChange}
+                        placeholder={t("Pickup Placeholder")}
                         type="text"
+                        value={formData.pickupLocation}
+                        required
                       />
                     </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={handleDetectLocation}
+                        disabled={isLocating}
+                        className="rounded-lg bg-[#eef4f1] px-3 py-1.5 text-[11px] font-semibold text-[#111814] hover:bg-[#dfeae4] disabled:opacity-60"
+                      >
+                        {isLocating ? "Detecting..." : "Use Current Location"}
+                      </button>
+                      {formData.pickupLatitude !== null && formData.pickupLongitude !== null ? (
+                        <span className="text-[11px] text-[#12c76a] font-semibold">
+                          GPS linked
+                        </span>
+                      ) : null}
+                    </div>
+                    {locationStatus ? (
+                      <p className="text-[11px] text-[#7a9087]">{locationStatus}</p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -201,9 +414,10 @@ const DonateFood = () => {
                     <div className="flex gap-3">
                       <label className="flex-1 relative cursor-pointer">
                         <input
-                          defaultChecked
                           className="sr-only peer"
                           name="dietary"
+                          onChange={handleChange}
+                          checked={formData.dietary === "veg"}
                           type="radio"
                           value="veg"
                         />
@@ -222,6 +436,8 @@ const DonateFood = () => {
                         <input
                           className="sr-only peer"
                           name="dietary"
+                          onChange={handleChange}
+                          checked={formData.dietary === "non-veg"}
                           type="radio"
                           value="non-veg"
                         />
@@ -254,9 +470,10 @@ const DonateFood = () => {
                       <div className="flex gap-3">
                         <label className="flex-1 relative cursor-pointer">
                           <input
-                            defaultChecked
                             className="sr-only peer"
                             name="bakedType"
+                            onChange={handleChange}
+                            checked={formData.bakedType === "baked"}
                             type="radio"
                             value="baked"
                           />
@@ -270,6 +487,8 @@ const DonateFood = () => {
                           <input
                             className="sr-only peer"
                             name="bakedType"
+                            onChange={handleChange}
+                            checked={formData.bakedType === "non-baked"}
                             type="radio"
                             value="non-baked"
                           />
@@ -288,12 +507,24 @@ const DonateFood = () => {
                   <button
                     className="w-full bg-[#12c76a] hover:bg-[#0fbf63] text-white font-bold py-3 rounded-xl text-sm shadow-sm transition-all flex items-center justify-center gap-2"
                     type="submit"
+                    disabled={isSubmitting || isLocating || !hasGpsLocation}
                   >
-                    {t("Submit Donation")}
+                    {isSubmitting ? "Submitting..." : t("Submit Donation")}
                     <span className="material-symbols-outlined text-[18px]">
                       send
                     </span>
                   </button>
+                  {!hasGpsLocation ? (
+                    <p className="text-center text-[#7a9087] text-xs mt-2">
+                      Use Current Location to enable submission.
+                    </p>
+                  ) : null}
+                  {submitError && (
+                    <p className="text-center text-red-600 text-xs mt-3">{submitError}</p>
+                  )}
+                  {submitSuccess && (
+                    <p className="text-center text-green-700 text-xs mt-3">{submitSuccess}</p>
+                  )}
                   <p className="text-center text-[#a4b2ac] text-xs mt-5 px-2 sm:px-10">
                     {t("Donation Disclaimer")}
                   </p>
@@ -313,6 +544,3 @@ const DonateFood = () => {
 };
 
 export default DonateFood;
-
-
-

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { decodeJwtPayload, getRoleHomePath, normalizeRole } from "../lib/auth.js";
+import { getProfileByEmail, setCurrentProfile, upsertProfile } from "../lib/profile.js";
 
 const Login = () => {
   const { t } = useLanguage();
@@ -16,6 +18,8 @@ const Login = () => {
   const [resetConfirm, setResetConfirm] = useState("");
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const remembered = localStorage.getItem("sharebite.remember") === "true";
@@ -28,24 +32,62 @@ const Login = () => {
     }
   }, []);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setLoginError("");
     const isPasswordValid = password.trim().length >= 6;
     setShowPasswordError(!isPasswordValid);
     if (isPasswordValid) {
-      if (rememberMe) {
-        localStorage.setItem("sharebite.remember", "true");
-        localStorage.setItem("sharebite.email", email);
-        localStorage.setItem("sharebite.password", password);
-      } else {
-        localStorage.removeItem("sharebite.remember");
-        localStorage.removeItem("sharebite.email");
-        localStorage.removeItem("sharebite.password");
-      }
-      if (role === "Volunteer") {
-        navigate("/volunteer/acceptmission", { state: { role } });
-      } else {
-        navigate("/registration-success", { state: { role } });
+      setIsSubmitting(true);
+      try {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+        const response = await fetch(`${baseUrl}/api/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data?.token) {
+          throw new Error(data?.message || "Login failed");
+        }
+
+        localStorage.setItem("sharebite.token", data.token);
+        const payload = decodeJwtPayload(data.token);
+        const resolvedRole =
+          normalizeRole(payload?.role) || normalizeRole(role) || "Receiver";
+        localStorage.setItem("sharebite.role", resolvedRole);
+        const savedProfile = getProfileByEmail(email.trim());
+        const currentProfile = upsertProfile({
+          name: savedProfile?.name || "User",
+          email: email.trim(),
+          phone: savedProfile?.phone || "",
+          role: resolvedRole,
+        });
+        if (currentProfile) {
+          setCurrentProfile(currentProfile);
+        }
+
+        if (rememberMe) {
+          localStorage.setItem("sharebite.remember", "true");
+          localStorage.setItem("sharebite.email", email);
+          localStorage.setItem("sharebite.password", password);
+        } else {
+          localStorage.removeItem("sharebite.remember");
+          localStorage.removeItem("sharebite.email");
+          localStorage.removeItem("sharebite.password");
+        }
+
+        navigate(getRoleHomePath(resolvedRole), { state: { role: resolvedRole } });
+      } catch (error) {
+        setLoginError(error.message || "Unable to login.");
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -179,10 +221,12 @@ const Login = () => {
               </div>
 <button
   type="submit"
+  disabled={isSubmitting}
   className="w-full sm:w-auto sm:px-20 py-3 rounded-full bg-green-600 text-white font-semibold shadow hover:brightness-110 transition"
 >
-  {t("Login")}
+  {isSubmitting ? "Logging in..." : t("Login")}
 </button>
+{loginError && <p className="text-xs text-red-600 mt-2">{loginError}</p>}
 
 {/* Divider */}
 <div className="flex items-center gap-4 my-6">

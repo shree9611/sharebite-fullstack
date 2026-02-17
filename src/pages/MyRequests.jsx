@@ -1,19 +1,90 @@
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { buildApiUrl } from "../lib/api.js";
+import { clearSession } from "../lib/auth.js";
+import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
+
+const statusClasses = {
+  pending: "bg-orange-50 text-orange-600 border-orange-100",
+  approved: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  declined: "bg-red-50 text-red-600 border-red-100",
+};
 
 const MyRequests = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [showProfile, setShowProfile] = useState(false);
-  const [openContact, setOpenContact] = useState(null);
+  const [profile, setProfile] = useState(() => getCurrentProfile());
+  const [requests, setRequests] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
   const isAvailable = location.pathname === "/dashboard";
   const isMyRequests = location.pathname === "/my-requests";
   const isFeedback = location.pathname === "/receiver/feedback";
+
   const handleLogout = () => {
+    clearSession();
+    clearCurrentProfile();
     navigate("/login");
   };
+
+  useEffect(() => {
+    setProfile(getCurrentProfile());
+  }, []);
+
+  useEffect(() => {
+    const loadRequests = async () => {
+      setIsLoading(true);
+      setLoadError("");
+      const token = localStorage.getItem("sharebite.token");
+      if (!token) {
+        setLoadError("Please login first.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(buildApiUrl("/api/requests"), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json().catch(() => []);
+        if (!response.ok) {
+          throw new Error(data?.message || "Failed to load my requests.");
+        }
+        setRequests(Array.isArray(data) ? data : []);
+      } catch (error) {
+        setLoadError(error.message || "Unable to load requests.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRequests();
+  }, []);
+
+  const sortedRequests = useMemo(() => {
+    return [...requests].sort((a, b) => {
+      const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+      const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [requests]);
+
+  const statusLabel = (status) => {
+    if (status === "approved") return "Approved";
+    if (status === "declined") return "Declined";
+    return "Pending";
+  };
+
+  const statusNote = (status) => {
+    if (status === "approved") return "Donor approved your request.";
+    if (status === "declined") return "Donor declined your request.";
+    return "Waiting for donor approval.";
+  };
+
   return (
     <div className="bg-background-light text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
@@ -21,13 +92,9 @@ const MyRequests = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="text-primary flex items-center">
-                <span className="material-symbols-outlined text-2xl font-semibold">
-                  volunteer_activism
-                </span>
+                <span className="material-symbols-outlined text-2xl font-semibold">volunteer_activism</span>
               </div>
-              <h2 className="text-lg font-bold leading-tight tracking-tight">
-                {t("ShareBite")}
-              </h2>
+              <h2 className="text-lg font-bold leading-tight tracking-tight">{t("ShareBite")}</h2>
             </div>
           </div>
           <div className="flex items-center gap-4 relative">
@@ -36,32 +103,22 @@ const MyRequests = () => {
               onClick={() => setShowProfile((prev) => !prev)}
               type="button"
             >
-              <span className="material-symbols-outlined text-[22px]">
-                account_circle
-              </span>
+              <span className="material-symbols-outlined text-[22px]">account_circle</span>
             </button>
             {showProfile && (
               <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden">
                 <div className="h-16 bg-[#f8efe3]" />
                 <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                   <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
-                    <span className="material-symbols-outlined text-3xl">
-                      account_circle
-                    </span>
+                    <span className="material-symbols-outlined text-3xl">account_circle</span>
                   </div>
-                  <p className="mt-2 font-bold text-[#111814]">
-                    {t("User Name")}
-                  </p>
-                  <p className="text-xs text-[#7a9087]">
-                    {t("User Email")}
-                  </p>
+                  <p className="mt-2 font-bold text-[#111814]">{profile?.name || t("User Name")}</p>
+                  <p className="text-xs text-[#7a9087]">{profile?.email || t("User Email")}</p>
                 </div>
                 <div className="px-4 pb-4 text-xs text-[#7a9087]">
                   <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
                     <span>{t("Phone")}</span>
-                    <span className="font-semibold text-[#111814]">
-                      +91 XXXXX XXXXX
-                    </span>
+                    <span className="font-semibold text-[#111814]">{profile?.phone || "N/A"}</span>
                   </div>
                   <div className="mt-3 flex gap-2">
                     <button
@@ -84,230 +141,90 @@ const MyRequests = () => {
             )}
           </div>
         </header>
+
         <div className="flex flex-1 flex-col lg:flex-row">
           <aside className="w-full lg:w-64 border-b lg:border-r border-[#e5e9e7] bg-white p-4 flex flex-col gap-6 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)]">
             <nav className="flex flex-col gap-1">
-              <a
+              <Link
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                  isAvailable
-                    ? "text-[#12c76a] bg-[#e9f9f0]"
-                    : "text-[#618972] hover:bg-[#f0f4f2]"
+                  isAvailable ? "text-[#12c76a] bg-[#e9f9f0]" : "text-[#618972] hover:bg-[#f0f4f2]"
                 }`}
-                href="/dashboard"
+                to="/dashboard"
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  restaurant
-                </span>
+                <span className="material-symbols-outlined text-[20px]">restaurant</span>
                 <p className="text-sm font-semibold">{t("Available Now")}</p>
-              </a>
-              <a
+              </Link>
+              <Link
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                  isMyRequests
-                    ? "text-[#12c76a] bg-[#e9f9f0]"
-                    : "text-[#618972] hover:bg-[#f0f4f2]"
+                  isMyRequests ? "text-[#12c76a] bg-[#e9f9f0]" : "text-[#618972] hover:bg-[#f0f4f2]"
                 }`}
-                href="/my-requests"
+                to="/my-requests"
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  shopping_cart
-                </span>
+                <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
                 <p className="text-sm font-bold">{t("My Requests")}</p>
-              </a>
-              <a
+              </Link>
+              <Link
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                  isFeedback
-                    ? "text-[#12c76a] bg-[#e9f9f0]"
-                    : "text-[#618972] hover:bg-[#f0f4f2]"
+                  isFeedback ? "text-[#12c76a] bg-[#e9f9f0]" : "text-[#618972] hover:bg-[#f0f4f2]"
                 }`}
-                href="/receiver/feedback"
+                to="/receiver/feedback"
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  reviews
-                </span>
+                <span className="material-symbols-outlined text-[20px]">reviews</span>
                 <p className="text-sm font-semibold">{t("Feedback")}</p>
-              </a>
+              </Link>
             </nav>
           </aside>
+
           <main className="flex-1 bg-white">
             <div className="p-4 sm:p-6 lg:p-12 max-w-6xl mx-auto">
               <div className="flex flex-col mb-10 gap-2">
-                <h1 className="text-[#111814] text-2xl sm:text-3xl font-bold tracking-tight">
-                  {t("My Requests Title")}
-                </h1>
-                <p className="text-[#618972]">
-                  {t("My Requests Subtitle")}
-                </p>
+                <h1 className="text-[#111814] text-2xl sm:text-3xl font-bold tracking-tight">{t("My Requests Title")}</h1>
+                <p className="text-[#618972]">{t("My Requests Subtitle")}</p>
               </div>
+
+              {isLoading ? <p className="text-sm text-[#618972]">Loading requests...</p> : null}
+              {loadError ? <p className="text-sm text-red-600">{loadError}</p> : null}
+
+              {!isLoading && !loadError && sortedRequests.length === 0 ? (
+                <div className="rounded-xl border border-[#e5e9e7] bg-white p-6 text-sm text-[#618972]">
+                  No requests yet.
+                </div>
+              ) : null}
+
               <div className="flex flex-col gap-3">
-                <div className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all">
-                  <div className="flex items-center gap-4 w-full sm:w-1/3">
-                    <div className="size-12 rounded-xl bg-[#f0f4f2] flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-primary text-2xl">
-                        bakery_dining
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[#111814]">
-                        {t("Artisan Bagels")}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs font-medium px-2.5 py-1 mt-1 rounded-full w-fit bg-emerald-50 text-emerald-600 border border-emerald-100">
-                        <div className="flex gap-0.5 mr-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
+                {sortedRequests.map((reqItem) => (
+                  <div
+                    key={reqItem._id}
+                    className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all"
+                  >
+                    <div className="flex items-center gap-4 w-full sm:w-1/3">
+                      <div className="size-12 rounded-xl bg-[#f0f4f2] flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-primary text-2xl">restaurant</span>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-[#111814]">{reqItem?.donation?.foodName || "Food"}</h3>
+                        <div
+                          className={`flex items-center gap-2 text-xs font-medium px-2.5 py-1 mt-1 rounded-full w-fit border ${
+                            statusClasses[reqItem?.status] || statusClasses.pending
+                          }`}
+                        >
+                          {statusLabel(reqItem?.status)}
                         </div>
-                        {t("On the way")}
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-6 sm:gap-12 w-full sm:w-1/3">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase tracking-wider text-[#9fb8a9] font-bold">
-                        {t("Donor")}
-                      </span>
-                      <span className="text-sm font-semibold text-[#4a6b57]">
-                        {t("Downtown Bakery")}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase tracking-wider text-[#9fb8a9] font-bold">
-                        {t("Arrival")}
-                      </span>
-                      <span className="text-sm font-semibold text-[#111814]">
-                        12:45 PM
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 justify-start sm:justify-end w-full sm:w-1/3">
-                    <div className="relative">
-                      <button
-                        className="px-4 py-2 text-primary hover:bg-primary/5 text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
-                        type="button"
-                        onClick={() =>
-                          setOpenContact(openContact === 1 ? null : 1)
-                        }
-                      >
-                      <span className="material-symbols-outlined text-lg">
-                        chat_bubble
-                      </span>
-                        {t("Contact")}
-                      </button>
-                      {openContact === 1 && (
-                        <div className="absolute right-0 mt-2 w-56 rounded-xl border border-[#e5e9e7] bg-white shadow-lg p-3 text-xs text-[#4a6b57]">
-                          <div className="flex flex-col gap-2">
-                            <a className="hover:text-primary" href="tel:+918245550187">
-                              {t("Donor")}: +91 824-555-0187
-                            </a>
-                            <a className="hover:text-primary" href="tel:+918245550288">
-                              {t("Volunteer")}: +91 824-555-0288
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
 
-                <div className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all">
-                  <div className="flex items-center gap-4 w-full sm:w-1/3">
-                    <div className="size-12 rounded-xl bg-[#f0f4f2] flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-primary text-2xl">
-                        lunch_dining
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[#111814]">
-                        {t("Mixed Sandwiches")}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs font-medium px-2.5 py-1 mt-1 rounded-full w-fit bg-orange-50 text-orange-600 border border-orange-100">
-                        <div className="flex gap-0.5 mr-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
-                        </div>
-                        {t("Pending")}
-                      </div>
+                    <div className="w-full sm:w-2/3 text-xs text-[#4a6b57] space-y-1">
+                      <p><strong>Requested Serves:</strong> {reqItem?.peopleCount || "-"}</p>
+                      <p><strong>Preference:</strong> {reqItem?.foodPreference || "any"}</p>
+                      <p><strong>Your Location:</strong> {reqItem?.requestedLocation || "-"}</p>
+                      <p><strong>Logistics:</strong> {reqItem?.logistics || "-"}</p>
+                      {reqItem?.logistics === "delivery" && reqItem?.deliveryAddress ? (
+                        <p><strong>Delivery Address:</strong> {reqItem.deliveryAddress}</p>
+                      ) : null}
+                      <p><strong>Status Update:</strong> {statusNote(reqItem?.status)}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-6 sm:gap-12 w-full sm:w-1/3">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase tracking-wider text-[#9fb8a9] font-bold">
-                        {t("Donor")}
-                      </span>
-                      <span className="text-sm font-semibold text-[#4a6b57]">
-                        {t("Plaza Deli")}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase tracking-wider text-[#9fb8a9] font-bold">
-                        {t("Status")}
-                      </span>
-                      <span className="text-sm font-semibold text-[#618972]">
-                        {t("Awaiting Shop")}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 justify-start sm:justify-end w-full sm:w-1/3">
-                    <button className="px-4 py-2 text-gray-400 cursor-not-allowed opacity-50 text-sm font-bold rounded-lg flex items-center gap-2">
-                      <span className="material-symbols-outlined text-lg">
-                        chat_bubble
-                      </span>
-                      {t("Contact")}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all">
-                  <div className="flex items-center gap-4 w-full sm:w-1/3">
-                    <div className="size-12 rounded-xl bg-[#f0f4f2] flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined text-primary text-2xl">
-                        skillet
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[#111814]">
-                        {t("Pasta Primavera")}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs font-medium px-2.5 py-1 mt-1 rounded-full w-fit bg-emerald-50 text-emerald-600 border border-emerald-100">
-                        <div className="flex gap-0.5 mr-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-gray-200" />
-                        </div>
-                        {t("On the way")}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6 sm:gap-12 w-full sm:w-1/3">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase tracking-wider text-[#9fb8a9] font-bold">
-                        {t("Donor")}
-                      </span>
-                      <span className="text-sm font-semibold text-[#4a6b57]">
-                        {t("Italian Bistro")}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase tracking-wider text-[#9fb8a9] font-bold">
-                        {t("Courier")}
-                      </span>
-                      <span className="text-sm font-semibold text-[#618972]">
-                        {t("Finding")}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 justify-start sm:justify-end w-full sm:w-1/3">
-                    <button className="px-4 py-2 text-gray-400 cursor-not-allowed opacity-50 text-sm font-bold rounded-lg flex items-center gap-2">
-                      <span className="material-symbols-outlined text-lg">
-                        chat_bubble
-                      </span>
-                      {t("Contact")}
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </main>
@@ -318,6 +235,3 @@ const MyRequests = () => {
 };
 
 export default MyRequests;
-
-
-
