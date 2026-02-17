@@ -83,16 +83,44 @@ const RegistrationStep2 = () => {
     }
     setLocationStatus(t("Detecting Location"));
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         setCoords({ latitude, longitude });
-        setStreetAddress(`Lat ${latitude.toFixed(5)}, Lng ${longitude.toFixed(5)}`);
-        setLocationStatus(t("Location Detected"));
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+          );
+          const data = await response.json().catch(() => ({}));
+          const address = data?.address || {};
+          const road = [address?.house_number, address?.road].filter(Boolean).join(" ").trim();
+          const area =
+            address?.suburb ||
+            address?.neighbourhood ||
+            address?.city_district ||
+            address?.county ||
+            "";
+          const detectedStreet = [road, area].filter(Boolean).join(", ").trim();
+          const detectedCity =
+            address?.city ||
+            address?.town ||
+            address?.village ||
+            address?.municipality ||
+            "";
+          const detectedPincode = address?.postcode || "";
+
+          setStreetAddress(detectedStreet || `Lat ${latitude.toFixed(5)}, Lng ${longitude.toFixed(5)}`);
+          if (detectedCity) setCity(detectedCity);
+          if (detectedPincode) setPincode(detectedPincode);
+          setLocationStatus(t("Location Detected"));
+        } catch {
+          setStreetAddress(`Lat ${latitude.toFixed(5)}, Lng ${longitude.toFixed(5)}`);
+          setLocationStatus(t("Location Detected"));
+        }
       },
       () => {
         setLocationStatus(t("Location Permission Denied"));
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 
