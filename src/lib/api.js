@@ -2,13 +2,8 @@ const resolveApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
-
-  if (typeof window !== "undefined") {
-    const protocol = window.location.protocol === "https:" ? "https" : "http";
-    return `${protocol}://${window.location.hostname}:5000`;
-  }
-
-  return "http://localhost:5000";
+  // In local dev, use same-origin + Vite proxy (/api and /uploads).
+  return "";
 };
 
 export const API_BASE_URL = resolveApiBaseUrl();
