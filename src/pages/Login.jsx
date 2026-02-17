@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
+import { buildApiUrl } from "../lib/api.js";
 import { decodeJwtPayload, getRoleHomePath, normalizeRole } from "../lib/auth.js";
 import { getProfileByEmail, setCurrentProfile, upsertProfile } from "../lib/profile.js";
 
@@ -40,8 +41,7 @@ const Login = () => {
     if (isPasswordValid) {
       setIsSubmitting(true);
       try {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-        const response = await fetch(`${baseUrl}/api/auth/login`, {
+        const response = await fetch(buildApiUrl("/api/auth/login"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
