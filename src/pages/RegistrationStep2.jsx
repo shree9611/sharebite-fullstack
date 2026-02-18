@@ -15,11 +15,12 @@ const RegistrationStep2 = () => {
   })();
   const role = location.state?.role || sessionStorage.getItem("sharebite.roleLabel") || "Receiver";
   const accountData = location.state?.accountData || storedAccountData;
-  const normalizedRole = ["donor", "receiver", "admin"].includes(
-    String(accountData?.role || "").trim().toLowerCase()
-  )
-    ? String(accountData.role).trim().toLowerCase()
-    : "receiver";
+  const roleValue = String(accountData?.role || role || "").trim().toLowerCase();
+  const normalizedRole = roleValue === "volunteer"
+    ? "admin"
+    : ["donor", "receiver", "admin"].includes(roleValue)
+      ? roleValue
+      : "receiver";
   const navigate = useNavigate();
   const { t } = useLanguage();
   const inputRefs = useRef([]);
@@ -38,18 +39,27 @@ const RegistrationStep2 = () => {
     fullName: false,
     email: false,
     phone: false,
+    streetAddress: false,
+    city: false,
+    pincode: false,
   });
 
   const validate = {
     fullName: fullName.trim().length >= 3,
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue),
     phone: /^[0-9]{10}$/.test(phoneValue),
+    streetAddress: streetAddress.trim().length >= 3,
+    city: city.trim().length >= 2,
+    pincode: /^[A-Za-z0-9 -]{4,10}$/.test(pincode.trim()),
   };
 
   const showError = {
     fullName: touched.fullName && !validate.fullName,
     email: touched.email && !validate.email,
     phone: touched.phone && !validate.phone,
+    streetAddress: touched.streetAddress && !validate.streetAddress,
+    city: touched.city && !validate.city,
+    pincode: touched.pincode && !validate.pincode,
   };
 
   const handleEnterNext = (event, index) => {
@@ -142,8 +152,17 @@ const RegistrationStep2 = () => {
       fullName: true,
       email: true,
       phone: true,
+      streetAddress: true,
+      city: true,
+      pincode: true,
     });
-    const isValid = validate.fullName && validate.email && validate.phone;
+    const isValid =
+      validate.fullName &&
+      validate.email &&
+      validate.phone &&
+      validate.streetAddress &&
+      validate.city &&
+      validate.pincode;
     if (!isValid) {
       setSubmitError("Please fill required fields correctly.");
       return;
@@ -154,10 +173,13 @@ const RegistrationStep2 = () => {
     }
 
     setIsSubmitting(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetch(buildApiUrl("/api/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           name: fullName.trim(),
           email: emailValue.trim(),
@@ -173,6 +195,12 @@ const RegistrationStep2 = () => {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
+        if (response.status === 409) {
+          throw new Error("Email already registered. Please login.");
+        }
+        if (response.status >= 500) {
+          throw new Error("Server error while creating account. Please try again.");
+        }
         throw new Error(data?.message || "Registration failed");
       }
       const locationParts = [streetAddress.trim(), city.trim(), pincode.trim()].filter(Boolean);
@@ -200,8 +228,15 @@ const RegistrationStep2 = () => {
       sessionStorage.removeItem("sharebite.roleLabel");
       navigate("/login", { state: { role } });
     } catch (error) {
-      setSubmitError(error.message || "Unable to register.");
+      if (error?.name === "AbortError") {
+        setSubmitError("Registration request timed out. Please try again.");
+      } else if (error instanceof TypeError) {
+        setSubmitError("Unable to reach server. Please check your connection and try again.");
+      } else {
+        setSubmitError(error.message || "Unable to register.");
+      }
     } finally {
+      clearTimeout(timeoutId);
       setIsSubmitting(false);
     }
   };
@@ -375,10 +410,15 @@ const RegistrationStep2 = () => {
                       <span className="text-accent-orange">*</span>
                     </label>
                     <input
-                      className="form-input w-full rounded-full border border-[#e7eeeb] bg-white h-11 px-4 text-sm placeholder:text-[#8aa19a] focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300"
+                      className={`form-input w-full rounded-full border border-[#e7eeeb] bg-white h-11 px-4 text-sm placeholder:text-[#8aa19a] focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300 ${
+                        showError.streetAddress ? "border-red-400" : ""
+                      }`}
                       placeholder={t("Street Address Placeholder")}
                       value={streetAddress}
                       onChange={(event) => setStreetAddress(event.target.value)}
+                      onBlur={() =>
+                        setTouched((prev) => ({ ...prev, streetAddress: true }))
+                      }
                       ref={(el) => (inputRefs.current[5] = el)}
                       onKeyDown={(event) => handleEnterNext(event, 5)}
                     />
@@ -390,10 +430,15 @@ const RegistrationStep2 = () => {
                         <span className="text-accent-orange">*</span>
                       </label>
                       <input
-                        className="form-input w-full rounded-full border border-[#e7eeeb] bg-white h-11 px-4 text-sm placeholder:text-[#8aa19a] focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300"
+                        className={`form-input w-full rounded-full border border-[#e7eeeb] bg-white h-11 px-4 text-sm placeholder:text-[#8aa19a] focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300 ${
+                          showError.city ? "border-red-400" : ""
+                        }`}
                         placeholder={t("City Placeholder")}
                         value={city}
                         onChange={(event) => setCity(event.target.value)}
+                        onBlur={() =>
+                          setTouched((prev) => ({ ...prev, city: true }))
+                        }
                         ref={(el) => (inputRefs.current[6] = el)}
                         onKeyDown={(event) => handleEnterNext(event, 6)}
                       />
@@ -404,10 +449,15 @@ const RegistrationStep2 = () => {
                         <span className="text-accent-orange">*</span>
                       </label>
                       <input
-                        className="form-input w-full rounded-full border border-[#e7eeeb] bg-white h-11 px-4 text-sm placeholder:text-[#8aa19a] focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300"
+                        className={`form-input w-full rounded-full border border-[#e7eeeb] bg-white h-11 px-4 text-sm placeholder:text-[#8aa19a] focus:ring-2 focus:ring-teal-200/60 focus:border-teal-300 ${
+                          showError.pincode ? "border-red-400" : ""
+                        }`}
                         placeholder={t("Pincode Placeholder")}
                         value={pincode}
                         onChange={(event) => setPincode(event.target.value)}
+                        onBlur={() =>
+                          setTouched((prev) => ({ ...prev, pincode: true }))
+                        }
                         ref={(el) => (inputRefs.current[7] = el)}
                         onKeyDown={(event) => handleEnterNext(event, 7)}
                       />
