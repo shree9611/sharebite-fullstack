@@ -217,7 +217,7 @@ const MyRequests = () => {
                       <p><strong>Requested Serves:</strong> {reqItem?.peopleCount || "-"}</p>
                       <p><strong>Preference:</strong> {reqItem?.foodPreference || "any"}</p>
                       <p><strong>Your Location:</strong> {reqItem?.requestedLocation || "-"}</p>
-                      <p><strong>Logistics:</strong> {reqItem?.logistics || "-"}</p>
+
                       {reqItem?.logistics === "delivery" && reqItem?.deliveryAddress ? (
                         <p><strong>Delivery Address:</strong> {reqItem.deliveryAddress}</p>
                       ) : null}
