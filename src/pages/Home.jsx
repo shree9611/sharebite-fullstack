@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileLangOpen, setMobileLangOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
 
   useEffect(() => {
@@ -50,14 +51,24 @@ export default function Home() {
             {t("ShareBite")}
           </div>
 
-          <button
-            type="button"
-            className="sm:hidden inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-700"
-            onClick={() => setMobileMenuOpen((prev) => !prev)}
-            aria-label="Toggle navigation menu"
-          >
-            <span className="material-symbols-outlined">{mobileMenuOpen ? "close" : "menu"}</span>
-          </button>
+          <div className="sm:hidden flex items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-700"
+              onClick={() => setMobileLangOpen((prev) => !prev)}
+              aria-label="Toggle language menu"
+            >
+              <span className="material-symbols-outlined">language</span>
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-700"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-label="Toggle navigation menu"
+            >
+              <span className="material-symbols-outlined">{mobileMenuOpen ? "close" : "menu"}</span>
+            </button>
+          </div>
 
           <nav className="hidden sm:flex items-center gap-6 md:gap-8">
             <a href="#" className={navClass("home")}>
@@ -71,12 +82,32 @@ export default function Home() {
             </a>
 
             <Link
-              to="/account-details"
+              to="/login"
               className="rounded-full border border-emerald-500 px-5 py-2 text-sm font-bold text-emerald-600 hover:bg-emerald-50"
             >
-              {t("Sign Up")}
+              {t("Login")}
             </Link>
           </nav>
+        </div>
+
+        <div className={`sm:hidden overflow-hidden transition-all duration-300 ${mobileLangOpen ? "max-h-36 border-t border-slate-100" : "max-h-0"}`}>
+          <div className="max-w-7xl mx-auto px-4 py-3 grid grid-cols-3 gap-2 bg-white">
+            {["English", "Kannada", "Hindi"].map((lang) => (
+              <button
+                key={lang}
+                onClick={() => {
+                  setLanguage(lang);
+                  setMobileLangOpen(false);
+                }}
+                className={`rounded-lg px-2 py-2 text-xs font-semibold ${
+                  language === lang ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-700"
+                }`}
+                type="button"
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className={`sm:hidden overflow-hidden transition-all duration-300 ${mobileMenuOpen ? "max-h-[430px] border-t border-slate-100" : "max-h-0"}`}>
@@ -104,11 +135,11 @@ export default function Home() {
             </a>
 
             <Link
-              to="/account-details"
+              to="/login"
               onClick={() => setMobileMenuOpen(false)}
               className="rounded-xl border border-emerald-500 px-4 py-3 text-center text-base font-bold text-emerald-600"
             >
-              {t("Sign Up")}
+              {t("Login")}
             </Link>
           </nav>
         </div>
