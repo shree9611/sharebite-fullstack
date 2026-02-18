@@ -15,6 +15,11 @@ const RegistrationStep2 = () => {
   })();
   const role = location.state?.role || sessionStorage.getItem("sharebite.roleLabel") || "Receiver";
   const accountData = location.state?.accountData || storedAccountData;
+  const normalizedRole = ["donor", "receiver", "admin"].includes(
+    String(accountData?.role || "").trim().toLowerCase()
+  )
+    ? String(accountData.role).trim().toLowerCase()
+    : "receiver";
   const navigate = useNavigate();
   const { t } = useLanguage();
   const inputRefs = useRef([]);
@@ -157,7 +162,13 @@ const RegistrationStep2 = () => {
           name: fullName.trim(),
           email: emailValue.trim(),
           password: accountData.password,
-          role: accountData.role,
+          role: normalizedRole,
+          locationName: [streetAddress.trim(), city.trim()].filter(Boolean).join(", "),
+          address: streetAddress.trim(),
+          city: city.trim(),
+          pincode: pincode.trim(),
+          latitude: coords?.latitude ?? null,
+          longitude: coords?.longitude ?? null,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -487,6 +498,3 @@ const RegistrationStep2 = () => {
 };
 
 export default RegistrationStep2;
-
-
-
