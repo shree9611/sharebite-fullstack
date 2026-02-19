@@ -62,14 +62,56 @@ const DonateFood = () => {
     setIsLocating(true);
     setLocationStatus("Detecting current location...");
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
+        const { latitude, longitude } = position.coords;
         setFormData((prev) => ({
           ...prev,
-          pickupLatitude: position.coords.latitude,
-          pickupLongitude: position.coords.longitude,
+          pickupLatitude: latitude,
+          pickupLongitude: longitude,
         }));
-        setIsLocating(false);
-        setLocationStatus("Current location detected for nearby matching.");
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+          );
+          const data = await response.json().catch(() => ({}));
+          const address = data?.address || {};
+          const road = [address?.house_number, address?.road]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+          const area =
+            address?.suburb ||
+            address?.neighbourhood ||
+            address?.city_district ||
+            address?.county ||
+            "";
+          const cityName =
+            address?.city ||
+            address?.town ||
+            address?.village ||
+            address?.municipality ||
+            "";
+          const postcode = address?.postcode || "";
+          const detectedLocation = [road, area, cityName, postcode]
+            .filter(Boolean)
+            .join(", ")
+            .trim();
+
+          setFormData((prev) => ({
+            ...prev,
+            pickupLocation:
+              detectedLocation || `Lat ${latitude.toFixed(5)}, Lng ${longitude.toFixed(5)}`,
+          }));
+          setLocationStatus("Current location detected and address generated.");
+        } catch {
+          setFormData((prev) => ({
+            ...prev,
+            pickupLocation: `Lat ${latitude.toFixed(5)}, Lng ${longitude.toFixed(5)}`,
+          }));
+          setLocationStatus("GPS detected. Address lookup failed, coordinates filled.");
+        } finally {
+          setIsLocating(false);
+        }
       },
       (error) => {
         setIsLocating(false);

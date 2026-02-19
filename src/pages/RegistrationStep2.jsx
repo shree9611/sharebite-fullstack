@@ -173,13 +173,10 @@ const RegistrationStep2 = () => {
     }
 
     setIsSubmitting(true);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetch(buildApiUrl("/api/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        signal: controller.signal,
         body: JSON.stringify({
           name: fullName.trim(),
           email: emailValue.trim(),
@@ -228,15 +225,12 @@ const RegistrationStep2 = () => {
       sessionStorage.removeItem("sharebite.roleLabel");
       navigate("/login", { state: { role } });
     } catch (error) {
-      if (error?.name === "AbortError") {
-        setSubmitError("Registration request timed out. Please try again.");
-      } else if (error instanceof TypeError) {
+      if (error instanceof TypeError) {
         setSubmitError("Unable to reach server. Please check your connection and try again.");
       } else {
         setSubmitError(error.message || "Unable to register.");
       }
     } finally {
-      clearTimeout(timeoutId);
       setIsSubmitting(false);
     }
   };
