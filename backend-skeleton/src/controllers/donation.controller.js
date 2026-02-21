@@ -4,6 +4,7 @@ const { eventBus } = require("../events/bus");
 function toAbsoluteImageUrl(req, imagePath) {
   if (!imagePath) return "";
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
+  if (imagePath.startsWith("data:")) return imagePath;
   const forwardedProto = req.headers["x-forwarded-proto"];
   const proto =
     process.env.NODE_ENV === "production"
@@ -12,6 +13,13 @@ function toAbsoluteImageUrl(req, imagePath) {
   const host = req.get("host");
   if (!host) return imagePath;
   return `${proto}://${host}${encodeURI(imagePath)}`;
+}
+
+function buildImageValue(file) {
+  if (!file || !file.buffer) return "";
+  const mime = file.mimetype || "image/jpeg";
+  const base64 = file.buffer.toString("base64");
+  return `data:${mime};base64,${base64}`;
 }
 
 async function createDonation(req, res) {
@@ -37,7 +45,7 @@ async function createDonation(req, res) {
       location: Number.isFinite(lat) && Number.isFinite(lng)
         ? { type: "Point", coordinates: [lng, lat] }
         : { type: "Point", coordinates: [0, 0] },
-      image: req.file ? `/uploads/${req.file.filename}` : "",
+      image: buildImageValue(req.file),
       expiryTime: new Date(expiryTime),
       status: "active",
     });
