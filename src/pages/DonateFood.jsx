@@ -167,8 +167,12 @@ const DonateFood = () => {
       payload.append("quantity", String(formData.quantity));
       payload.append("location", formData.pickupLocation);
       payload.append("expiryTime", expiryTime.toISOString());
-      payload.append("latitude", String(formData.pickupLatitude));
-      payload.append("longitude", String(formData.pickupLongitude));
+      if (Number.isFinite(formData.pickupLatitude)) {
+        payload.append("latitude", String(formData.pickupLatitude));
+      }
+      if (Number.isFinite(formData.pickupLongitude)) {
+        payload.append("longitude", String(formData.pickupLongitude));
+      }
       if (photoFile) payload.append("image", photoFile);
 
       let response = await fetch(buildApiUrl("/api/donations"), {
@@ -180,7 +184,8 @@ const DonateFood = () => {
       });
 
       // Fallback for backends still expecting JSON payload.
-      if (!response.ok && response.status === 400) {
+      // Never retry with JSON when photo is selected because JSON cannot carry files.
+      if (!response.ok && response.status === 400 && !photoFile) {
         response = await fetch(buildApiUrl("/api/donations"), {
           method: "POST",
           headers: {
@@ -201,6 +206,9 @@ const DonateFood = () => {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (response.status === 400 && photoFile) {
+          throw new Error(data?.message || "Image upload failed. Please try another image.");
+        }
         throw new Error(data?.message || "Failed to submit donation.");
       }
 

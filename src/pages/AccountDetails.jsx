@@ -111,11 +111,21 @@ const AccountDetails = () => {
           });
           const data = await response.json().catch(() => ({}));
           if (!response.ok) {
+            if (response.status === 409) {
+              throw new Error("Email already registered. Please login.");
+            }
+            if (response.status >= 500) {
+              throw new Error("Server error while creating account. Please try again.");
+            }
             throw new Error(data?.message || "Registration failed");
           }
           navigate("/login", { state: { role } });
         } catch (error) {
-          setSubmitError(error.message || "Unable to register.");
+          if (error instanceof TypeError) {
+            setSubmitError("Unable to reach server. Please check your connection and try again.");
+          } else {
+            setSubmitError(error.message || "Unable to register.");
+          }
         } finally {
           setIsSubmitting(false);
         }
