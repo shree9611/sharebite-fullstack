@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl } from "../lib/api.js";
@@ -30,7 +30,7 @@ const RequestApproval = () => {
     setProfile(getCurrentProfile());
   }, []);
 
-  const loadRequests = async () => {
+  const loadRequests = useCallback(async () => {
     setIsLoading(true);
     setLoadError("");
     const token = localStorage.getItem("sharebite.token");
@@ -56,11 +56,22 @@ const RequestApproval = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadRequests();
-  }, []);
+  }, [loadRequests]);
+
+  useEffect(() => {
+    const refresh = () => loadRequests();
+    const onFocus = () => loadRequests();
+    const intervalId = window.setInterval(refresh, 10000);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [loadRequests]);
 
   const pendingRequests = useMemo(
     () =>
