@@ -32,11 +32,17 @@ app.use(
       // Allow server-to-server and local tools with no Origin header.
       if (!origin) return callback(null, true);
 
-      if (!isProduction && allowedOrigins.length === 0) {
+      // If no allowlist is configured, allow all origins to avoid accidental lockout.
+      if (allowedOrigins.length === 0) {
         return callback(null, true);
       }
 
       if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // In development, do not block requests even if allowlist is present/mismatched.
+      if (!isProduction) {
         return callback(null, true);
       }
 
