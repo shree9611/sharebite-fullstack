@@ -54,7 +54,7 @@ async function createDonation(req, res) {
   }
 }
 
-async function listDonations(_req, res) {
+async function listDonations(req, res) {
   try {
     const now = new Date();
     const items = await Donation.find({

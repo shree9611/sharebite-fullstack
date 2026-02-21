@@ -162,6 +162,10 @@ const DonateFood = () => {
       const expiryTime = new Date(now);
       expiryTime.setHours(Number(hours), Number(minutes), 0, 0);
 
+      if (expiryTime.getTime() <= now.getTime()) {
+        throw new Error("Best before time must be later than current time.");
+      }
+
       const payload = new FormData();
       payload.append("foodName", formData.title);
       payload.append("quantity", String(formData.quantity));
