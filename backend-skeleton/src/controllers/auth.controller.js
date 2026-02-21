@@ -1,8 +1,14 @@
 const crypto = require("crypto");
 const { User } = require("../models/user.model");
 
-const JWT_SECRET = process.env.JWT_SECRET || "sharebite-dev-secret";
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === "production" ? "" : "sharebite-dev-secret");
 const JWT_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is required in production.");
+}
 
 const base64UrlEncode = (value) =>
   Buffer.from(value).toString("base64url");

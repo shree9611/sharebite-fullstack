@@ -53,7 +53,16 @@ const Login = () => {
         });
 
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data?.token) {
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Invalid email or password.");
+          }
+          if (response.status >= 500) {
+            throw new Error("Server error while logging in. Please try again.");
+          }
+          throw new Error(data?.message || "Login failed");
+        }
+        if (!data?.token) {
           throw new Error(data?.message || "Login failed");
         }
 
@@ -85,7 +94,11 @@ const Login = () => {
 
         navigate(getRoleHomePath(resolvedRole), { state: { role: resolvedRole } });
       } catch (error) {
-        setLoginError(error.message || "Unable to login.");
+        if (error instanceof TypeError) {
+          setLoginError("Unable to reach server. Please check your connection and try again.");
+        } else {
+          setLoginError(error.message || "Unable to login.");
+        }
       } finally {
         setIsSubmitting(false);
       }

@@ -192,6 +192,9 @@ const RegistrationStep2 = () => {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
+        if (response.status === 400) {
+          throw new Error(data?.message || "Please check your details and try again.");
+        }
         if (response.status === 409) {
           throw new Error("Email already registered. Please login.");
         }

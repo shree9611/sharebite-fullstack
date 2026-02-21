@@ -11,7 +11,40 @@ const notificationRoutes = require("./routes/notification.routes");
 
 const app = express();
 
-app.use(cors());
+const parseAllowedOrigins = () => {
+  const raw =
+    process.env.CORS_ORIGINS ||
+    process.env.CORS_ORIGIN ||
+    process.env.FRONTEND_URL ||
+    "";
+  return raw
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+};
+
+const allowedOrigins = parseAllowedOrigins();
+const isProduction = process.env.NODE_ENV === "production";
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Allow server-to-server and local tools with no Origin header.
+      if (!origin) return callback(null, true);
+
+      if (!isProduction && allowedOrigins.length === 0) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("CORS policy: origin not allowed."), false);
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
