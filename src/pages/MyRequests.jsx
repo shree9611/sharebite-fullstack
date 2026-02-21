@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl } from "../lib/api.js";
@@ -35,35 +35,45 @@ const MyRequests = () => {
     setProfile(getCurrentProfile());
   }, []);
 
-  useEffect(() => {
-    const loadRequests = async () => {
-      setIsLoading(true);
-      setLoadError("");
-      const token = localStorage.getItem("sharebite.token");
-      if (!token) {
-        setLoadError("Please login first.");
-        setIsLoading(false);
-        return;
-      }
+  const loadRequests = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError("");
+    const token = localStorage.getItem("sharebite.token");
+    if (!token) {
+      setLoadError("Please login first.");
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        const response = await fetch(buildApiUrl("/api/requests"), {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json().catch(() => []);
-        if (!response.ok) {
-          throw new Error(data?.message || "Failed to load my requests.");
-        }
-        setRequests(Array.isArray(data) ? data : []);
-      } catch (error) {
-        setLoadError(error.message || "Unable to load requests.");
-      } finally {
-        setIsLoading(false);
+    try {
+      const response = await fetch(buildApiUrl("/api/requests"), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json().catch(() => []);
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to load my requests.");
       }
-    };
-
-    loadRequests();
+      setRequests(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setLoadError(error.message || "Unable to load requests.");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
+
+  useEffect(() => {
+    const onFocus = () => loadRequests();
+    const intervalId = window.setInterval(() => loadRequests(), 10000);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [loadRequests]);
 
   const sortedRequests = useMemo(() => {
     return [...requests].sort((a, b) => {

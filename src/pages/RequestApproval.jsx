@@ -107,7 +107,7 @@ const RequestApproval = () => {
 
     try {
       const response = await fetch(buildApiUrl(`/api/approvals/${requestId}`), {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -138,7 +138,7 @@ const RequestApproval = () => {
 
     try {
       const response = await fetch(buildApiUrl(`/api/approvals/${requestId}/decline`), {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
         },
