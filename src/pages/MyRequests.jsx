@@ -91,12 +91,12 @@ const MyRequests = () => {
 
   const statusNote = (status) => {
     if (status === "approved") {
-      return "Great news. The donor has approved your request. Please coordinate pickup or delivery details and complete collection within the expected time so the food can be distributed without delay.";
+      return "Approved by donor. Please complete pickup or delivery soon.";
     }
     if (status === "declined") {
-      return "This request was not approved by the donor at this time. Please visit the Available Foods page to explore other nearby options and place a new request that best matches your current need.";
+      return "Not approved. Please check Available Foods and place a new request.";
     }
-    return "Your request is currently pending donor review. Please wait while the donor checks availability and logistics. You can keep monitoring this page for updates.";
+    return "Pending donor review.";
   };
 
   return (

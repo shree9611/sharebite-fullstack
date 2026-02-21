@@ -4,10 +4,14 @@ const { eventBus } = require("../events/bus");
 function toAbsoluteImageUrl(req, imagePath) {
   if (!imagePath) return "";
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
-  const proto = req.headers["x-forwarded-proto"] || req.protocol || "https";
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const proto =
+    process.env.NODE_ENV === "production"
+      ? "https"
+      : (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || req.protocol || "http";
   const host = req.get("host");
   if (!host) return imagePath;
-  return `${proto}://${host}${imagePath}`;
+  return `${proto}://${host}${encodeURI(imagePath)}`;
 }
 
 async function createDonation(req, res) {
