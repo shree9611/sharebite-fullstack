@@ -2,6 +2,15 @@ const { Donation } = require("../models/donation.model");
 const { Request } = require("../models/request.model");
 const { eventBus } = require("../events/bus");
 
+function toAbsoluteImageUrl(req, imagePath) {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
+  const proto = req.headers["x-forwarded-proto"] || req.protocol || "https";
+  const host = req.get("host");
+  if (!host) return imagePath;
+  return `${proto}://${host}${imagePath}`;
+}
+
 async function createRequest(req, res) {
   try {
     if (req.user.role !== "receiver") {
@@ -52,6 +61,7 @@ async function listRequests(req, res) {
 
     const rows = await Request.find(query)
       .populate("donationId", "foodName quantity locationText image")
+      .populate("receiverId", "name email")
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -59,11 +69,19 @@ async function listRequests(req, res) {
       _id: row._id,
       status: row.status,
       peopleCount: row.peopleCount,
+      foodPreference: row.foodPreference,
       requestedLocation: row.requestedLocation,
       logistics: row.logistics,
       deliveryAddress: row.deliveryAddress,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      receiver: row.receiverId
+        ? {
+            _id: row.receiverId._id,
+            name: row.receiverId.name,
+            email: row.receiverId.email,
+          }
+        : null,
       donation: row.donationId
         ? {
             _id: row.donationId._id,
@@ -71,6 +89,7 @@ async function listRequests(req, res) {
             quantity: row.donationId.quantity,
             location: row.donationId.locationText,
             image: row.donationId.image,
+            imageUrl: toAbsoluteImageUrl(req, row.donationId.image),
           }
         : null,
     }));
@@ -85,4 +104,3 @@ module.exports = {
   createRequest,
   listRequests,
 };
-

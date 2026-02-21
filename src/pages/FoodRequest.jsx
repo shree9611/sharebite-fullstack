@@ -98,13 +98,20 @@ const FoodRequest = () => {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error("Only receiver accounts can send requests.");
+        }
         throw new Error(data?.message || "Failed to submit request.");
       }
 
       setSuccess("Request sent to donor successfully.");
       setTimeout(() => navigate("/dashboard"), 1000);
     } catch (submitError) {
-      setError(submitError.message || "Unable to submit request.");
+      if (submitError instanceof TypeError) {
+        setError("Unable to reach server. Please check your connection and try again.");
+      } else {
+        setError(submitError.message || "Unable to submit request.");
+      }
     } finally {
       setIsSubmitting(false);
     }
