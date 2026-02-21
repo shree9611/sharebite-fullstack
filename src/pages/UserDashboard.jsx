@@ -6,6 +6,7 @@ import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
 const API_BASE = API_BASE_URL;
+const NEARBY_RADIUS_KM = 10;
 
 const toNumber = (value) => {
   const parsed = Number(value);
@@ -114,13 +115,15 @@ const UserDashboard = () => {
   const visibleDonations = useMemo(() => {
     if (!showNearby || !userCoords) return donations;
 
-    const mapped = donations.map((item) => {
+    const mapped = donations
+      .map((item) => {
       const coords = extractCoords(item);
       if (!coords) {
         return { ...item, _distanceKm: null };
       }
       return { ...item, _distanceKm: haversineKm(userCoords, coords) };
-    });
+      })
+      .filter((item) => item._distanceKm !== null && item._distanceKm <= NEARBY_RADIUS_KM);
 
     mapped.sort((a, b) => {
       if (a._distanceKm === null && b._distanceKm === null) return 0;

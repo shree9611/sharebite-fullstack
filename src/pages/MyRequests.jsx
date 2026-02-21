@@ -90,9 +90,13 @@ const MyRequests = () => {
   };
 
   const statusNote = (status) => {
-    if (status === "approved") return "Donor approved your request.";
-    if (status === "declined") return "Donor declined your request.";
-    return "Waiting for donor approval.";
+    if (status === "approved") {
+      return "Great news. The donor has approved your request. Please coordinate pickup or delivery details and complete collection within the expected time so the food can be distributed without delay.";
+    }
+    if (status === "declined") {
+      return "This request was not approved by the donor at this time. Please visit the Available Foods page to explore other nearby options and place a new request that best matches your current need.";
+    }
+    return "Your request is currently pending donor review. Please wait while the donor checks availability and logistics. You can keep monitoring this page for updates.";
   };
 
   return (

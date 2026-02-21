@@ -28,24 +28,74 @@ const FoodRequest = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    if (requestedLocation.trim()) return;
-    if (!navigator.geolocation) return;
+  const detectAndFillLocation = (target = "pickup") => {
+    if (!navigator.geolocation) {
+      setLocationStatus("Geolocation is not supported on this browser.");
+      return;
+    }
 
     setLocationStatus("Detecting your location...");
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude.toFixed(5);
-        const lng = position.coords.longitude.toFixed(5);
-        setRequestedLocation(`Lat ${lat}, Lng ${lng}`);
-        setLocationStatus("Receiver location auto-filled.");
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        let detected = `Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}`;
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+          );
+          const data = await response.json().catch(() => ({}));
+          const address = data?.address || {};
+          const road = [address?.house_number, address?.road].filter(Boolean).join(" ").trim();
+          const area =
+            address?.suburb ||
+            address?.neighbourhood ||
+            address?.city_district ||
+            address?.county ||
+            "";
+          const cityName =
+            address?.city ||
+            address?.town ||
+            address?.village ||
+            address?.municipality ||
+            "";
+          const postcode = address?.postcode || "";
+          const resolved = [road, area, cityName, postcode].filter(Boolean).join(", ").trim();
+          if (resolved) detected = resolved;
+        } catch {
+          // Keep GPS text fallback.
+        }
+
+        if (target === "delivery") {
+          setAddress((prev) => prev || detected);
+          setLocationStatus("Delivery address auto-filled from current location.");
+        } else {
+          setRequestedLocation((prev) => prev || detected);
+          setLocationStatus("Receiver location auto-filled.");
+        }
       },
       () => {
         setLocationStatus("Unable to auto-detect location. Enter manually.");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
+  };
+
+  useEffect(() => {
+    if (requestedLocation.trim()) return;
+    detectAndFillLocation("pickup");
   }, [requestedLocation]);
+
+  useEffect(() => {
+    if (logistics === "delivery" && !address.trim()) {
+      detectAndFillLocation("delivery");
+      return;
+    }
+    if (logistics === "pickup" && !requestedLocation.trim()) {
+      detectAndFillLocation("pickup");
+    }
+  }, [logistics, address, requestedLocation]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -236,6 +286,14 @@ const FoodRequest = () => {
                   Request Delivery
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={() => detectAndFillLocation(logistics === "delivery" ? "delivery" : "pickup")}
+                className="text-xs font-semibold text-[#10b981] hover:text-[#059669]"
+              >
+                Use Current Location
+              </button>
 
               {logistics === "delivery" && (
                 <textarea

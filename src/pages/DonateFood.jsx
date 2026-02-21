@@ -134,6 +134,13 @@ const DonateFood = () => {
   };
 
   useEffect(() => {
+    if (formData.pickupLatitude !== null && formData.pickupLongitude !== null) return;
+    handleDetectLocation();
+    // Run only once on mount for auto GPS capture.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (!photoFile) {
       setPhotoPreviewUrl("");
       return;

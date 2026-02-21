@@ -19,13 +19,27 @@ async function approveRequest(req, res) {
     }
 
     request.status = "approved";
-    await request.save();
-
     const donation = await Donation.findById(request.donationId);
-    if (donation) {
-      donation.status = "claimed";
-      await donation.save();
+    if (!donation) {
+      return res.status(404).json({ message: "Donation not found." });
     }
+    if (donation.status !== "active") {
+      return res.status(400).json({ message: "Donation is no longer active." });
+    }
+
+    const requestedQty = Number(request.peopleCount);
+    if (!Number.isFinite(requestedQty) || requestedQty <= 0) {
+      return res.status(400).json({ message: "Invalid requested quantity." });
+    }
+    if (requestedQty > donation.quantity) {
+      return res.status(400).json({ message: "Requested quantity exceeds remaining donation quantity." });
+    }
+
+    donation.quantity = donation.quantity - requestedQty;
+    donation.status = donation.quantity > 0 ? "active" : "claimed";
+
+    await donation.save();
+    await request.save();
 
     eventBus.emit("request.updated", {
       receiverId: request.receiverId,
@@ -33,7 +47,17 @@ async function approveRequest(req, res) {
       status: "approved",
     });
 
-    return res.json({ message: "Request approved.", request });
+    return res.json({
+      message: donation.status === "active"
+        ? `Request approved. ${donation.quantity} portions still available.`
+        : "Request approved. Donation fully claimed.",
+      request,
+      donation: {
+        _id: donation._id,
+        quantity: donation.quantity,
+        status: donation.status,
+      },
+    });
   } catch (error) {
     return res.status(500).json({ message: error.message || "Failed to approve request." });
   }
@@ -74,4 +98,3 @@ module.exports = {
   approveRequest,
   declineRequest,
 };
-
