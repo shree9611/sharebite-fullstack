@@ -6,6 +6,7 @@ export default function Home() {
   const { language, setLanguage, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileLangOpen, setMobileLangOpen] = useState(false);
+  const [desktopLangOpen, setDesktopLangOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
 
   useEffect(() => {
@@ -81,19 +82,36 @@ export default function Home() {
               {t("Features")}
             </a>
 
-            <div className="hidden md:flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1">
-              {["English", "Kannada", "Hindi"].map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => setLanguage(lang)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    language === lang ? "bg-emerald-500 text-white" : "text-slate-600 hover:bg-slate-100"
-                  }`}
-                  type="button"
-                >
-                  {lang}
-                </button>
-              ))}
+            <div className="relative hidden md:block">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-700"
+                onClick={() => setDesktopLangOpen((prev) => !prev)}
+                aria-label="Toggle language menu"
+              >
+                <span className="material-symbols-outlined">language</span>
+              </button>
+              <div
+                className={`absolute right-0 mt-2 w-36 rounded-xl border border-slate-200 bg-white p-2 shadow-md transition-all ${
+                  desktopLangOpen ? "opacity-100 visible" : "opacity-0 invisible"
+                }`}
+              >
+                {["English", "Kannada", "Hindi"].map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => {
+                      setLanguage(lang);
+                      setDesktopLangOpen(false);
+                    }}
+                    className={`block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold ${
+                      language === lang ? "bg-emerald-500 text-white" : "text-slate-700 hover:bg-slate-100"
+                    }`}
+                    type="button"
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <Link

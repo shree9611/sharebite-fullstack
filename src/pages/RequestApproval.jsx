@@ -5,6 +5,16 @@ import { buildApiUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
+const SAFE_DATA_IMAGE_RE = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
+
+const resolveDonationImage = (reqItem) => {
+  const imageUrl = reqItem?.donation?.imageUrl || reqItem?.donation?.image || "";
+  if (!imageUrl) return "";
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return imageUrl;
+  if (imageUrl.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imageUrl) ? imageUrl : "";
+  return "";
+};
+
 const RequestApproval = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -298,9 +308,17 @@ const RequestApproval = () => {
                         className="bg-white rounded-3xl border border-[#e6ebf1] p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5"
                       >
                         <div className="flex items-start gap-4">
-                          <div className="size-14 rounded-2xl bg-[#edf3fb] text-[#8da2bf] flex items-center justify-center">
-                            <span className="material-symbols-outlined text-3xl">domain</span>
-                          </div>
+                          {resolveDonationImage(reqItem) ? (
+                            <img
+                              src={resolveDonationImage(reqItem)}
+                              alt={reqItem?.donation?.foodName || "Food"}
+                              className="size-14 rounded-2xl object-cover border border-[#dbe5f0]"
+                            />
+                          ) : (
+                            <div className="size-14 rounded-2xl bg-[#edf3fb] text-[#8da2bf] flex items-center justify-center">
+                              <span className="material-symbols-outlined text-3xl">domain</span>
+                            </div>
+                          )}
 
                           <div>
                             <h3 className="leading-tight font-extrabold text-[#1d2b3d] text-2xl sm:text-3xl">

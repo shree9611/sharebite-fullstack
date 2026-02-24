@@ -116,7 +116,7 @@ const DonateFood = () => {
       (error) => {
         setIsLocating(false);
         if (error.code === error.PERMISSION_DENIED) {
-          setLocationStatus("Location permission denied.");
+          setLocationStatus("Location permission denied. You can enter pickup location manually.");
           return;
         }
         if (error.code === error.POSITION_UNAVAILABLE) {
@@ -132,13 +132,6 @@ const DonateFood = () => {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
-
-  useEffect(() => {
-    if (formData.pickupLatitude !== null && formData.pickupLongitude !== null) return;
-    handleDetectLocation();
-    // Run only once on mount for auto GPS capture.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!photoFile) {
