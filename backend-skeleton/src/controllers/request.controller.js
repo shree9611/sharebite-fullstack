@@ -61,10 +61,24 @@ async function createRequest(req, res) {
 
 async function listRequests(req, res) {
   try {
-    const query = req.user.role === "donor" ? { donorId: req.user.id } : { receiverId: req.user.id };
+    let query = {};
+    if (req.user.role === "donor") {
+      query = { donorId: req.user.id };
+    } else if (req.user.role === "receiver") {
+      query = { receiverId: req.user.id };
+    } else if (req.user.role === "admin") {
+      // Volunteers (admin role) should see active delivery missions.
+      query = {
+        logistics: "delivery",
+        status: { $in: ["pending", "approved"] },
+      };
+    } else {
+      return res.status(403).json({ message: "Not authorized to view requests." });
+    }
 
     const rows = await Request.find(query)
       .populate("donationId", "foodName quantity locationText image")
+      .populate("donorId", "name email phone")
       .populate("receiverId", "name email")
       .sort({ updatedAt: -1 })
       .lean();
@@ -79,6 +93,14 @@ async function listRequests(req, res) {
       deliveryAddress: row.deliveryAddress,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      donor: row.donorId
+        ? {
+            _id: row.donorId._id,
+            name: row.donorId.name,
+            email: row.donorId.email,
+            phone: row.donorId.phone || "",
+          }
+        : null,
       receiver: row.receiverId
         ? {
             _id: row.receiverId._id,

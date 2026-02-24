@@ -1,10 +1,11 @@
 const { Donation } = require("../models/donation.model");
 const { eventBus } = require("../events/bus");
+const ALLOWED_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function toAbsoluteImageUrl(req, imagePath) {
   if (!imagePath) return "";
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
-  if (imagePath.startsWith("data:")) return imagePath;
+  if (imagePath.startsWith("data:")) return "";
   const forwardedProto = req.headers["x-forwarded-proto"];
   const proto =
     process.env.NODE_ENV === "production"
@@ -17,7 +18,8 @@ function toAbsoluteImageUrl(req, imagePath) {
 
 function buildImageValue(file) {
   if (!file || !file.buffer) return "";
-  const mime = file.mimetype || "image/jpeg";
+  const mime = file.mimetype || "";
+  if (!ALLOWED_IMAGE_MIME_TYPES.has(mime)) return "";
   const base64 = file.buffer.toString("base64");
   return `data:${mime};base64,${base64}`;
 }

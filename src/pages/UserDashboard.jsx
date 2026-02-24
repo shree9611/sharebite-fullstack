@@ -53,9 +53,10 @@ const resolveDonationImage = (item) => {
   if (item?.imageUrl) return item.imageUrl;
   const imagePath = item?.image;
   if (!imagePath) return "";
-  if (imagePath.startsWith("http://") || imagePath.startsWith("https://") || imagePath.startsWith("data:")) {
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     return imagePath;
   }
+  if (imagePath.startsWith("data:")) return "";
   return `${API_BASE}${imagePath}`;
 };
 

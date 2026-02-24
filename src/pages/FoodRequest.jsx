@@ -20,7 +20,6 @@ const FoodRequest = () => {
 
   const [peopleCount, setPeopleCount] = useState("");
   const [foodPreference, setFoodPreference] = useState("any");
-  const [requestedLocation, setRequestedLocation] = useState(receiverLocation || "");
   const [logistics, setLogistics] = useState("pickup");
   const [address, setAddress] = useState("");
   const [locationStatus, setLocationStatus] = useState("");
@@ -67,13 +66,10 @@ const FoodRequest = () => {
           // Keep GPS text fallback.
         }
 
-        if (target === "delivery") {
-          setAddress((prev) => prev || detected);
-          setLocationStatus("Delivery address auto-filled from current location.");
-        } else {
-          setRequestedLocation((prev) => prev || detected);
-          setLocationStatus("Receiver location auto-filled.");
-        }
+    if (target === "delivery") {
+      setAddress((prev) => prev || detected);
+      setLocationStatus("Delivery address auto-filled from current location.");
+    }
       },
       () => {
         setLocationStatus("Unable to auto-detect location. Enter manually.");
@@ -83,19 +79,16 @@ const FoodRequest = () => {
   };
 
   useEffect(() => {
-    if (requestedLocation.trim()) return;
-    detectAndFillLocation("pickup");
-  }, [requestedLocation]);
-
-  useEffect(() => {
-    if (logistics === "delivery" && !address.trim()) {
+    if (logistics === "delivery" && !address.trim() && !receiverLocation) {
       detectAndFillLocation("delivery");
       return;
     }
-    if (logistics === "pickup" && !requestedLocation.trim()) {
-      detectAndFillLocation("pickup");
+    if (logistics === "delivery" && !address.trim() && receiverLocation) {
+      setAddress(receiverLocation);
+      setLocationStatus("Delivery address auto-filled from your profile location.");
+      return;
     }
-  }, [logistics, address, requestedLocation]);
+  }, [logistics, address, receiverLocation]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -119,10 +112,6 @@ const FoodRequest = () => {
       setError(`Requested quantity cannot be greater than available quantity (${availableQuantity}).`);
       return;
     }
-    if (logistics === "pickup" && !requestedLocation.trim()) {
-      setError("Please enter your location.");
-      return;
-    }
     if (logistics === "delivery" && !address.trim()) {
       setError("Please enter delivery address.");
       return;
@@ -140,9 +129,9 @@ const FoodRequest = () => {
           donationId,
           peopleCount: Number(peopleCount),
           foodPreference,
-          requestedLocation: logistics === "pickup" ? requestedLocation.trim() : "",
+          requestedLocation: "",
           logistics,
-          deliveryAddress: address.trim(),
+          deliveryAddress: logistics === "delivery" ? address.trim() : "",
         }),
       });
 
@@ -242,34 +231,16 @@ const FoodRequest = () => {
               </div>
             </div>
 
-            {logistics === "pickup" && (
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold text-slate-700">Receiver Location</label>
-                <input
-                  type="text"
-                  value={requestedLocation}
-                  onChange={(event) => setRequestedLocation(event.target.value)}
-                  onFocus={() => {
-                    if (!requestedLocation.trim() && receiverLocation) {
-                      setRequestedLocation(receiverLocation);
-                    }
-                  }}
-                  placeholder="Enter your pickup location"
-                  className="w-full p-3 rounded-2xl border border-slate-200 focus:ring-[#10b981] focus:border-[#10b981] outline-none"
-                  required
-                />
-                {locationStatus ? (
-                  <p className="text-xs text-slate-500">{locationStatus}</p>
-                ) : null}
-              </div>
-            )}
-
             <div className="space-y-4">
               <label className="block text-sm font-semibold text-slate-700">Logistics Preference</label>
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setLogistics("pickup")}
+                  onClick={() => {
+                    setLogistics("pickup");
+                    setAddress("");
+                    setLocationStatus("");
+                  }}
                   className={`px-4 py-2 rounded-full border text-sm font-semibold ${
                     logistics === "pickup" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
                   }`}
@@ -278,7 +249,13 @@ const FoodRequest = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setLogistics("delivery")}
+                  onClick={() => {
+                    setLogistics("delivery");
+                    if (!address.trim() && receiverLocation) {
+                      setAddress(receiverLocation);
+                      setLocationStatus("Delivery address auto-filled from your profile location.");
+                    }
+                  }}
                   className={`px-4 py-2 rounded-full border text-sm font-semibold ${
                     logistics === "delivery" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
                   }`}
@@ -287,22 +264,25 @@ const FoodRequest = () => {
                 </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => detectAndFillLocation(logistics === "delivery" ? "delivery" : "pickup")}
-                className="text-xs font-semibold text-[#10b981] hover:text-[#059669]"
-              >
-                Use Current Location
-              </button>
-
               {logistics === "delivery" && (
-                <textarea
-                  rows="3"
-                  value={address}
-                  onChange={(event) => setAddress(event.target.value)}
-                  placeholder="Enter full delivery address"
-                  className="w-full p-3 rounded-2xl border border-slate-200 focus:ring-[#10b981] focus:border-[#10b981] outline-none"
-                />
+                <div className="space-y-2">
+                  <textarea
+                    rows="3"
+                    value={address}
+                    onChange={(event) => setAddress(event.target.value)}
+                    placeholder="Delivery address is auto-filled. You can edit if needed."
+                    className="w-full p-3 rounded-2xl border border-slate-200 focus:ring-[#10b981] focus:border-[#10b981] outline-none"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => detectAndFillLocation("delivery")}
+                    className="text-xs font-semibold text-[#10b981] hover:text-[#059669]"
+                  >
+                    Refresh Current Location
+                  </button>
+                  {locationStatus ? <p className="text-xs text-slate-500">{locationStatus}</p> : null}
+                </div>
               )}
             </div>
 
