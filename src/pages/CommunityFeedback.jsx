@@ -75,60 +75,12 @@ const CommunityFeedback = () => {
       <div className="flex flex-col min-h-screen">
         <main className="flex-1">
           <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
-            <div className="flex items-center gap-2 font-bold text-lg">
-              <span className="material-symbols-outlined text-green-500">
-                volunteer_activism
-              </span>
-              {t("ShareBite")}
-            </div>
-          </header>
-          <div className="flex flex-col sm:flex-row">
-            <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e6eee9] w-full sm:w-64 shrink-0">
-              <nav className="flex flex-col gap-2 text-lg font-extrabold text-[#7a9087]">
-                <Link
-                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/donate") ? "bg-green-50 text-green-600" : ""}`}
-                  to="/donor/donate"
-                >
-                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/donate") ? "text-green-600" : ""}`}>
-                    add_circle
-                  </span>
-                  {t("Donate Food")}
-                </Link>
-                <Link
-                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/approvals") ? "bg-green-50 text-green-600" : ""}`}
-                  to="/donor/approvals"
-                >
-                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/approvals") ? "text-green-600" : ""}`}>
-                    verified
-                  </span>
-                  {t("Request Approval")}
-                </Link>
-                <Link
-                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/feedback") ? "bg-green-50 text-green-600" : ""}`}
-                  to="/donor/feedback"
-                >
-                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/feedback") ? "text-green-600" : ""}`}>
-                    forum
-                  </span>
-                  {t("Community Feedback")}
-                </Link>
-              </nav>
-            </aside>
-            <div className="flex-1">
-              <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-            <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="material-symbols-outlined text-green-500 text-3xl">
-                    volunteer_activism
-                  </span>
-                  <h2 className="text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight font-display">
-                    {t("Community Feedback")}
-                  </h2>
-                </div>
-                <p className="text-zinc-500 text-base sm:text-lg">
-                  {t("Community Feedback Subtitle")}
-                </p>
+            <div className="flex items-center justify-between gap-2 font-bold text-lg relative">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-green-500">
+                  volunteer_activism
+                </span>
+                {t("ShareBite")}
               </div>
               <div className="relative">
                 <button
@@ -182,6 +134,56 @@ const CommunityFeedback = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </header>
+          <div className="flex flex-col sm:flex-row">
+            <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e6eee9] w-full sm:w-64 shrink-0">
+              <nav className="flex flex-col gap-2 text-lg font-extrabold text-[#7a9087]">
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/donate") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/donate"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/donate") ? "text-green-600" : ""}`}>
+                    add_circle
+                  </span>
+                  {t("Donate Food")}
+                </Link>
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/approvals") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/approvals"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/approvals") ? "text-green-600" : ""}`}>
+                    verified
+                  </span>
+                  {t("Request Approval")}
+                </Link>
+                <Link
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/feedback") ? "bg-green-50 text-green-600" : ""}`}
+                  to="/donor/feedback"
+                >
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/feedback") ? "text-green-600" : ""}`}>
+                    forum
+                  </span>
+                  {t("Community Feedback")}
+                </Link>
+              </nav>
+            </aside>
+            <div className="flex-1">
+              <div className="max-w-4xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+            <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-green-500 text-3xl">
+                    volunteer_activism
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight font-display">
+                    {t("Community Feedback")}
+                  </h2>
+                </div>
+                <p className="text-zinc-500 text-base sm:text-lg">
+                  {t("Community Feedback Subtitle")}
+                </p>
               </div>
             </div>
             {feedback && (

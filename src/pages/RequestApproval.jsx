@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { buildApiUrl } from "../lib/api.js";
+import { API_BASE_URL, buildApiUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
@@ -12,6 +12,7 @@ const resolveDonationImage = (reqItem) => {
   if (!imageUrl) return "";
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return imageUrl;
   if (imageUrl.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imageUrl) ? imageUrl : "";
+  if (imageUrl.startsWith("/")) return `${API_BASE_URL}${imageUrl}`;
   return "";
 };
 
@@ -172,9 +173,54 @@ const RequestApproval = () => {
       <div className="flex flex-col min-h-screen">
         <main className="flex-1">
           <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
-            <div className="flex items-center gap-2 font-bold text-lg">
-              <span className="material-symbols-outlined text-green-500">volunteer_activism</span>
-              {t("ShareBite")}
+            <div className="flex items-center justify-between gap-2 font-bold text-lg relative">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-green-500">volunteer_activism</span>
+                {t("ShareBite")}
+              </div>
+              <div className="relative">
+                <button
+                  className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
+                  onClick={() => setShowProfile((prev) => !prev)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-[18px]">account_circle</span>
+                </button>
+                {showProfile && (
+                  <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
+                    <div className="h-16 bg-[#f8efe3]" />
+                    <div className="-mt-8 flex flex-col items-center px-4 pb-4">
+                      <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
+                        <span className="material-symbols-outlined text-3xl">account_circle</span>
+                      </div>
+                      <p className="mt-2 font-bold text-[#111814]">{profile?.name || t("User Name")}</p>
+                      <p className="text-xs text-[#7a9087]">{profile?.email || t("User Email")}</p>
+                    </div>
+                    <div className="px-4 pb-4 text-xs text-[#7a9087]">
+                      <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
+                        <span>{t("Phone")}</span>
+                        <span className="font-semibold text-[#111814]">{profile?.phone || "N/A"}</span>
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          className="flex-1 rounded-xl bg-[#f3f6f4] px-3 py-2 font-semibold text-[#111814]"
+                          type="button"
+                          onClick={() => setShowProfile(false)}
+                        >
+                          {t("Cancel")}
+                        </button>
+                        <button
+                          className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
+                          onClick={handleLogout}
+                          type="button"
+                        >
+                          {t("Logout")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </header>
           <div className="flex flex-col sm:flex-row">
@@ -240,51 +286,6 @@ const RequestApproval = () => {
                     </h2>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <button
-                        className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
-                        onClick={() => setShowProfile((prev) => !prev)}
-                        type="button"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">account_circle</span>
-                      </button>
-                      {showProfile && (
-                        <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
-                          <div className="h-16 bg-[#f8efe3]" />
-                          <div className="-mt-8 flex flex-col items-center px-4 pb-4">
-                            <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
-                              <span className="material-symbols-outlined text-3xl">account_circle</span>
-                            </div>
-                            <p className="mt-2 font-bold text-[#111814]">{profile?.name || t("User Name")}</p>
-                            <p className="text-xs text-[#7a9087]">{profile?.email || t("User Email")}</p>
-                          </div>
-                          <div className="px-4 pb-4 text-xs text-[#7a9087]">
-                            <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
-                              <span>{t("Phone")}</span>
-                              <span className="font-semibold text-[#111814]">{profile?.phone || "N/A"}</span>
-                            </div>
-                            <div className="mt-3 flex gap-2">
-                              <button
-                                className="flex-1 rounded-xl bg-[#f3f6f4] px-3 py-2 font-semibold text-[#111814]"
-                                type="button"
-                                onClick={() => setShowProfile(false)}
-                              >
-                                {t("Cancel")}
-                              </button>
-                              <button
-                                className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
-                                onClick={handleLogout}
-                                type="button"
-                              >
-                                {t("Logout")}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
 
                 {isLoading ? <p className="text-sm text-[#8aa19a]">Loading requests...</p> : null}
