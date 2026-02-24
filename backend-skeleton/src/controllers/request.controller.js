@@ -81,7 +81,7 @@ async function listRequests(req, res) {
     const rows = await Request.find(query)
       .populate("donationId", "foodName quantity locationText image")
       .populate("donorId", "name email phone")
-      .populate("receiverId", "name email")
+      .populate("receiverId", "name email phone")
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -108,6 +108,7 @@ async function listRequests(req, res) {
             _id: row.receiverId._id,
             name: row.receiverId.name,
             email: row.receiverId.email,
+            phone: row.receiverId.phone || "",
           }
         : null,
       donation: row.donationId

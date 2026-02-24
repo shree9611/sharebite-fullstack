@@ -84,7 +84,10 @@ const VolunteerAcceptMission = () => {
                       Receiver: {mission?.receiver?.name || "Receiver"}
                     </p>
                     <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-[#6b7f77]">
-                      <div>Donor: {mission?.donor?.name || "Donor"} {mission?.donor?.phone ? `(${mission.donor.phone})` : ""}</div>
+                      <div>Donor: {mission?.donor?.name || "Donor"}</div>
+                      <div>Donor Phone: {mission?.donor?.phone || "Not available"}</div>
+                      <div>Receiver: {mission?.receiver?.name || "Receiver"}</div>
+                      <div>Receiver Phone: {mission?.receiver?.phone || "Not available"}</div>
                       <div>From: {donorLocation}</div>
                       <div>To: {receiverLocation}</div>
                     </div>
