@@ -7,6 +7,7 @@ import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
 const API_BASE = API_BASE_URL;
 const NEARBY_RADIUS_KM = 10;
+const SAFE_DATA_IMAGE_RE = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
 
 const toNumber = (value) => {
   const parsed = Number(value);
@@ -56,7 +57,7 @@ const resolveDonationImage = (item) => {
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     return imagePath;
   }
-  if (imagePath.startsWith("data:")) return "";
+  if (imagePath.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imagePath) ? imagePath : "";
   return `${API_BASE}${imagePath}`;
 };
 

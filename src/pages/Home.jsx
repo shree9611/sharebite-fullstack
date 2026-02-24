@@ -81,6 +81,21 @@ export default function Home() {
               {t("Features")}
             </a>
 
+            <div className="hidden md:flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1">
+              {["English", "Kannada", "Hindi"].map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setLanguage(lang)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                    language === lang ? "bg-emerald-500 text-white" : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                  type="button"
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
+
             <Link
               to="/login"
               className="rounded-full border border-emerald-500 px-5 py-2 text-sm font-bold text-emerald-600 hover:bg-emerald-50"

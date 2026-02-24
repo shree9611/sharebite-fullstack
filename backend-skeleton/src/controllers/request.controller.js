@@ -1,10 +1,12 @@
 const { Donation } = require("../models/donation.model");
 const { Request } = require("../models/request.model");
 const { eventBus } = require("../events/bus");
+const SAFE_DATA_IMAGE_RE = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
 
 function toAbsoluteImageUrl(req, imagePath) {
   if (!imagePath) return "";
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
+  if (imagePath.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imagePath) ? imagePath : "";
   const forwardedProto = req.headers["x-forwarded-proto"];
   const proto =
     process.env.NODE_ENV === "production"
