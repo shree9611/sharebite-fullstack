@@ -109,8 +109,7 @@ const UserDashboard = () => {
           throw new Error(data?.message || "Failed to load donations.");
         }
         const list = Array.isArray(data) ? data : [];
-        const availableOnly = list.filter((item) => item?.status !== "claimed");
-        setDonations(availableOnly.reverse());
+        setDonations(list);
       } catch (error) {
         setLoadError(error.message || "Unable to load donations.");
       } finally {
@@ -201,7 +200,7 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="bg-transparent text-[#111814] min-h-screen">
+    <div className="bg-[#fbf6ea] text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-solid border-orange-100 bg-white px-4 sm:px-6 md:px-10 py-5 shadow-sm">
           <div className="flex items-center gap-4 text-[#111814]">
@@ -330,7 +329,9 @@ const UserDashboard = () => {
               ) : null}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {visibleDonations.map((item) => (
+                {visibleDonations.map((item) => {
+                  const isAvailable = item?.status === "active" && Number(item?.quantity || 0) > 0;
+                  return (
                   <div key={item._id} className="bg-white rounded-xl overflow-hidden border border-[#e6eee9] flex flex-col shadow-sm">
                     <div className="relative h-32 w-full bg-[#f3f6f4] flex items-center justify-center">
                       {resolveDonationImage(item) ? (
@@ -342,9 +343,11 @@ const UserDashboard = () => {
                       ) : (
                         <span className="material-symbols-outlined text-[#7a9087] text-4xl">photo_camera</span>
                       )}
-                      <div className="absolute bottom-2 right-2 bg-[#12c76a] text-white text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                      <div className={`absolute bottom-2 right-2 text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1 ${
+                        isAvailable ? "bg-[#12c76a] text-white" : "bg-slate-200 text-slate-700"
+                      }`}>
                         <span className="material-symbols-outlined text-[12px]">check_circle</span>
-                        Available
+                        {isAvailable ? "Available" : "Unavailable"}
                       </div>
                     </div>
                     <div className="p-4 flex flex-col gap-2">
@@ -362,28 +365,38 @@ const UserDashboard = () => {
                       </div>
                       <div className="flex items-center justify-between text-[11px] mt-2">
                         <span className="text-[#7a9087]">Claim Status</span>
-                        <span className="font-semibold text-[#12c76a]">
-                          {item.quantity ? `${item.quantity} portions left` : "Available"}
+                        <span className={`font-semibold ${isAvailable ? "text-[#12c76a]" : "text-slate-600"}`}>
+                          {isAvailable ? `${item.quantity} portions left` : `${item?.status || "claimed"}`}
                         </span>
                       </div>
                       <div className="w-full h-1.5 bg-[#eef4f1] rounded-full">
                         <div className="bg-[#12c76a] h-full rounded-full w-full" />
                       </div>
-                      <Link
-                        className="mt-3 w-full bg-[#12c76a] hover:bg-[#0fbf63] text-white font-bold py-2 rounded-full text-xs text-center inline-flex items-center justify-center"
-                        to="/food-request"
-                        state={{
-                          donationId: item._id,
-                          foodName: item.foodName,
-                          quantity: item.quantity,
-                          location: item.location,
-                        }}
-                      >
-                        {t("Request Food")}
-                      </Link>
+                      {isAvailable ? (
+                        <Link
+                          className="mt-3 w-full bg-[#12c76a] hover:bg-[#0fbf63] text-white font-bold py-2 rounded-full text-xs text-center inline-flex items-center justify-center"
+                          to="/food-request"
+                          state={{
+                            donationId: item._id,
+                            foodName: item.foodName,
+                            quantity: item.quantity,
+                            location: item.location,
+                          }}
+                        >
+                          {t("Request Food")}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          className="mt-3 w-full bg-slate-200 text-slate-600 font-bold py-2 rounded-full text-xs text-center inline-flex items-center justify-center cursor-not-allowed"
+                        >
+                          Not Available
+                        </button>
+                      )}
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
           </main>

@@ -80,11 +80,7 @@ async function createDonation(req, res) {
 
 async function listDonations(req, res) {
   try {
-    const now = new Date();
-    const items = await Donation.find({
-      status: "active",
-      expiryTime: { $gte: now },
-    })
+    const items = await Donation.find({})
       .sort({ createdAt: -1 })
       .lean();
 
@@ -109,7 +105,39 @@ async function listDonations(req, res) {
   }
 }
 
+async function listMyDonations(req, res) {
+  try {
+    if (req.user.role !== "donor") {
+      return res.status(403).json({ message: "Only donor can view own donations." });
+    }
+
+    const items = await Donation.find({ donorId: req.user.id })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const payload = items.map((item) => ({
+      _id: item._id,
+      donorId: item.donorId,
+      foodName: item.foodName,
+      quantity: item.quantity,
+      location: item.locationText,
+      image: item.image,
+      imageUrl: toAbsoluteImageUrl(req, item.image),
+      latitude: item.location?.coordinates?.[1],
+      longitude: item.location?.coordinates?.[0],
+      status: item.status,
+      createdAt: item.createdAt,
+      expiryTime: item.expiryTime,
+    }));
+
+    return res.json(payload);
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Failed to load donor donations." });
+  }
+}
+
 module.exports = {
   createDonation,
   listDonations,
+  listMyDonations,
 };

@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { API_BASE_URL, buildApiUrl } from "../lib/api.js";
-import { clearSession, decodeJwtPayload } from "../lib/auth.js";
+import { API_BASE_URL, apiFetchWithFallback, buildApiUrl } from "../lib/api.js";
+import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
 const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
@@ -158,25 +158,16 @@ const DonateFood = () => {
       const token = localStorage.getItem("sharebite.token");
       if (!token) return;
 
-      const payload = decodeJwtPayload(token);
-      const currentUserId = payload?.sub || payload?.id || "";
-
       setIsRecentLoading(true);
       try {
-        const response = await fetch(buildApiUrl("/api/donations"));
+        const response = await apiFetchWithFallback("/api/donations/mine", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await response.json().catch(() => []);
         if (!response.ok || !Array.isArray(data)) {
           return;
         }
-
-        const mine = data
-          .filter((item) => String(item?.donorId || "") === String(currentUserId))
-          .sort(
-            (a, b) =>
-              new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime()
-          );
-
-        setRecentDonations(mine);
+        setRecentDonations(data);
       } finally {
         setIsRecentLoading(false);
       }
@@ -278,7 +269,7 @@ const DonateFood = () => {
     }
   };
   return (
-    <div className="bg-transparent min-h-screen">
+    <div className="bg-[#fbf6ea] min-h-screen">
       <div className="flex flex-col min-h-screen">
         <main className="flex-1">
           <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
@@ -657,8 +648,8 @@ const DonateFood = () => {
                 <span className="material-symbols-outlined text-[#12c76a] text-[18px]">
                   photo_library
                 </span>
-                <h3 className="text-sm font-bold text-[#111814]">
-                  Your Recent Donations
+                  <h3 className="text-sm font-bold text-[#111814]">
+                  Donation Management
                 </h3>
               </div>
 
@@ -674,7 +665,7 @@ const DonateFood = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 {recentDonations.map((item) => (
-                  <div key={item?._id || `${item?.foodName}-${item?.createdAt}`} className="rounded-xl border border-[#e6eee9] overflow-hidden">
+                  <div key={item?._id || `${item?.foodName}-${item?.createdAt}`} className="rounded-xl border border-[#e6eee9] overflow-hidden shadow-sm bg-[#fffef9]">
                     <div className="h-32 bg-[#f3f6f4]">
                       {resolveDonationImage(item) ? (
                         <img
@@ -689,11 +680,22 @@ const DonateFood = () => {
                       )}
                     </div>
                     <div className="p-3">
-                      <p className="text-xs font-bold text-[#111814]">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold text-[#111814]">
                         {item?.foodName || "Food Donation"}
-                      </p>
+                        </p>
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                          item?.status === "active"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : item?.status === "claimed"
+                              ? "bg-orange-50 text-orange-700"
+                              : "bg-slate-100 text-slate-600"
+                        }`}>
+                          {item?.status || "active"}
+                        </span>
+                      </div>
                       <p className="text-[11px] text-[#7a9087] mt-1">
-                        Quantity: {item?.quantity || "-"}
+                        Remaining Quantity: {item?.quantity || "-"}
                       </p>
                       <p className="text-[11px] text-[#7a9087]">
                         {item?.location || "Location not provided"}

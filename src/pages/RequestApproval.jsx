@@ -28,6 +28,7 @@ const RequestApproval = () => {
   const [actionError, setActionError] = useState("");
   const [activeActionId, setActiveActionId] = useState("");
   const [showPastApprovals, setShowPastApprovals] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
 
   const isActive = (path) => location.pathname === path;
 
@@ -310,11 +311,17 @@ const RequestApproval = () => {
                       >
                         <div className="flex items-start gap-4">
                           {resolveDonationImage(reqItem) ? (
-                            <img
-                              src={resolveDonationImage(reqItem)}
-                              alt={reqItem?.donation?.foodName || "Food"}
-                              className="size-14 rounded-2xl object-cover border border-[#dbe5f0]"
-                            />
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImage(resolveDonationImage(reqItem))}
+                              className="rounded-2xl overflow-hidden border border-[#dbe5f0] shrink-0"
+                            >
+                              <img
+                                src={resolveDonationImage(reqItem)}
+                                alt={reqItem?.donation?.foodName || "Food"}
+                                className="h-20 w-24 object-cover"
+                              />
+                            </button>
                           ) : (
                             <div className="size-14 rounded-2xl bg-[#edf3fb] text-[#8da2bf] flex items-center justify-center">
                               <span className="material-symbols-outlined text-3xl">domain</span>
@@ -391,7 +398,7 @@ const RequestApproval = () => {
                 </div>
 
                 {showPastApprovals && (
-                  <div className="mt-6 space-y-3">
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     {approvedRequests.length === 0 ? (
                       <div className="bg-white rounded-2xl border border-[#e6ebf1] p-4 text-sm text-[#8aa19a]">
                         No past approvals yet.
@@ -400,8 +407,21 @@ const RequestApproval = () => {
                       approvedRequests.map((reqItem) => (
                         <div
                           key={`approved-${reqItem._id}`}
-                          className="bg-white rounded-2xl border border-[#e6ebf1] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                          className="bg-white rounded-2xl border border-[#e6ebf1] p-4 flex flex-col gap-3 shadow-sm"
                         >
+                          {resolveDonationImage(reqItem) ? (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImage(resolveDonationImage(reqItem))}
+                              className="rounded-xl overflow-hidden border border-[#dbe5f0] w-full h-32"
+                            >
+                              <img
+                                src={resolveDonationImage(reqItem)}
+                                alt={reqItem?.donation?.foodName || "Food"}
+                                className="h-full w-full object-cover"
+                              />
+                            </button>
+                          ) : null}
                           <div className="text-sm text-[#4c6077]">
                             <p className="font-bold text-[#1d2b3d]">
                               {reqItem?.receiver?.name || "Receiver"} approved for {reqItem?.donation?.foodName || "Food"}
@@ -413,14 +433,37 @@ const RequestApproval = () => {
                               <p className="text-xs text-[#8aa0b6]">Mission: {reqItem?.deliveryStatus || "unassigned"}</p>
                             ) : null}
                           </div>
-                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-                            Approved
-                          </span>
+                          <div className="flex justify-between items-center">
+                            <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                              Approved
+                            </span>
+                            {resolveDonationImage(reqItem) ? (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewImage(resolveDonationImage(reqItem))}
+                                className="text-xs font-semibold text-[#2563eb] underline"
+                              >
+                                Preview Image
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                       ))
                     )}
                   </div>
                 )}
+
+                {previewImage ? (
+                  <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setPreviewImage("")}>
+                    <div className="max-w-3xl w-full bg-white rounded-2xl overflow-hidden" onClick={(event) => event.stopPropagation()}>
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+                        <p className="font-semibold text-sm text-slate-700">Food Image Preview</p>
+                        <button type="button" onClick={() => setPreviewImage("")} className="text-slate-500 hover:text-slate-700">Close</button>
+                      </div>
+                      <img src={previewImage} alt="Food preview" className="w-full max-h-[70vh] object-contain bg-[#f8f6ef]" />
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

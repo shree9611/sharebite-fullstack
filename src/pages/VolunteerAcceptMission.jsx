@@ -60,12 +60,8 @@ const VolunteerAcceptMission = () => {
 
   const missionStats = useMemo(() => {
     const total = missions.length;
-    const withPhoneContacts = missions.filter(
-      (mission) => mission?.donor?.phone || mission?.receiver?.phone
-    ).length;
     return {
       total,
-      withPhoneContacts,
       routesAvailable: missions.filter((mission) => mission?.deliveryStatus !== "delivered").length,
     };
   }, [missions]);
@@ -132,20 +128,12 @@ const VolunteerAcceptMission = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
             <div className="rounded-xl bg-[#f2fbf6] border border-[#d6f1e1] px-4 py-3">
               <p className="text-[11px] uppercase tracking-wide font-semibold text-[#4d7d66]">
                 Total Missions
               </p>
               <p className="text-2xl font-extrabold text-[#0f6b4b] mt-1">{missionStats.total}</p>
-            </div>
-            <div className="rounded-xl bg-[#f7fbff] border border-[#d7e8f6] px-4 py-3">
-              <p className="text-[11px] uppercase tracking-wide font-semibold text-[#4a6f8e]">
-                Contact Ready
-              </p>
-              <p className="text-2xl font-extrabold text-[#215f8f] mt-1">
-                {missionStats.withPhoneContacts}
-              </p>
             </div>
             <div className="rounded-xl bg-[#fffbf3] border border-[#f8e5bf] px-4 py-3">
               <p className="text-[11px] uppercase tracking-wide font-semibold text-[#8a6a2e]">

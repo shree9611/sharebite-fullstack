@@ -108,7 +108,7 @@ const MyRequests = () => {
   };
 
   return (
-    <div className="bg-background-light text-[#111814] min-h-screen">
+    <div className="bg-[#fbf6ea] text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[#e5e9e7] bg-white px-4 sm:px-6 md:px-10 py-5">
           <div className="flex items-center gap-4">
@@ -197,7 +197,7 @@ const MyRequests = () => {
             </nav>
           </aside>
 
-          <main className="flex-1 bg-white">
+          <main className="flex-1 bg-[#fbf6ea]">
             <div className="p-4 sm:p-6 lg:p-12 max-w-6xl mx-auto">
               <div className="flex flex-col mb-10 gap-2">
                 <h1 className="text-[#111814] text-2xl sm:text-3xl font-bold tracking-tight">{t("My Requests Title")}</h1>
