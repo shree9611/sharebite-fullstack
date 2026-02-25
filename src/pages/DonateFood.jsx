@@ -1,9 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { buildApiUrl } from "../lib/api.js";
-import { clearSession } from "../lib/auth.js";
+import { API_BASE_URL, buildApiUrl } from "../lib/api.js";
+import { clearSession, decodeJwtPayload } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
+
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
+
+const resolveDonationImage = (item) => {
+  const imageUrl = item?.imageUrl || item?.image || "";
+  if (!imageUrl) return "";
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return imageUrl;
+  if (imageUrl.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imageUrl) ? imageUrl : "";
+  if (imageUrl.startsWith("/")) return `${API_BASE_URL}${imageUrl}`;
+  return "";
+};
 
 const DonateFood = () => {
   const { t } = useLanguage();
@@ -27,6 +38,8 @@ const DonateFood = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
+  const [recentDonations, setRecentDonations] = useState([]);
+  const [isRecentLoading, setIsRecentLoading] = useState(false);
   const [profile, setProfile] = useState(() => getCurrentProfile());
   const hasGpsLocation =
     formData.pickupLatitude !== null && formData.pickupLongitude !== null;
@@ -142,6 +155,39 @@ const DonateFood = () => {
   useEffect(() => {
     setProfile(getCurrentProfile());
   }, []);
+
+  useEffect(() => {
+    const loadRecentDonations = async () => {
+      const token = localStorage.getItem("sharebite.token");
+      if (!token) return;
+
+      const payload = decodeJwtPayload(token);
+      const currentUserId = payload?.sub || payload?.id || "";
+
+      setIsRecentLoading(true);
+      try {
+        const response = await fetch(buildApiUrl("/api/donations"));
+        const data = await response.json().catch(() => []);
+        if (!response.ok || !Array.isArray(data)) {
+          return;
+        }
+
+        const mine = data
+          .filter((item) => String(item?.donorId || "") === String(currentUserId))
+          .sort(
+            (a, b) =>
+              new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime()
+          );
+
+        setRecentDonations(mine);
+      } finally {
+        setIsRecentLoading(false);
+      }
+    };
+
+    loadRecentDonations();
+  }, []);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitError("");
@@ -213,6 +259,9 @@ const DonateFood = () => {
       }
 
       setSubmitSuccess(data?.message || "Donation submitted successfully.");
+      if (data && typeof data === "object") {
+        setRecentDonations((prev) => [data, ...prev]);
+      }
       setFormData({
         title: "",
         quantity: "",
@@ -605,6 +654,58 @@ const DonateFood = () => {
             <p className="text-center text-[#a4b2ac] text-xs mt-6">
               {t("Donation Thanks")}
             </p>
+
+            <div className="mt-8 bg-white rounded-2xl border border-[#e6eee9] p-5 sm:p-6">
+              <div className="flex items-center gap-2 pb-4 border-b border-[#eef4f1]">
+                <span className="material-symbols-outlined text-[#12c76a] text-[18px]">
+                  photo_library
+                </span>
+                <h3 className="text-sm font-bold text-[#111814]">
+                  Your Recent Donations
+                </h3>
+              </div>
+
+              {isRecentLoading ? (
+                <p className="text-xs text-[#7a9087] mt-4">Loading your donations...</p>
+              ) : null}
+
+              {!isRecentLoading && recentDonations.length === 0 ? (
+                <p className="text-xs text-[#7a9087] mt-4">
+                  Your donated food images will appear here after you submit.
+                </p>
+              ) : null}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                {recentDonations.map((item) => (
+                  <div key={item?._id || `${item?.foodName}-${item?.createdAt}`} className="rounded-xl border border-[#e6eee9] overflow-hidden">
+                    <div className="h-32 bg-[#f3f6f4]">
+                      {resolveDonationImage(item) ? (
+                        <img
+                          src={resolveDonationImage(item)}
+                          alt={item?.foodName || "Donated food"}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-[#9fb3aa]">
+                          <span className="material-symbols-outlined text-3xl">photo_camera</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="text-xs font-bold text-[#111814]">
+                        {item?.foodName || "Food Donation"}
+                      </p>
+                      <p className="text-[11px] text-[#7a9087] mt-1">
+                        Quantity: {item?.quantity || "-"}
+                      </p>
+                      <p className="text-[11px] text-[#7a9087]">
+                        {item?.location || "Location not provided"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
             </div>
           </div>
