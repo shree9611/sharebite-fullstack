@@ -59,6 +59,13 @@ const DonateFood = () => {
     const file = event.target.files?.[0];
     if (!file) return;
     setPhotoFile(file);
+    if (file.type && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = () => setPhotoPreviewUrl(String(reader.result || ""));
+      reader.readAsDataURL(file);
+    } else {
+      setPhotoPreviewUrl("");
+    }
     setSubmitError("");
   };
 
@@ -141,16 +148,6 @@ const DonateFood = () => {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
-
-  useEffect(() => {
-    if (!photoFile) {
-      setPhotoPreviewUrl("");
-      return;
-    }
-    const objectUrl = URL.createObjectURL(photoFile);
-    setPhotoPreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [photoFile]);
 
   useEffect(() => {
     setProfile(getCurrentProfile());

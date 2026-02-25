@@ -1,44 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { buildApiUrl } from "../lib/api.js";
+import { API_BASE_URL, apiFetchWithFallback } from "../lib/api.js";
+
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
+
+const resolveDonationImage = (mission) => {
+  const imageUrl = mission?.donation?.imageUrl || mission?.donation?.image || "";
+  if (!imageUrl) return "";
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return imageUrl;
+  if (imageUrl.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imageUrl) ? imageUrl : "";
+  if (imageUrl.startsWith("/")) return `${API_BASE_URL}${imageUrl}`;
+  return "";
+};
 
 const VolunteerAcceptMission = () => {
   const [showLocationFor, setShowLocationFor] = useState("");
   const [missions, setMissions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeMissionId, setActiveMissionId] = useState("");
   const { t } = useLanguage();
-
-  const fetchRequestsWithFallback = useCallback(async (token) => {
-    const primaryUrl = buildApiUrl("/api/requests");
-    const fallbackUrl = "/api/requests";
-    const urlsToTry = primaryUrl === fallbackUrl ? [primaryUrl] : [primaryUrl, fallbackUrl];
-
-    let lastNetworkError = null;
-
-    for (const url of urlsToTry) {
-      try {
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        return response;
-      } catch (error) {
-        if (error instanceof TypeError) {
-          lastNetworkError = error;
-          continue;
-        }
-        throw error;
-      }
-    }
-
-    if (lastNetworkError) {
-      throw lastNetworkError;
-    }
-
-    throw new Error("Unable to reach server.");
-  }, []);
 
   const loadMissions = useCallback(async () => {
     const token = localStorage.getItem("sharebite.token");
@@ -51,13 +32,17 @@ const VolunteerAcceptMission = () => {
     setIsLoading(true);
     setError("");
     try {
-      const response = await fetchRequestsWithFallback(token);
+      const response = await apiFetchWithFallback("/api/requests", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json().catch(() => []);
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load missions.");
       }
       const rows = Array.isArray(data) ? data : [];
-      setMissions(rows.filter((row) => row?.logistics === "delivery"));
+      setMissions(rows.filter((row) => row?.logistics === "delivery" && row?.status !== "declined"));
     } catch (loadError) {
       if (loadError instanceof TypeError) {
         setError("Unable to reach server. Please check your connection and try again.");
@@ -67,7 +52,7 @@ const VolunteerAcceptMission = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchRequestsWithFallback]);
+  }, []);
 
   useEffect(() => {
     loadMissions();
@@ -81,12 +66,47 @@ const VolunteerAcceptMission = () => {
     return {
       total,
       withPhoneContacts,
-      routesAvailable: total,
+      routesAvailable: missions.filter((mission) => mission?.deliveryStatus !== "delivered").length,
     };
   }, [missions]);
 
+  const handleAcceptMission = async (missionId) => {
+    const token = localStorage.getItem("sharebite.token");
+    if (!token) {
+      setError("Please login as volunteer.");
+      return;
+    }
+
+    setActiveMissionId(missionId);
+    setError("");
+
+    try {
+      const response = await apiFetchWithFallback(`/api/requests/${missionId}/accept-mission`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to accept mission.");
+      }
+      setMissions((prev) =>
+        prev.map((mission) =>
+          mission?._id === missionId
+            ? { ...mission, deliveryStatus: "accepted", volunteer: mission?.volunteer || { name: "You" } }
+            : mission
+        )
+      );
+    } catch (acceptError) {
+      setError(acceptError.message || "Unable to accept mission.");
+    } finally {
+      setActiveMissionId("");
+    }
+  };
+
   return (
-    <div className="bg-[#f6faf8] min-h-screen text-[#111814]">
+    <div className="bg-[#fbf6ea] min-h-screen text-[#111814]">
       <div className="max-w-6xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-2xl border border-[#e6eee9] p-5 sm:p-6 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -161,6 +181,9 @@ const VolunteerAcceptMission = () => {
             const donorLocation = mission?.donation?.location || "Donor location not available";
             const receiverLocation = mission?.deliveryAddress || mission?.requestedLocation || "Receiver location not available";
             const mapQuery = encodeURIComponent(`${donorLocation} to ${receiverLocation}`);
+            const isAccepted = mission?.deliveryStatus === "accepted" || mission?.deliveryStatus === "picked_up";
+            const isDelivered = mission?.deliveryStatus === "delivered";
+            const isProcessing = activeMissionId === missionId;
 
             return (
               <div key={missionId} className="bg-white rounded-2xl border border-[#e6eee9] p-5 sm:p-6 shadow-sm">
@@ -172,17 +195,45 @@ const VolunteerAcceptMission = () => {
                     <h3 className="text-lg font-extrabold text-[#111814] mt-1">
                       Delivery: {mission?.donation?.foodName || "Food"}
                     </h3>
+                    {resolveDonationImage(mission) ? (
+                      <img
+                        src={resolveDonationImage(mission)}
+                        alt={mission?.donation?.foodName || "Food"}
+                        className="mt-3 h-20 w-28 rounded-lg object-cover border border-[#e6eee9]"
+                      />
+                    ) : null}
                     <p className="text-xs text-[#8aa19a] mt-1">
                       Assigned for receiver: {mission?.receiver?.name || "Receiver"}
                     </p>
+                    <div className="mt-2">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                        isDelivered
+                          ? "bg-emerald-50 text-emerald-700"
+                          : isAccepted
+                            ? "bg-blue-50 text-blue-700"
+                            : "bg-amber-50 text-amber-700"
+                      }`}>
+                        {isDelivered ? "Delivered" : isAccepted ? "Mission Accepted" : "Awaiting Volunteer"}
+                      </span>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowLocationFor((prev) => (prev === missionId ? "" : missionId))}
-                    className="shrink-0 px-4 py-2 rounded-xl bg-[#12c76a] text-white text-xs font-bold hover:bg-[#0fbf63] transition-colors"
-                  >
-                    {showLocationFor === missionId ? "Hide Route" : "View Route"}
-                  </button>
+                  <div className="flex shrink-0 flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowLocationFor((prev) => (prev === missionId ? "" : missionId))}
+                      className="px-4 py-2 rounded-xl bg-[#12c76a] text-white text-xs font-bold hover:bg-[#0fbf63] transition-colors"
+                    >
+                      {showLocationFor === missionId ? "Hide Route" : "View Route"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isAccepted || isDelivered || isProcessing}
+                      onClick={() => handleAcceptMission(missionId)}
+                      className="px-4 py-2 rounded-xl bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition-colors disabled:opacity-60"
+                    >
+                      {isProcessing ? "Accepting..." : isAccepted ? "Accepted" : isDelivered ? "Delivered" : "Accept Mission"}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">

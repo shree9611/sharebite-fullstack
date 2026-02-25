@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { API_BASE_URL, buildApiUrl } from "../lib/api.js";
+import { API_BASE_URL, apiFetchWithFallback, buildApiUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
@@ -52,7 +52,7 @@ const RequestApproval = () => {
     }
 
     try {
-      const response = await fetch(buildApiUrl("/api/requests"), {
+      const response = await apiFetchWithFallback("/api/requests", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -117,7 +117,7 @@ const RequestApproval = () => {
     }
 
     try {
-      const response = await fetch(buildApiUrl(`/api/approvals/${requestId}`), {
+      const response = await apiFetchWithFallback(`/api/approvals/${requestId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -148,7 +148,7 @@ const RequestApproval = () => {
     }
 
     try {
-      const response = await fetch(buildApiUrl(`/api/approvals/${requestId}/decline`), {
+      const response = await apiFetchWithFallback(`/api/approvals/${requestId}/decline`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -274,7 +274,7 @@ const RequestApproval = () => {
               </nav>
             </aside>
 
-            <div className="flex-1 bg-[#f6f8fb]">
+            <div className="flex-1 bg-[#fbf6ea]">
               <div className="max-w-6xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8">
                 <div className="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div>
@@ -347,6 +347,9 @@ const RequestApproval = () => {
                               <span>Food: {reqItem?.donation?.foodName || "-"}</span>
                               <span>Preference: {reqItem?.foodPreference || "any"}</span>
                               <span>Location: {reqItem?.requestedLocation || "-"}</span>
+                              {isDelivery ? (
+                                <span>Mission: {reqItem?.deliveryStatus || "unassigned"}</span>
+                              ) : null}
                               {isDelivery && reqItem?.deliveryAddress ? (
                                 <span>Delivery: {reqItem.deliveryAddress}</span>
                               ) : null}
@@ -406,6 +409,9 @@ const RequestApproval = () => {
                             <p className="text-xs text-[#8aa0b6]">
                               Serves: {reqItem?.peopleCount || 1} | {reqItem?.logistics === "delivery" ? "Delivery" : "Self-Pickup"}
                             </p>
+                            {reqItem?.logistics === "delivery" ? (
+                              <p className="text-xs text-[#8aa0b6]">Mission: {reqItem?.deliveryStatus || "unassigned"}</p>
+                            ) : null}
                           </div>
                           <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
                             Approved

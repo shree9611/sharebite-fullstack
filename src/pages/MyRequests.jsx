@@ -99,6 +99,14 @@ const MyRequests = () => {
     return "Pending donor review.";
   };
 
+  const deliveryStatusLabel = (deliveryStatus) => {
+    if (deliveryStatus === "accepted") return "Volunteer accepted your mission.";
+    if (deliveryStatus === "picked_up") return "Volunteer picked up the food.";
+    if (deliveryStatus === "delivered") return "Food delivered successfully.";
+    if (deliveryStatus === "unassigned") return "Waiting for volunteer assignment.";
+    return "";
+  };
+
   return (
     <div className="bg-background-light text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
@@ -234,6 +242,9 @@ const MyRequests = () => {
 
                       {reqItem?.logistics === "delivery" && reqItem?.deliveryAddress ? (
                         <p><strong>Delivery Address:</strong> {reqItem.deliveryAddress}</p>
+                      ) : null}
+                      {reqItem?.logistics === "delivery" && reqItem?.deliveryStatus ? (
+                        <p><strong>Delivery Status:</strong> {deliveryStatusLabel(reqItem.deliveryStatus) || reqItem.deliveryStatus}</p>
                       ) : null}
                       <p><strong>Status Update:</strong> {statusNote(reqItem?.status)}</p>
                     </div>

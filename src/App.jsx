@@ -18,6 +18,7 @@ const RequestApproval = lazy(() => import("./pages/RequestApproval"));
 const CommunityFeedback = lazy(() => import("./pages/CommunityFeedback"));
 const VolunteerAcceptMission = lazy(() => import("./pages/VolunteerAcceptMission"));
 const ReceiverFeedback = lazy(() => import("./pages/ReceiverFeedback"));
+const Profile = lazy(() => import("./pages/Profile"));
 
 export default function App() {
   return (
@@ -96,6 +97,14 @@ export default function App() {
           />
           <Route path="/login" element={<Login />} />
           <Route path="/register-access" element={<RegisterAccess />} />
+          <Route
+            path="/profile"
+            element={
+              <RoleProtectedRoute allowedRoles={["Donor", "Receiver", "Volunteer"]}>
+                <Profile />
+              </RoleProtectedRoute>
+            }
+          />
         </Routes>
       </Suspense>
     </BrowserRouter>

@@ -19,6 +19,9 @@ async function approveRequest(req, res) {
     }
 
     request.status = "approved";
+    if (request.logistics === "delivery" && request.deliveryStatus === "not_applicable") {
+      request.deliveryStatus = "unassigned";
+    }
     const donation = await Donation.findById(request.donationId);
     if (!donation) {
       return res.status(404).json({ message: "Donation not found." });

@@ -32,6 +32,14 @@ async function createFeedback(req, res) {
       photo: "",
     });
 
+    if (request.status !== "completed") {
+      request.status = "completed";
+    }
+    if (request.logistics === "delivery") {
+      request.deliveryStatus = "delivered";
+    }
+    await request.save();
+
     eventBus.emit("feedback.created", {
       donorId: request.donorId,
       feedbackId: feedback._id,
@@ -59,4 +67,3 @@ module.exports = {
   createFeedback,
   listFeedback,
 };
-

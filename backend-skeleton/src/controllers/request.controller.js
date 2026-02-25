@@ -45,6 +45,7 @@ async function createRequest(req, res) {
       requestedLocation: requestedLocation || "",
       logistics: logistics || "pickup",
       deliveryAddress: deliveryAddress || "",
+      deliveryStatus: (logistics || "pickup") === "delivery" ? "unassigned" : "not_applicable",
       foodPreference: foodPreference || "any",
       status: "pending",
     });
@@ -72,7 +73,8 @@ async function listRequests(req, res) {
       // Volunteers (admin role) should see active delivery missions.
       query = {
         logistics: "delivery",
-        status: { $in: ["pending", "approved"] },
+        status: { $in: ["approved", "completed"] },
+        deliveryStatus: { $in: ["unassigned", "accepted", "picked_up"] },
       };
     } else {
       return res.status(403).json({ message: "Not authorized to view requests." });
@@ -82,6 +84,7 @@ async function listRequests(req, res) {
       .populate("donationId", "foodName quantity locationText image")
       .populate("donorId", "name email phone")
       .populate("receiverId", "name email phone")
+      .populate("volunteerId", "name email phone")
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -93,6 +96,15 @@ async function listRequests(req, res) {
       requestedLocation: row.requestedLocation,
       logistics: row.logistics,
       deliveryAddress: row.deliveryAddress,
+      deliveryStatus: row.deliveryStatus || "not_applicable",
+      volunteer: row.volunteerId
+        ? {
+            _id: row.volunteerId._id,
+            name: row.volunteerId.name,
+            email: row.volunteerId.email,
+            phone: row.volunteerId.phone || "",
+          }
+        : null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       donor: row.donorId
@@ -129,7 +141,46 @@ async function listRequests(req, res) {
   }
 }
 
+async function acceptMission(req, res) {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only volunteer can accept mission." });
+    }
+
+    const request = await Request.findById(req.params.requestId);
+    if (!request) return res.status(404).json({ message: "Mission not found." });
+    if (request.logistics !== "delivery") {
+      return res.status(400).json({ message: "Only delivery requests are missions." });
+    }
+    if (!["approved", "completed"].includes(request.status)) {
+      return res.status(400).json({ message: "Mission can be accepted only after donor approval." });
+    }
+    if (request.deliveryStatus === "delivered") {
+      return res.status(400).json({ message: "Mission already delivered." });
+    }
+    if (request.volunteerId && String(request.volunteerId) !== String(req.user.id)) {
+      return res.status(400).json({ message: "Mission already accepted by another volunteer." });
+    }
+
+    request.volunteerId = req.user.id;
+    request.deliveryStatus = "accepted";
+    await request.save();
+
+    eventBus.emit("mission.accepted", {
+      requestId: request._id,
+      donorId: request.donorId,
+      receiverId: request.receiverId,
+      volunteerId: req.user.id,
+    });
+
+    return res.json({ message: "Mission accepted successfully.", request });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Failed to accept mission." });
+  }
+}
+
 module.exports = {
   createRequest,
   listRequests,
+  acceptMission,
 };

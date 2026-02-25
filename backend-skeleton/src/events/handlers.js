@@ -50,7 +50,25 @@ function registerEventHandlers() {
       data: { feedbackId },
     });
   });
+
+  eventBus.on("mission.accepted", async ({ donorId, receiverId, requestId }) => {
+    await Promise.all([
+      createNotification({
+        userId: donorId,
+        type: "mission_accepted",
+        title: "Volunteer assigned",
+        body: "A volunteer accepted your delivery request.",
+        data: { requestId },
+      }),
+      createNotification({
+        userId: receiverId,
+        type: "mission_accepted",
+        title: "Delivery volunteer assigned",
+        body: "A volunteer accepted your mission and will deliver your food.",
+        data: { requestId },
+      }),
+    ]);
+  });
 }
 
 module.exports = { registerEventHandlers };
-

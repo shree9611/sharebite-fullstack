@@ -1,4 +1,5 @@
 const { Donation } = require("../models/donation.model");
+const { User } = require("../models/user.model");
 const { eventBus } = require("../events/bus");
 const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
@@ -59,6 +60,7 @@ async function createDonation(req, res) {
       expiryTime: new Date(expiryTime),
       status: "active",
     });
+    await User.findByIdAndUpdate(req.user.id, { $inc: { totalDonationsCount: 1 } }).catch(() => null);
 
     eventBus.emit("donation.created", {
       donationId: donation._id,
