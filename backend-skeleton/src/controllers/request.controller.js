@@ -1,7 +1,7 @@
 const { Donation } = require("../models/donation.model");
 const { Request } = require("../models/request.model");
 const { eventBus } = require("../events/bus");
-const SAFE_DATA_IMAGE_RE = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 function toAbsoluteImageUrl(req, imagePath) {
   if (!imagePath) return "";

@@ -7,7 +7,7 @@ import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
 const API_BASE = API_BASE_URL;
 const NEARBY_RADIUS_KM = 10;
-const SAFE_DATA_IMAGE_RE = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 const toNumber = (value) => {
   const parsed = Number(value);

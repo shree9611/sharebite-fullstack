@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 
 const authRoutes = require("./routes/auth.routes");
 const donationRoutes = require("./routes/donation.routes");
@@ -52,7 +53,9 @@ app.use(
   })
 );
 app.use(express.json());
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+const uploadsDir = path.resolve(__dirname, "..", "uploads");
+fs.mkdirSync(uploadsDir, { recursive: true });
+app.use("/uploads", express.static(uploadsDir));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/donations", donationRoutes);

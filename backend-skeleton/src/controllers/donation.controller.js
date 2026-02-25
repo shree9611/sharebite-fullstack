@@ -1,7 +1,6 @@
 const { Donation } = require("../models/donation.model");
 const { eventBus } = require("../events/bus");
-const ALLOWED_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const SAFE_DATA_IMAGE_RE = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 function toAbsoluteImageUrl(req, imagePath) {
   if (!imagePath) return "";
@@ -20,11 +19,17 @@ function toAbsoluteImageUrl(req, imagePath) {
 }
 
 function buildImageValue(file) {
-  if (!file || !file.buffer) return "";
-  const mime = file.mimetype || "";
-  if (!ALLOWED_IMAGE_MIME_TYPES.has(mime)) return "";
-  const base64 = file.buffer.toString("base64");
-  return `data:${mime};base64,${base64}`;
+  if (!file) return "";
+  if (file.path) {
+    const normalizedPath = String(file.path).replace(/\\/g, "/");
+    const marker = "/uploads/";
+    const markerIndex = normalizedPath.lastIndexOf(marker);
+    if (markerIndex >= 0) {
+      return normalizedPath.slice(markerIndex);
+    }
+    return `/uploads/donations/${file.filename}`;
+  }
+  return "";
 }
 
 async function createDonation(req, res) {

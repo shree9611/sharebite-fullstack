@@ -12,6 +12,8 @@ node_modules
 dist/
 dist-ssr
 *.local
+uploads/
+backend-skeleton/uploads/
 
 # App data / caches
 .npm-cache/

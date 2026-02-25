@@ -368,9 +368,8 @@ const DonateFood = () => {
                       src={photoPreviewUrl}
                       alt="Food preview"
                       onError={() => {
-                        setPhotoFile(null);
                         setPhotoPreviewUrl("");
-                        setSubmitError("Unable to preview this image. Please try another file.");
+                        setSubmitError("Unable to preview this image. You can still submit it.");
                       }}
                       className="h-36 w-full max-w-sm rounded-xl object-cover mb-3"
                     />

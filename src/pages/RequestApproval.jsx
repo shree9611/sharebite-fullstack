@@ -5,7 +5,7 @@ import { API_BASE_URL, buildApiUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
-const SAFE_DATA_IMAGE_RE = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 const resolveDonationImage = (reqItem) => {
   const imageUrl = reqItem?.donation?.imageUrl || reqItem?.donation?.image || "";
