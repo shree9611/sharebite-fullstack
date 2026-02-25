@@ -1,12 +1,10 @@
 const resolveApiBaseUrl = () => {
-  // In development, always use same-origin paths so Vite proxy handles /api and /uploads.
-  if (import.meta.env.DEV) {
-    return "";
-  }
+  // Use explicit backend URL when provided (dev + production).
+  // Falls back to same-origin when env is not set.
   if (import.meta.env.VITE_API_BASE_URL) {
     return String(import.meta.env.VITE_API_BASE_URL).replace(/\/+$/, "");
   }
-  // Fallback for production if env is not set.
+  // Fallback when env is not set.
   return "";
 };
 
