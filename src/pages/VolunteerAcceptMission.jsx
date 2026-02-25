@@ -9,6 +9,37 @@ const VolunteerAcceptMission = () => {
   const [error, setError] = useState("");
   const { t } = useLanguage();
 
+  const fetchRequestsWithFallback = useCallback(async (token) => {
+    const primaryUrl = buildApiUrl("/api/requests");
+    const fallbackUrl = "/api/requests";
+    const urlsToTry = primaryUrl === fallbackUrl ? [primaryUrl] : [primaryUrl, fallbackUrl];
+
+    let lastNetworkError = null;
+
+    for (const url of urlsToTry) {
+      try {
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        return response;
+      } catch (error) {
+        if (error instanceof TypeError) {
+          lastNetworkError = error;
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (lastNetworkError) {
+      throw lastNetworkError;
+    }
+
+    throw new Error("Unable to reach server.");
+  }, []);
+
   const loadMissions = useCallback(async () => {
     const token = localStorage.getItem("sharebite.token");
     if (!token) {
@@ -20,11 +51,7 @@ const VolunteerAcceptMission = () => {
     setIsLoading(true);
     setError("");
     try {
-      const response = await fetch(buildApiUrl("/api/requests"), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetchRequestsWithFallback(token);
       const data = await response.json().catch(() => []);
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load missions.");
@@ -40,7 +67,7 @@ const VolunteerAcceptMission = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchRequestsWithFallback]);
 
   useEffect(() => {
     loadMissions();
