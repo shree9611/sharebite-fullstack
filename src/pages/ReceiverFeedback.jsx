@@ -16,6 +16,8 @@ const ReceiverFeedback = () => {
   const [submitSuccess, setSubmitSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestId, setRequestId] = useState(location.state?.requestId || "");
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [deliveryReached, setDeliveryReached] = useState(false);
   const fileInputRef = useRef(null);
   const isAvailable = location.pathname === "/dashboard";
   const isMyRequests = location.pathname === "/my-requests";
@@ -25,8 +27,6 @@ const ReceiverFeedback = () => {
   };
 
   useEffect(() => {
-    if (requestId) return;
-
     const loadLatestApprovedRequest = async () => {
       try {
         const response = await fetch(buildApiUrl("/api/requests"), {
@@ -36,15 +36,26 @@ const ReceiverFeedback = () => {
         if (!response.ok || !Array.isArray(data)) {
           return;
         }
+
         const approved = data
-          .filter((item) => item?.status === "approved")
+          .filter((item) => item?.status === "approved" || item?.status === "completed")
           .sort((a, b) => {
             const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
             const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
             return bTime - aTime;
           });
+
+        if (requestId) {
+          const exactMatch = approved.find((item) => item?._id === requestId);
+          if (exactMatch) {
+            setSelectedRequest(exactMatch);
+            return;
+          }
+        }
+
         if (approved[0]?._id) {
           setRequestId(approved[0]._id);
+          setSelectedRequest(approved[0]);
         }
       } catch {
         // Keep silent here; submit will show actionable error if requestId is missing.
@@ -79,6 +90,10 @@ const ReceiverFeedback = () => {
       setSubmitError("No approved request found. Please request and get approval first.");
       return;
     }
+    if (selectedRequest?.logistics === "delivery" && !deliveryReached) {
+      setSubmitError("Please confirm food reached your location before submitting feedback.");
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -98,11 +113,16 @@ const ReceiverFeedback = () => {
       if (!response.ok) {
         throw new Error(data?.message || "Feedback submit failed");
       }
-      setSubmitSuccess("Feedback submitted.");
+      setSubmitSuccess(
+        selectedRequest?.logistics === "delivery"
+          ? "Feedback submitted. Donor has been notified that delivery reached your location."
+          : "Feedback submitted."
+      );
       setComments("");
       setPhotoPreview("");
       setFoodRating(4);
       setDeliveryRating(5);
+      setDeliveryReached(false);
     } catch (error) {
       setSubmitError(error.message || "Unable to submit feedback.");
     } finally {
@@ -345,6 +365,19 @@ const ReceiverFeedback = () => {
                   </div>
                 </div>
                 <div className="pt-4 flex flex-col gap-6">
+                  {selectedRequest?.logistics === "delivery" ? (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-background-light border-none"
+                        type="checkbox"
+                        checked={deliveryReached}
+                        onChange={(event) => setDeliveryReached(event.target.checked)}
+                      />
+                      <span className="text-[#111815] text-sm">
+                        Food has reached my delivery location. Notify donor.
+                      </span>
+                    </label>
+                  ) : null}
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       defaultChecked

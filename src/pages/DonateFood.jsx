@@ -5,8 +5,6 @@ import { buildApiUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
-const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
 const DonateFood = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -47,12 +45,6 @@ const DonateFood = () => {
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-      setPhotoFile(null);
-      setPhotoPreviewUrl("");
-      setSubmitError("Please upload JPG, PNG, or WEBP image only.");
-      return;
-    }
     setPhotoFile(file);
     setSubmitError("");
   };
@@ -366,7 +358,7 @@ const DonateFood = () => {
                   <input
                     ref={photoInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/*"
                     capture="environment"
                     className="hidden"
                     onChange={handlePhotoChange}
@@ -378,7 +370,7 @@ const DonateFood = () => {
                       onError={() => {
                         setPhotoFile(null);
                         setPhotoPreviewUrl("");
-                        setSubmitError("This image format is not supported. Please use JPG, PNG, or WEBP.");
+                        setSubmitError("Unable to preview this image. Please try another file.");
                       }}
                       className="h-36 w-full max-w-sm rounded-xl object-cover mb-3"
                     />
