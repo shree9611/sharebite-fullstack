@@ -51,7 +51,14 @@ const haversineKm = (from, to) => {
 };
 
 const resolveDonationImage = (item) => {
-  if (item?.imageUrl) return item.imageUrl;
+  if (item?.imageUrl) {
+    if (item.imageUrl.startsWith("http://") || item.imageUrl.startsWith("https://")) {
+      return item.imageUrl;
+    }
+    if (item.imageUrl.startsWith("/")) {
+      return `${API_BASE}${item.imageUrl}`;
+    }
+  }
   const imagePath = item?.image;
   if (!imagePath) return "";
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
