@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { API_BASE_URL, apiFetchWithFallback } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
@@ -49,6 +49,15 @@ const resolveDonationImage = (mission) => {
   return "";
 };
 
+const resolveProfileImage = (profile) => {
+  const image = profile?.profileImageUrl || profile?.profileImage || "";
+  if (!image) return "";
+  if (image.startsWith("http://") || image.startsWith("https://")) return image;
+  if (image.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(image) ? image : "";
+  if (image.startsWith("/")) return `${API_BASE_URL}${image}`;
+  return "";
+};
+
 const normalizeDeliveryStatus = (value) => {
   const status = String(value || "").toLowerCase();
   if (status === "completed") return "delivered";
@@ -92,10 +101,8 @@ const normalizeMission = (row) => {
 };
 
 const VolunteerAcceptMission = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const isMissions = location.pathname === "/volunteer/acceptmission";
-  const isProfile = location.pathname === "/profile";
+  const [showProfile, setShowProfile] = useState(false);
   const [showLocationFor, setShowLocationFor] = useState("");
   const [missions, setMissions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -232,27 +239,46 @@ const VolunteerAcceptMission = () => {
       return;
     }
     const pickupId = mission?.pickupId;
-    if (!pickupId) {
-      setActionError("Pickup is not linked for this mission yet.");
+    const requestId = mission?.requestId || mission?._id;
+    if (!pickupId && !requestId) {
+      setActionError("Mission is missing required IDs.");
       return;
     }
-    setActivePickupId(pickupId);
+    setActivePickupId(String(pickupId || requestId));
     setActionError("");
     setSuccessMessage("");
     try {
-      const response = await apiFetchWithFallback(`/api/pickups/${pickupId}/complete`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      let response;
+      if (pickupId) {
+        response = await apiFetchWithFallback(`/api/pickups/${pickupId}/complete`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } else {
+        response = await apiFetchWithFallback(`/api/requests/${requestId}/complete-delivery`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+      if (response.status === 404 && requestId) {
+        response = await apiFetchWithFallback(`/api/requests/${requestId}/complete-delivery`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data?.message || "Failed to confirm delivery.");
       }
       setMissions((prev) =>
         prev.map((item) =>
-          item?.pickupId === pickupId
+          item?.pickupId === pickupId || item?.requestId === requestId || item?._id === requestId
             ? {
                 ...item,
                 status: "completed",
@@ -274,50 +300,66 @@ const VolunteerAcceptMission = () => {
 
   return (
     <div className="bg-[#fbf6ea] min-h-screen text-[#111814]">
-      <div className="max-w-6xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="bg-white rounded-2xl border border-[#e6eee9] p-5 shadow-sm">
-            <p className="text-[11px] tracking-wider uppercase font-semibold text-[#7a9087]">Profile</p>
-            <p className="text-lg font-bold text-[#111814] mt-1">{profile?.name || "Volunteer"}</p>
-            <p className="text-xs text-[#6b7f77] mt-1">{profile?.email || "Email not available"}</p>
-            <p className="text-xs text-[#6b7f77] mt-1">Contact: {profile?.phone || "Not available"}</p>
-            <div className="mt-3 flex items-center gap-2">
-              <Link
-                to="/profile"
-                className={`px-3 py-2 rounded-xl text-xs font-bold border ${
-                  isProfile
-                    ? "bg-green-50 text-green-700 border-green-200"
-                    : "bg-[#f8fbf9] border-[#d7e5de] text-[#1f3b31]"
-                }`}
-              >
-                Open Profile
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="px-3 py-2 rounded-xl text-xs font-bold border border-red-200 text-red-600 hover:bg-red-50"
-              >
-                Logout
-              </button>
-            </div>
+      <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 font-bold text-lg relative">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-green-500">volunteer_activism</span>
+            {t("ShareBite")}
           </div>
-          <aside className="bg-white rounded-2xl border border-[#e6eee9] p-5 shadow-sm">
-            <p className="text-[11px] tracking-wider uppercase font-semibold text-[#7a9087]">Dashboard</p>
-            <nav className="mt-3 flex flex-col gap-2 text-sm font-semibold">
-              <Link
-                to="/volunteer/acceptmission"
-                className={`rounded-xl px-3 py-2 ${
-                  isMissions ? "bg-green-50 text-green-700" : "bg-[#f8fbf9] text-[#1f3b31]"
-                }`}
-              >
-                Missions
-              </Link>
-              <Link to="/profile" className="rounded-xl px-3 py-2 bg-[#f8fbf9] text-[#1f3b31]">
-                Profile
-              </Link>
-            </nav>
-          </aside>
+          <div className="relative">
+            <button
+              className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
+              onClick={() => setShowProfile((prev) => !prev)}
+              type="button"
+            >
+              {resolveProfileImage(profile) ? (
+                <img src={resolveProfileImage(profile)} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined text-[18px]">account_circle</span>
+              )}
+            </button>
+            {showProfile && (
+              <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
+                <div className="h-16 bg-[#f8efe3]" />
+                <div className="-mt-8 flex flex-col items-center px-4 pb-4">
+                  <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
+                    {resolveProfileImage(profile) ? (
+                      <img src={resolveProfileImage(profile)} alt="Profile" className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-3xl">account_circle</span>
+                    )}
+                  </div>
+                  <p className="mt-2 font-bold text-[#111814]">{profile?.name || "Volunteer"}</p>
+                  <p className="text-xs text-[#7a9087]">{profile?.email || "Email not available"}</p>
+                </div>
+                <div className="px-4 pb-4 text-xs text-[#7a9087]">
+                  <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
+                    <span>{t("Phone")}</span>
+                    <span className="font-semibold text-[#111814]">{profile?.phone || "N/A"}</span>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <Link
+                      className="flex-1 rounded-xl bg-[#f3f6f4] px-3 py-2 font-semibold text-[#111814] text-center"
+                      to="/profile"
+                      onClick={() => setShowProfile(false)}
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
+                      onClick={handleLogout}
+                      type="button"
+                    >
+                      {t("Logout")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+      </header>
+      <div className="max-w-6xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-2xl border border-[#e6eee9] p-5 sm:p-6 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -403,7 +445,9 @@ const VolunteerAcceptMission = () => {
             const isAccepted = mission?.deliveryStatus === "accepted" || mission?.deliveryStatus === "picked_up";
             const isDelivered = mission?.deliveryStatus === "delivered";
             const isAccepting = activeRequestId && (activeRequestId === mission?.requestId || activeRequestId === missionId);
-            const isCompleting = activePickupId && activePickupId === mission?.pickupId;
+            const isCompleting =
+              activePickupId &&
+              (activePickupId === mission?.pickupId || activePickupId === mission?.requestId || activePickupId === missionId);
             const imageSrc = brokenImageIds[missionId] ? "" : resolveDonationImage(mission);
 
             return (
@@ -461,7 +505,7 @@ const VolunteerAcceptMission = () => {
                     </button>
                     <button
                       type="button"
-                      disabled={!isAccepted || isDelivered || isCompleting || !mission?.pickupId}
+                      disabled={!isAccepted || isDelivered || isCompleting || (!mission?.pickupId && !mission?.requestId)}
                       onClick={() => handleConfirmDelivery(mission)}
                       className="px-4 py-2 rounded-xl bg-[#12c76a] text-white text-xs font-bold hover:bg-[#0fbf63] transition-colors disabled:opacity-60"
                     >

@@ -179,8 +179,61 @@ async function acceptMission(req, res) {
   }
 }
 
+async function completeMission(req, res) {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only volunteer can confirm delivery." });
+    }
+
+    const request = await Request.findById(req.params.requestId);
+    if (!request) return res.status(404).json({ message: "Mission not found." });
+    if (request.logistics !== "delivery") {
+      return res.status(400).json({ message: "Only delivery requests can be completed." });
+    }
+    if (!["approved", "completed"].includes(request.status)) {
+      return res.status(400).json({ message: "Mission can be completed only after donor approval." });
+    }
+    if (request.deliveryStatus === "delivered") {
+      return res.status(400).json({ message: "Mission already delivered." });
+    }
+    if (!request.volunteerId || String(request.volunteerId) !== String(req.user.id)) {
+      return res.status(403).json({ message: "Only assigned volunteer can confirm this delivery." });
+    }
+
+    const donation = await Donation.findById(request.donationId);
+    if (!donation) {
+      return res.status(404).json({ message: "Donation not found." });
+    }
+
+    request.status = "completed";
+    request.deliveryStatus = "delivered";
+    donation.status = "delivered";
+
+    await Promise.all([request.save(), donation.save()]);
+
+    eventBus.emit("mission.delivered", {
+      requestId: request._id,
+      donorId: request.donorId,
+      receiverId: request.receiverId,
+      volunteerId: req.user.id,
+    });
+
+    return res.json({
+      message: "Delivery confirmed successfully.",
+      request,
+      donation: {
+        _id: donation._id,
+        status: donation.status,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || "Failed to confirm delivery." });
+  }
+}
+
 module.exports = {
   createRequest,
   listRequests,
   acceptMission,
+  completeMission,
 };

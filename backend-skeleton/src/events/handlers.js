@@ -69,6 +69,25 @@ function registerEventHandlers() {
       }),
     ]);
   });
+
+  eventBus.on("mission.delivered", async ({ donorId, receiverId, requestId }) => {
+    await Promise.all([
+      createNotification({
+        userId: donorId,
+        type: "mission_delivered",
+        title: "Delivery completed",
+        body: "Your donation was delivered successfully.",
+        data: { requestId },
+      }),
+      createNotification({
+        userId: receiverId,
+        type: "mission_delivered",
+        title: "Food delivered",
+        body: "Your food delivery was completed successfully.",
+        data: { requestId },
+      }),
+    ]);
+  });
 }
 
 module.exports = { registerEventHandlers };

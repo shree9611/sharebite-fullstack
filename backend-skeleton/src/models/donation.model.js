@@ -21,7 +21,7 @@ const donationSchema = new mongoose.Schema(
     expiryTime: { type: Date, required: true },
     status: {
       type: String,
-      enum: ["active", "claimed", "expired"],
+      enum: ["active", "claimed", "expired", "delivered"],
       default: "active",
     },
   },
@@ -32,4 +32,3 @@ donationSchema.index({ location: "2dsphere" });
 
 const Donation = mongoose.model("Donation", donationSchema);
 module.exports = { Donation };
-
