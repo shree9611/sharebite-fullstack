@@ -44,6 +44,21 @@ const RegistrationStep2 = () => {
     pincode: false,
   });
 
+  const dataUrlToFile = (dataUrl, fallbackName = "profile-image") => {
+    if (!dataUrl || !dataUrl.startsWith("data:image/")) return null;
+    const [meta, base64Payload] = dataUrl.split(",");
+    if (!meta || !base64Payload) return null;
+    const mimeMatch = meta.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64$/i);
+    const mime = mimeMatch?.[1] || "image/jpeg";
+    const ext = mime.split("/")[1] || "jpg";
+    const binary = atob(base64Payload);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return new File([bytes], `${fallbackName}.${ext}`, { type: mime });
+  };
+
   const validate = {
     fullName: fullName.trim().length >= 3,
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue),
@@ -174,21 +189,29 @@ const RegistrationStep2 = () => {
 
     setIsSubmitting(true);
     try {
+      const payload = new FormData();
+      payload.append("name", fullName.trim());
+      payload.append("email", emailValue.trim());
+      payload.append("password", accountData.password);
+      payload.append("role", normalizedRole);
+      payload.append("locationName", [streetAddress.trim(), city.trim()].filter(Boolean).join(", "));
+      payload.append("address", streetAddress.trim());
+      payload.append("city", city.trim());
+      payload.append("pincode", pincode.trim());
+      if (coords?.latitude !== undefined && coords?.latitude !== null) {
+        payload.append("latitude", String(coords.latitude));
+      }
+      if (coords?.longitude !== undefined && coords?.longitude !== null) {
+        payload.append("longitude", String(coords.longitude));
+      }
+      if (accountData?.profileImageDataUrl) {
+        const imageFile = dataUrlToFile(accountData.profileImageDataUrl, "user-avatar");
+        if (imageFile) payload.append("avatar", imageFile);
+      }
+
       const response = await fetch(buildApiUrl("/api/auth/register"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: fullName.trim(),
-          email: emailValue.trim(),
-          password: accountData.password,
-          role: normalizedRole,
-          locationName: [streetAddress.trim(), city.trim()].filter(Boolean).join(", "),
-          address: streetAddress.trim(),
-          city: city.trim(),
-          pincode: pincode.trim(),
-          latitude: coords?.latitude ?? null,
-          longitude: coords?.longitude ?? null,
-        }),
+        body: payload,
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -220,6 +243,8 @@ const RegistrationStep2 = () => {
         exactLocation,
         latitude: coords?.latitude ?? null,
         longitude: coords?.longitude ?? null,
+        profileImage: accountData?.profileImageDataUrl || "",
+        profileImageUrl: accountData?.profileImageDataUrl || "",
       });
       if (profile) {
         setCurrentProfile(profile);

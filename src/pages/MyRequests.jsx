@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { buildApiUrl } from "../lib/api.js";
+import { API_BASE_URL, buildApiUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
@@ -9,6 +9,17 @@ const statusClasses = {
   pending: "bg-orange-50 text-orange-600 border-orange-100",
   approved: "bg-emerald-50 text-emerald-700 border-emerald-100",
   declined: "bg-red-50 text-red-600 border-red-100",
+};
+
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
+
+const resolveProfileImage = (profile) => {
+  const image = profile?.profileImageUrl || profile?.profileImage || "";
+  if (!image) return "";
+  if (image.startsWith("http://") || image.startsWith("https://")) return image;
+  if (image.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(image) ? image : "";
+  if (image.startsWith("/")) return `${API_BASE_URL}${image}`;
+  return "";
 };
 
 const MyRequests = () => {
@@ -125,14 +136,22 @@ const MyRequests = () => {
               onClick={() => setShowProfile((prev) => !prev)}
               type="button"
             >
-              <span className="material-symbols-outlined text-[22px]">account_circle</span>
+              {resolveProfileImage(profile) ? (
+                <img src={resolveProfileImage(profile)} alt="Profile" className="h-10 w-10 rounded-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined text-[22px]">account_circle</span>
+              )}
             </button>
             {showProfile && (
               <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden">
                 <div className="h-16 bg-[#f8efe3]" />
                 <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                   <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
-                    <span className="material-symbols-outlined text-3xl">account_circle</span>
+                    {resolveProfileImage(profile) ? (
+                      <img src={resolveProfileImage(profile)} alt="Profile" className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-3xl">account_circle</span>
+                    )}
                   </div>
                   <p className="mt-2 font-bold text-[#111814]">{profile?.name || t("User Name")}</p>
                   <p className="text-xs text-[#7a9087]">{profile?.email || t("User Email")}</p>

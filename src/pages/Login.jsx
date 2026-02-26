@@ -72,12 +72,36 @@ const Login = () => {
           normalizeRole(payload?.role) || normalizeRole(role) || "Receiver";
         localStorage.setItem("sharebite.role", resolvedRole);
         const savedProfile = getProfileByEmail(email.trim());
-        const currentProfile = upsertProfile({
+        let currentProfile = upsertProfile({
           name: savedProfile?.name || "User",
           email: email.trim(),
           phone: savedProfile?.phone || "",
           role: resolvedRole,
+          profileImage: savedProfile?.profileImage || "",
+          profileImageUrl: savedProfile?.profileImageUrl || "",
         });
+        try {
+          const profileResponse = await fetch(buildApiUrl("/api/users/profile"), {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          const profileData = await profileResponse.json().catch(() => ({}));
+          if (profileResponse.ok) {
+            currentProfile = upsertProfile({
+              ...currentProfile,
+              name: profileData?.fullName || currentProfile?.name || "User",
+              email: profileData?.email || email.trim(),
+              phone: profileData?.phoneNumber || currentProfile?.phone || "",
+              role: profileData?.accountType || resolvedRole,
+              profileImage: profileData?.profileImage || "",
+              profileImageUrl: profileData?.profileImageUrl || "",
+              city: profileData?.city || "",
+              state: profileData?.state || "",
+              address: profileData?.address || "",
+            });
+          }
+        } catch {
+          // Fallback to local profile cache when backend profile fetch is unavailable.
+        }
         if (currentProfile) {
           setCurrentProfile(currentProfile);
         }

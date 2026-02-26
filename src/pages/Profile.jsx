@@ -25,6 +25,13 @@ const initialForm = {
   profileImageUrl: "",
 };
 
+const ROLE_LABEL = {
+  donor: "Donor",
+  receiver: "Receiver",
+  admin: "Volunteer",
+  volunteer: "Volunteer",
+};
+
 const Profile = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
@@ -39,22 +46,39 @@ const Profile = () => {
   const isDonor = form.accountType === "Donor";
   const isReceiver = form.accountType === "Receiver";
 
+  const apiRequestAcrossPaths = async (paths, options = {}) => {
+    let lastResponseData = {};
+    for (const path of paths) {
+      const response = await apiFetchWithFallback(path, options);
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        return { response, data };
+      }
+      if (![404, 405].includes(response.status)) {
+        return { response, data };
+      }
+      lastResponseData = data;
+    }
+    return { response: { ok: false }, data: lastResponseData };
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       setIsLoading(true);
       setError("");
       try {
-        const response = await apiFetchWithFallback("/api/users/me", {
+        const { response, data } = await apiRequestAcrossPaths(["/api/users/profile", "/api/users/me"], {
           headers: { ...getAuthHeaders() },
         });
-        const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data?.message || "Failed to load profile.");
         setForm((prev) => ({ ...prev, ...data }));
         setCurrentProfile({
           name: data?.fullName || "",
           email: data?.email || "",
           phone: data?.phoneNumber || "",
-          role: data?.accountType || "",
+          role: data?.accountType || ROLE_LABEL[String(data?.role || "").toLowerCase()] || "",
+          profileImage: data?.profileImage || "",
+          profileImageUrl: data?.profileImageUrl || "",
         });
       } catch (loadError) {
         setError(loadError.message || "Unable to load profile.");
@@ -97,12 +121,11 @@ const Profile = () => {
       payload.append("totalFoodReceived", String(form.totalFoodReceived || 0));
       if (photoFile) payload.append("avatar", photoFile);
 
-      const response = await apiFetchWithFallback("/api/users/me", {
+      const { response, data } = await apiRequestAcrossPaths(["/api/users/profile", "/api/users/me"], {
         method: "PATCH",
         headers: { ...getAuthHeaders() },
         body: payload,
       });
-      const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.message || "Failed to update profile.");
 
       setForm((prev) => ({ ...prev, ...data }));
@@ -112,7 +135,9 @@ const Profile = () => {
         name: data?.fullName || form.fullName,
         email: form.email,
         phone: data?.phoneNumber || form.phoneNumber,
-        role: form.accountType,
+        role: data?.accountType || form.accountType,
+        profileImage: data?.profileImage || form.profileImage || "",
+        profileImageUrl: data?.profileImageUrl || form.profileImageUrl || photoPreview || "",
       });
     } catch (saveError) {
       setError(saveError.message || "Unable to update profile.");
@@ -125,7 +150,7 @@ const Profile = () => {
     setError("");
     setSuccess("");
     try {
-      const response = await apiFetchWithFallback("/api/users/me/password", {
+      const { response, data } = await apiRequestAcrossPaths(["/api/users/profile/password", "/api/users/me/password"], {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -133,7 +158,6 @@ const Profile = () => {
         },
         body: JSON.stringify(passwordState),
       });
-      const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.message || "Failed to change password.");
       setSuccess(data?.message || "Password changed.");
       setPasswordState({ currentPassword: "", newPassword: "" });
@@ -147,11 +171,10 @@ const Profile = () => {
     if (!confirmed) return;
     setError("");
     try {
-      const response = await apiFetchWithFallback("/api/users/me", {
+      const { response, data } = await apiRequestAcrossPaths(["/api/users/profile", "/api/users/me"], {
         method: "DELETE",
         headers: { ...getAuthHeaders() },
       });
-      const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.message || "Failed to delete account.");
       clearSession();
       clearCurrentProfile();
@@ -187,8 +210,8 @@ const Profile = () => {
               )}
             </div>
             <input type="file" accept="image/*" className="mt-3 w-full text-xs" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} />
-            <p className="mt-2 text-xs text-[#8e8674]">User ID: {form.userId}</p>
-            <p className="text-xs text-[#8e8674]">Account: {form.accountType}</p>
+            <input className="mt-3 h-10 w-full rounded-xl border border-[#e8e0cf] px-3 text-xs bg-[#faf7ef]" value={`Account Type: ${form.accountType || "N/A"}`} readOnly />
+            <input className="mt-2 h-10 w-full rounded-xl border border-[#e8e0cf] px-3 text-xs bg-[#faf7ef]" value={`User ID: ${form.userId || "N/A"}`} readOnly />
           </div>
 
           <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -201,15 +224,17 @@ const Profile = () => {
 
             {isDonor ? (
               <>
+                <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm bg-[#faf7ef]" value="Donor Details" readOnly />
                 <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm" value={form.organizationName} onChange={(e) => setForm((p) => ({ ...p, organizationName: e.target.value }))} placeholder="Organization Name" />
                 <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm" value={form.foodTypeUsuallyDonated} onChange={(e) => setForm((p) => ({ ...p, foodTypeUsuallyDonated: e.target.value }))} placeholder="Food Type Usually Donated" />
                 <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm bg-[#faf7ef]" value={`Total Donations: ${form.totalDonationsCount}`} readOnly />
-                <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm bg-[#faf7ef]" value={`Rating: ${form.donorRating || 0}`} readOnly />
+                <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm bg-[#faf7ef]" value={`Rating / Feedback: ${form.donorRating || 0}`} readOnly />
               </>
             ) : null}
 
             {isReceiver ? (
               <>
+                <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm bg-[#faf7ef]" value="Receiver Details" readOnly />
                 <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm" value={form.receiverOrganizationName} onChange={(e) => setForm((p) => ({ ...p, receiverOrganizationName: e.target.value }))} placeholder="NGO/Organization Name" />
                 <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm" value={form.peopleServed} onChange={(e) => setForm((p) => ({ ...p, peopleServed: e.target.value }))} placeholder="People Served" />
                 <input className="h-11 rounded-xl border border-[#e8e0cf] px-3 text-sm" value={form.totalFoodReceived} onChange={(e) => setForm((p) => ({ ...p, totalFoodReceived: e.target.value }))} placeholder="Total Food Received" />
@@ -244,4 +269,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

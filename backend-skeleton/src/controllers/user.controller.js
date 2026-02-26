@@ -25,7 +25,10 @@ const toAbsoluteImageUrl = (req, imagePath) => {
   if (!imagePath) return "";
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
   if (imagePath.startsWith("/")) {
-    const host = req.get("host");
+    const forwardedHost = req.headers["x-forwarded-host"];
+    const host =
+      (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ||
+      req.get("host");
     if (!host) return imagePath;
     const forwardedProto = req.headers["x-forwarded-proto"];
     const proto =
@@ -44,6 +47,19 @@ const toAvatarPath = (file) => {
   const markerIndex = normalizedPath.lastIndexOf(marker);
   if (markerIndex >= 0) return normalizedPath.slice(markerIndex);
   return `/uploads/profiles/${file.filename}`;
+};
+
+const resolveAvatarInput = (patch, file) => {
+  if (file) {
+    return toAvatarPath(file);
+  }
+  const directAvatar = patch.avatar ?? patch.profileImage ?? patch.profileImageUrl;
+  if (typeof directAvatar !== "string") return undefined;
+  const value = directAvatar.trim();
+  if (!value) return "";
+  if (value.startsWith("http://") || value.startsWith("https://")) return value;
+  if (value.startsWith("/")) return value;
+  return undefined;
 };
 
 async function getCurrentUserProfile(req, res) {
@@ -98,9 +114,8 @@ async function updateCurrentUserProfile(req, res) {
 
     Object.keys(update).forEach((key) => update[key] === undefined && delete update[key]);
 
-    if (req.file) {
-      update.avatar = toAvatarPath(req.file);
-    }
+    const avatarValue = resolveAvatarInput(patch, req.file);
+    if (avatarValue !== undefined) update.avatar = avatarValue;
 
     const user = await User.findByIdAndUpdate(req.user.id, update, { new: true }).lean();
     if (!user) return res.status(404).json({ message: "User not found." });

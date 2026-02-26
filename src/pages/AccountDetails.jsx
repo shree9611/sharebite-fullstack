@@ -9,16 +9,26 @@ const AccountDetails = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const role = location.state?.role;
+    const storedAccountData = (() => {
+      try {
+        return JSON.parse(sessionStorage.getItem("sharebite.accountData") || "null");
+      } catch {
+        return null;
+      }
+    })();
     const { t } = useLanguage();
     const inputRefs = useRef([]);
-    const [fullName, setFullName] = useState("");
-    const [emailValue, setEmailValue] = useState("");
-    const [phoneValue, setPhoneValue] = useState("");
+    const profileImageInputRef = useRef(null);
+    const [fullName, setFullName] = useState(storedAccountData?.name || "");
+    const [emailValue, setEmailValue] = useState(storedAccountData?.email || "");
+    const [phoneValue, setPhoneValue] = useState(storedAccountData?.phone || "");
     const [passwordValue, setPasswordValue] = useState("");
     const [confirmValue, setConfirmValue] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [submitError, setSubmitError] = useState("");
+    const [profileImageDataUrl, setProfileImageDataUrl] = useState(storedAccountData?.profileImageDataUrl || "");
+    const [profileImageError, setProfileImageError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [touched, setTouched] = useState({
       fullName: false,
@@ -60,9 +70,58 @@ const AccountDetails = () => {
       Volunteer: "admin",
     };
 
+    const dataUrlToFile = (dataUrl, fallbackName = "profile-image") => {
+      if (!dataUrl || !dataUrl.startsWith("data:image/")) return null;
+      const [meta, base64Payload] = dataUrl.split(",");
+      if (!meta || !base64Payload) return null;
+      const mimeMatch = meta.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64$/i);
+      const mime = mimeMatch?.[1] || "image/jpeg";
+      const ext = mime.split("/")[1] || "jpg";
+      const binary = atob(base64Payload);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return new File([bytes], `${fallbackName}.${ext}`, { type: mime });
+    };
+
+    const handleProfileImageChange = (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      setProfileImageError("");
+      if (!file.type.startsWith("image/")) {
+        setProfileImageError("Please select a valid image file.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setProfileImageError("Image must be 5 MB or smaller.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || "");
+        if (!result.startsWith("data:image/")) {
+          setProfileImageError("Unable to preview this image.");
+          return;
+        }
+        setProfileImageDataUrl(result);
+      };
+      reader.onerror = () => setProfileImageError("Unable to read image.");
+      reader.readAsDataURL(file);
+    };
+
+    const handleRemoveProfileImage = () => {
+      setProfileImageDataUrl("");
+      setProfileImageError("");
+      if (profileImageInputRef.current) {
+        profileImageInputRef.current.value = "";
+      }
+    };
+
     const handleContinue = async (event) => {
       event.preventDefault();
       setSubmitError("");
+      setProfileImageError("");
       setTouched({
         fullName: true,
         email: true,
@@ -88,6 +147,8 @@ const AccountDetails = () => {
         email: emailValue.trim(),
         phone: phoneValue.trim(),
         role,
+        profileImage: profileImageDataUrl,
+        profileImageUrl: profileImageDataUrl,
       });
       if (profile) {
         setCurrentProfile(profile);
@@ -95,8 +156,10 @@ const AccountDetails = () => {
       const accountData = {
         name: fullName.trim(),
         email: emailValue.trim(),
+        phone: phoneValue.trim(),
         password: passwordValue,
         role: userRole,
+        profileImageDataUrl,
       };
       sessionStorage.setItem("sharebite.accountData", JSON.stringify(accountData));
       sessionStorage.setItem("sharebite.roleLabel", role || "Receiver");
@@ -104,10 +167,19 @@ const AccountDetails = () => {
       if (role === "Volunteer") {
         setIsSubmitting(true);
         try {
+          const payload = new FormData();
+          payload.append("name", accountData.name);
+          payload.append("email", accountData.email);
+          payload.append("password", accountData.password);
+          payload.append("role", accountData.role);
+          payload.append("phone", accountData.phone);
+          if (profileImageDataUrl) {
+            const imageFile = dataUrlToFile(profileImageDataUrl, "volunteer-avatar");
+            if (imageFile) payload.append("avatar", imageFile);
+          }
           const response = await fetch(buildApiUrl("/api/auth/register"), {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(accountData),
+            body: payload,
           });
           const data = await response.json().catch(() => ({}));
           if (!response.ok) {
@@ -136,7 +208,7 @@ const AccountDetails = () => {
     };
 
   return (
-    <div className="bg-transparent min-h-screen text-[#111815] transition-colors duration-300">
+    <div className="bg-[#fbf6ea] min-h-screen text-[#111815] transition-colors duration-300">
 
     {/* Header */}
 <header className="flex items-center justify-between border-b border-[#e0e5e3] px-4 sm:px-6 md:px-10 py-5 bg-white">
@@ -176,6 +248,48 @@ const AccountDetails = () => {
 
           {/* Form */}
           <form className="flex flex-col gap-4 sm:gap-5" onSubmit={handleContinue}>
+            <div className="rounded-xl border border-[#e6eee9] bg-[#f8fbf9] p-4">
+              <p className="text-sm font-semibold text-[#111815] mb-3">Profile Image</p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="h-20 w-20 rounded-full overflow-hidden border border-[#dce8e1] bg-white flex items-center justify-center">
+                  {profileImageDataUrl ? (
+                    <img src={profileImageDataUrl} alt="Profile preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-[#91a59d]">account_circle</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    ref={profileImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProfileImageChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => profileImageInputRef.current?.click()}
+                    className="rounded-xl bg-[#12c76a] px-4 py-2 text-xs font-bold text-white hover:bg-[#0fbf63]"
+                  >
+                    {profileImageDataUrl ? "Change Image" : "Upload Profile Image"}
+                  </button>
+                  {profileImageDataUrl ? (
+                    <button
+                      type="button"
+                      onClick={handleRemoveProfileImage}
+                      className="rounded-xl border border-red-200 px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50"
+                    >
+                      Remove Image
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              {profileImageError ? (
+                <p className="mt-2 text-[11px] text-red-600">{profileImageError}</p>
+              ) : (
+                <p className="mt-2 text-[11px] text-[#8aa19a]">JPG/PNG/WebP up to 5 MB.</p>
+              )}
+            </div>
 
             {/* Full Name */}
             <div>

@@ -51,7 +51,49 @@ const normalizeRole = (role) => {
   return null;
 };
 
-const issueAuthResponse = (res, user, statusCode = 200) => {
+const toAbsoluteImageUrl = (req, imagePath) => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
+  if (imagePath.startsWith("data:")) return imagePath;
+  if (!imagePath.startsWith("/")) return imagePath;
+  const forwardedHost = req.headers["x-forwarded-host"];
+  const host =
+    (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ||
+    req.get("host");
+  if (!host) return imagePath;
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const proto =
+    process.env.NODE_ENV === "production"
+      ? "https"
+      : (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || req.protocol || "http";
+  return `${proto}://${host}${encodeURI(imagePath)}`;
+};
+
+const sanitizeProfileImageDataUrl = (value) => {
+  const input = String(value || "").trim();
+  if (!input) return "";
+  if (/^data:image\/[a-zA-Z0-9.+-]+;base64,/i.test(input) && input.length <= 7_000_000) {
+    return input;
+  }
+  if (input.startsWith("http://") || input.startsWith("https://")) {
+    return input;
+  }
+  if (input.startsWith("/")) {
+    return input;
+  }
+  return "";
+};
+
+const toAvatarPath = (file) => {
+  if (!file?.path) return "";
+  const normalizedPath = String(file.path).replace(/\\/g, "/");
+  const marker = "/uploads/";
+  const markerIndex = normalizedPath.lastIndexOf(marker);
+  if (markerIndex >= 0) return normalizedPath.slice(markerIndex);
+  return `/uploads/profiles/${file.filename}`;
+};
+
+const issueAuthResponse = (req, res, user, statusCode = 200) => {
   const now = Math.floor(Date.now() / 1000);
   const token = signToken({
     sub: String(user._id),
@@ -69,6 +111,9 @@ const issueAuthResponse = (res, user, statusCode = 200) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      phone: user.phone || "",
+      avatar: user.avatar || "",
+      avatarUrl: toAbsoluteImageUrl(req, user.avatar || ""),
     },
   });
 };
@@ -87,6 +132,9 @@ const register = async (req, res) => {
       locationName,
       latitude,
       longitude,
+      profileImageDataUrl,
+      profileImage,
+      avatar,
     } = req.body || {};
 
     const normalizedRole = normalizeRole(role);
@@ -120,9 +168,12 @@ const register = async (req, res) => {
       location: hasValidCoords
         ? { type: "Point", coordinates: [lng, lat] }
         : { type: "Point", coordinates: [0, 0] },
+      avatar: req.file
+        ? toAvatarPath(req.file)
+        : sanitizeProfileImageDataUrl(profileImageDataUrl || profileImage || avatar),
     });
 
-    return issueAuthResponse(res, user, 201);
+    return issueAuthResponse(req, res, user, 201);
   } catch (error) {
     return res.status(500).json({ message: "Server error while creating account. Please try again." });
   }
@@ -141,7 +192,7 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    return issueAuthResponse(res, user, 200);
+    return issueAuthResponse(req, res, user, 200);
   } catch (error) {
     return res.status(500).json({ message: "Server error while logging in. Please try again." });
   }

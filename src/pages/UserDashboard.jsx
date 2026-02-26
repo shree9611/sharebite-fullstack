@@ -68,6 +68,15 @@ const resolveDonationImage = (item) => {
   return `${API_BASE}${imagePath}`;
 };
 
+const resolveProfileImage = (profile) => {
+  const image = profile?.profileImageUrl || profile?.profileImage || "";
+  if (!image) return "";
+  if (image.startsWith("http://") || image.startsWith("https://")) return image;
+  if (image.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(image) ? image : "";
+  if (image.startsWith("/")) return `${API_BASE}${image}`;
+  return "";
+};
+
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -217,14 +226,22 @@ const UserDashboard = () => {
               onClick={() => setShowProfile((prev) => !prev)}
               type="button"
             >
-              <span className="material-symbols-outlined">account_circle</span>
+              {resolveProfileImage(profile) ? (
+                <img src={resolveProfileImage(profile)} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined">account_circle</span>
+              )}
             </button>
             {showProfile && (
               <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden">
                 <div className="h-16 bg-[#f8efe3]" />
                 <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                   <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
-                    <span className="material-symbols-outlined text-3xl">account_circle</span>
+                    {resolveProfileImage(profile) ? (
+                      <img src={resolveProfileImage(profile)} alt="Profile" className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-3xl">account_circle</span>
+                    )}
                   </div>
                   <p className="mt-2 font-bold text-[#111814]">{profile?.name || t("User Name")}</p>
                   <p className="text-xs text-[#7a9087]">{profile?.email || t("User Email")}</p>

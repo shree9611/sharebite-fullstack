@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { API_BASE_URL, apiFetchWithFallback, buildApiUrl } from "../lib/api.js";
@@ -8,12 +8,46 @@ import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 const resolveDonationImage = (item) => {
-  const imageUrl = item?.imageUrl || item?.image || "";
+  const imageUrl = item?.imageUrl || item?.image || item?.foodImage || "";
   if (!imageUrl) return "";
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return imageUrl;
   if (imageUrl.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imageUrl) ? imageUrl : "";
   if (imageUrl.startsWith("/")) return `${API_BASE_URL}${imageUrl}`;
   return "";
+};
+
+const resolveProfileImage = (profile) => {
+  const image = profile?.profileImageUrl || profile?.profileImage || "";
+  if (!image) return "";
+  if (image.startsWith("http://") || image.startsWith("https://")) return image;
+  if (image.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(image) ? image : "";
+  if (image.startsWith("/")) return `${API_BASE_URL}${image}`;
+  return "";
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "Not available";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not available";
+  return date.toLocaleString();
+};
+
+const normalizeWorkflowStatus = (donation, requests = []) => {
+  const hasDeliveredRequest = requests.some(
+    (row) =>
+      String(row?.deliveryStatus || "").toLowerCase() === "delivered" ||
+      String(row?.deliveryStatus || "").toLowerCase() === "completed"
+  );
+  if (hasDeliveredRequest || String(donation?.status || "").toLowerCase() === "delivered") {
+    return "Delivered";
+  }
+  const hasApproved = requests.some((row) => String(row?.status || "").toLowerCase() === "approved");
+  if (hasApproved) return "Approved";
+  const hasRejected = requests.some((row) =>
+    ["declined", "rejected"].includes(String(row?.status || "").toLowerCase())
+  );
+  if (hasRejected) return "Rejected";
+  return "Pending";
 };
 
 const DonateFood = () => {
@@ -39,7 +73,10 @@ const DonateFood = () => {
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
   const [recentDonations, setRecentDonations] = useState([]);
+  const [approvalRequests, setApprovalRequests] = useState([]);
   const [isRecentLoading, setIsRecentLoading] = useState(false);
+  const [managementError, setManagementError] = useState("");
+  const [activeApprovalId, setActiveApprovalId] = useState("");
   const [profile, setProfile] = useState(() => getCurrentProfile());
   const hasGpsLocation =
     formData.pickupLatitude !== null && formData.pickupLongitude !== null;
@@ -153,28 +190,51 @@ const DonateFood = () => {
     setProfile(getCurrentProfile());
   }, []);
 
-  useEffect(() => {
-    const loadRecentDonations = async () => {
-      const token = localStorage.getItem("sharebite.token");
-      if (!token) return;
+  const loadManagementData = useCallback(async () => {
+    const token = localStorage.getItem("sharebite.token");
+    if (!token) return;
 
-      setIsRecentLoading(true);
-      try {
-        const response = await apiFetchWithFallback("/api/donations/mine", {
+    setIsRecentLoading(true);
+    setManagementError("");
+    try {
+      const [donationsResponse, requestsResponse] = await Promise.all([
+        apiFetchWithFallback("/api/donations/mine", {
           headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json().catch(() => []);
-        if (!response.ok || !Array.isArray(data)) {
-          return;
-        }
-        setRecentDonations(data);
-      } finally {
-        setIsRecentLoading(false);
-      }
-    };
+        }),
+        apiFetchWithFallback("/api/requests", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-    loadRecentDonations();
+      const donationsData = await donationsResponse.json().catch(() => []);
+      const requestsData = await requestsResponse.json().catch(() => []);
+
+      if (!donationsResponse.ok || !Array.isArray(donationsData)) {
+        throw new Error("Failed to load donation history.");
+      }
+
+      setRecentDonations(donationsData);
+      setApprovalRequests(Array.isArray(requestsData) ? requestsData : []);
+    } catch (error) {
+      setManagementError(error.message || "Unable to load donation management details.");
+    } finally {
+      setIsRecentLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadManagementData();
+  }, [loadManagementData]);
+
+  useEffect(() => {
+    const onFocus = () => loadManagementData();
+    const intervalId = window.setInterval(() => loadManagementData(), 8000);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [loadManagementData]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -247,9 +307,7 @@ const DonateFood = () => {
       }
 
       setSubmitSuccess(data?.message || "Donation submitted successfully.");
-      if (data && typeof data === "object") {
-        setRecentDonations((prev) => [data, ...prev]);
-      }
+      await loadManagementData();
       setFormData({
         title: "",
         quantity: "",
@@ -266,6 +324,47 @@ const DonateFood = () => {
       setSubmitError(error.message || "Unable to connect to backend.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const requestsByDonation = useMemo(() => {
+    const grouped = {};
+    for (const request of approvalRequests) {
+      const donationId = String(request?.donation?._id || request?.donationId || "");
+      if (!donationId) continue;
+      if (!grouped[donationId]) grouped[donationId] = [];
+      grouped[donationId].push(request);
+    }
+    return grouped;
+  }, [approvalRequests]);
+
+  const handleApprovalAction = async (requestId, action) => {
+    const token = localStorage.getItem("sharebite.token");
+    if (!token) {
+      setManagementError("Please login first.");
+      return;
+    }
+
+    setActiveApprovalId(requestId);
+    setManagementError("");
+    try {
+      const path =
+        action === "approve"
+          ? `/api/approvals/${requestId}`
+          : `/api/approvals/${requestId}/decline`;
+      const response = await apiFetchWithFallback(path, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to update request status.");
+      }
+      await loadManagementData();
+    } catch (error) {
+      setManagementError(error.message || "Unable to update request status.");
+    } finally {
+      setActiveApprovalId("");
     }
   };
   return (
@@ -286,18 +385,26 @@ const DonateFood = () => {
                   onClick={() => setShowProfile((prev) => !prev)}
                   type="button"
                 >
-                  <span className="material-symbols-outlined text-[18px]">
-                    account_circle
-                  </span>
+                  {resolveProfileImage(profile) ? (
+                    <img src={resolveProfileImage(profile)} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-[18px]">
+                      account_circle
+                    </span>
+                  )}
                 </button>
                 {showProfile && (
                   <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
                     <div className="h-16 bg-[#f8efe3]" />
                     <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                       <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
-                        <span className="material-symbols-outlined text-3xl">
-                          account_circle
-                        </span>
+                        {resolveProfileImage(profile) ? (
+                          <img src={resolveProfileImage(profile)} alt="Profile" className="h-full w-full rounded-full object-cover" />
+                        ) : (
+                          <span className="material-symbols-outlined text-3xl">
+                            account_circle
+                          </span>
+                        )}
                       </div>
                       <p className="mt-2 font-bold text-[#111814]">
                         {profile?.name || t("User Name")}
@@ -656,53 +763,113 @@ const DonateFood = () => {
               {isRecentLoading ? (
                 <p className="text-xs text-[#7a9087] mt-4">Loading your donations...</p>
               ) : null}
+              {managementError ? (
+                <p className="text-xs text-red-600 mt-4">{managementError}</p>
+              ) : null}
 
               {!isRecentLoading && recentDonations.length === 0 ? (
                 <p className="text-xs text-[#7a9087] mt-4">
-                  Your donated food images will appear here after you submit.
+                  No donation history found yet. Saved donations will appear here and remain until manually removed.
                 </p>
               ) : null}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                {recentDonations.map((item) => (
-                  <div key={item?._id || `${item?.foodName}-${item?.createdAt}`} className="rounded-xl border border-[#e6eee9] overflow-hidden shadow-sm bg-[#fffef9]">
-                    <div className="h-32 bg-[#f3f6f4]">
-                      {resolveDonationImage(item) ? (
-                        <img
-                          src={resolveDonationImage(item)}
-                          alt={item?.foodName || "Donated food"}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center text-[#9fb3aa]">
-                          <span className="material-symbols-outlined text-3xl">photo_camera</span>
+              <div className="mt-4 space-y-4">
+                {recentDonations.map((item) => {
+                  const donationId = String(item?._id || "");
+                  const relatedRequests = requestsByDonation[donationId] || [];
+                  const workflowStatus = normalizeWorkflowStatus(item, relatedRequests);
+                  const statusClass =
+                    workflowStatus === "Delivered"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : workflowStatus === "Approved"
+                        ? "bg-blue-50 text-blue-700 border-blue-200"
+                        : workflowStatus === "Rejected"
+                          ? "bg-red-50 text-red-700 border-red-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200";
+
+                  return (
+                    <div key={donationId || `${item?.foodName}-${item?.createdAt}`} className="rounded-xl border border-[#e6eee9] bg-[#fffef9] p-4 sm:p-5">
+                      <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="h-36 w-full lg:w-52 rounded-xl bg-[#f3f6f4] overflow-hidden border border-[#e6eee9]">
+                          {resolveDonationImage(item) ? (
+                            <img
+                              src={resolveDonationImage(item)}
+                              alt={item?.foodName || "Donated food"}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-[#9fb3aa]">
+                              <span className="material-symbols-outlined text-3xl">photo_camera</span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold text-[#111814]">
-                        {item?.foodName || "Food Donation"}
-                        </p>
-                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                          item?.status === "active"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : item?.status === "claimed"
-                              ? "bg-orange-50 text-orange-700"
-                              : "bg-slate-100 text-slate-600"
-                        }`}>
-                          {item?.status || "active"}
-                        </span>
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h4 className="text-base font-extrabold text-[#111814]">{item?.foodName || "Food Donation"}</h4>
+                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${statusClass}`}>
+                              {workflowStatus}
+                            </span>
+                          </div>
+                          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-4 text-xs text-[#5f6d66]">
+                            <p><strong>Quantity:</strong> {item?.quantity || "-"}</p>
+                            <p><strong>Status:</strong> {item?.status || "active"}</p>
+                            <p><strong>Location:</strong> {item?.location || "Location not provided"}</p>
+                            <p><strong>Date:</strong> {formatDateTime(item?.createdAt)}</p>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-[11px] text-[#7a9087] mt-1">
-                        Remaining Quantity: {item?.quantity || "-"}
-                      </p>
-                      <p className="text-[11px] text-[#7a9087]">
-                        {item?.location || "Location not provided"}
-                      </p>
+
+                      <div className="mt-4 rounded-xl border border-[#e8efe9] bg-white p-3">
+                        <p className="text-xs font-bold text-[#2e3f36]">Request & Approval History</p>
+                        {relatedRequests.length === 0 ? (
+                          <p className="text-xs text-[#7a9087] mt-2">Pending: no receiver requests yet.</p>
+                        ) : (
+                          <div className="mt-2 space-y-2">
+                            {relatedRequests.map((requestItem) => {
+                              const isPending = String(requestItem?.status || "").toLowerCase() === "pending";
+                              const isBusy = activeApprovalId === requestItem?._id;
+                              return (
+                                <div key={requestItem?._id} className="rounded-lg border border-[#eef4f1] p-3">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <p className="text-xs font-semibold text-[#24352c]">
+                                      Receiver: {requestItem?.receiver?.name || "Receiver"} | Volunteer: {requestItem?.volunteer?.name || "Not assigned"}
+                                    </p>
+                                    <span className="text-[11px] font-semibold text-[#60756b]">
+                                      {String(requestItem?.status || "pending").toUpperCase()} / {String(requestItem?.deliveryStatus || "unassigned").toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-[#6b7f77] mt-1">
+                                    Delivery Location: {requestItem?.deliveryAddress || requestItem?.requestedLocation || "Not provided"}
+                                  </p>
+                                  {isPending ? (
+                                    <div className="mt-2 flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleApprovalAction(requestItem?._id, "reject")}
+                                        disabled={isBusy}
+                                        className="rounded-lg border border-red-200 px-3 py-1.5 text-[11px] font-bold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                                      >
+                                        {isBusy ? "Please wait..." : "Reject"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleApprovalAction(requestItem?._id, "approve")}
+                                        disabled={isBusy}
+                                        className="rounded-lg bg-[#12c76a] px-3 py-1.5 text-[11px] font-bold text-white hover:bg-[#0fbf63] disabled:opacity-60"
+                                      >
+                                        {isBusy ? "Please wait..." : "Approve"}
+                                      </button>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
