@@ -65,6 +65,7 @@ const DonateFood = () => {
   const [isRecentLoading, setIsRecentLoading] = useState(false);
   const [managementError, setManagementError] = useState("");
   const [activeApprovalId, setActiveApprovalId] = useState("");
+  const [showDonationManagement, setShowDonationManagement] = useState(false);
   const [profile, setProfile] = useState(() => getCurrentProfile());
   const hasGpsLocation =
     formData.pickupLatitude !== null && formData.pickupLongitude !== null;
@@ -370,7 +371,7 @@ const DonateFood = () => {
               <div className="relative">
                 <button
                   className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
-                  onClick={() => setShowProfile((prev) => !prev)}
+                  onClick={() => navigate("/profile")}
                   type="button"
                 >
                   {resolveProfileImage(profile) ? (
@@ -739,30 +740,44 @@ const DonateFood = () => {
             </p>
 
             <div className="mt-8 bg-white rounded-2xl border border-[#e6eee9] p-5 sm:p-6">
-              <div className="flex items-center gap-2 pb-4 border-b border-[#eef4f1]">
-                <span className="material-symbols-outlined text-[#12c76a] text-[18px]">
-                  photo_library
-                </span>
+              <button
+                type="button"
+                onClick={() => setShowDonationManagement((prev) => !prev)}
+                className="w-full flex items-center justify-between gap-3 pb-4 border-b border-[#eef4f1]"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#12c76a] text-[18px]">
+                    photo_library
+                  </span>
                   <h3 className="text-sm font-bold text-[#111814]">
-                  Donation Management
-                </h3>
-              </div>
+                    Donation Management
+                  </h3>
+                  <span className="text-[11px] font-semibold text-[#6b7f77]">
+                    ({recentDonations.length})
+                  </span>
+                </div>
+                <span className="material-symbols-outlined text-[#6b7f77] text-[20px]">
+                  {showDonationManagement ? "expand_less" : "expand_more"}
+                </span>
+              </button>
 
-              {isRecentLoading ? (
-                <p className="text-xs text-[#7a9087] mt-4">Loading your donations...</p>
-              ) : null}
-              {managementError ? (
-                <p className="text-xs text-red-600 mt-4">{managementError}</p>
-              ) : null}
+              {showDonationManagement ? (
+                <>
+                  {isRecentLoading ? (
+                    <p className="text-xs text-[#7a9087] mt-4">Loading your donations...</p>
+                  ) : null}
+                  {managementError ? (
+                    <p className="text-xs text-red-600 mt-4">{managementError}</p>
+                  ) : null}
 
-              {!isRecentLoading && recentDonations.length === 0 ? (
-                <p className="text-xs text-[#7a9087] mt-4">
-                  No donation history found yet. Saved donations will appear here and remain until manually removed.
-                </p>
-              ) : null}
+                  {!isRecentLoading && recentDonations.length === 0 ? (
+                    <p className="text-xs text-[#7a9087] mt-4">
+                      No donation history found yet. Saved donations will appear here and remain until manually removed.
+                    </p>
+                  ) : null}
 
-              <div className="mt-4 space-y-4">
-                {recentDonations.map((item) => {
+                  <div className="mt-4 space-y-4">
+                    {recentDonations.map((item) => {
                   const donationId = String(item?._id || "");
                   const relatedRequests = requestsByDonation[donationId] || [];
                   const workflowStatus = normalizeWorkflowStatus(item, relatedRequests);
@@ -857,8 +872,14 @@ const DonateFood = () => {
                       </div>
                     </div>
                   );
-                })}
-              </div>
+                    })}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-[#7a9087] mt-4">
+                  Click Donation Management to view your already donated food list.
+                </p>
+              )}
             </div>
           </div>
             </div>

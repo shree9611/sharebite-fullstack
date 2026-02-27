@@ -145,7 +145,7 @@ const Login = () => {
     setResetSuccess(true);
   };
   return (
-    <div className="min-h-screen bg-transparent flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
 
       {/* NAVBAR */}
       <header className="bg-white border-b px-4 sm:px-6 md:px-10 py-5 flex items-center justify-between">

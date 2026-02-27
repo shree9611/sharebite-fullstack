@@ -130,7 +130,7 @@ const ReceiverFeedback = () => {
     }
   };
   return (
-    <div className="bg-transparent min-h-screen text-[#111815]">
+    <div className="bg-white min-h-screen text-[#111815]">
       <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
         <div className="flex h-full grow flex-col">
           <div className="px-4 sm:px-6 md:px-10 flex justify-center py-5 bg-white border-b border-solid border-[#f0f4f3]">
@@ -145,7 +145,7 @@ const ReceiverFeedback = () => {
                 <div className="flex flex-1 justify-end items-center relative">
                   <button
                     className="flex items-center justify-center rounded-full h-9 w-9 bg-[#f0f4f2] text-[#111814]"
-                    onClick={() => setShowProfile((prev) => !prev)}
+                    onClick={() => navigate("/profile")}
                     type="button"
                   >
                     <span className="material-symbols-outlined text-[20px]">
@@ -262,7 +262,7 @@ const ReceiverFeedback = () => {
                   <h2 className="text-[#111815] text-[22px] font-bold leading-tight tracking-[-0.015em] pb-4">
                     {t("Food Quality Question")}
                   </h2>
-                  <div className="flex flex-wrap gap-4 p-4 bg-background-light rounded-lg items-center">
+                  <div className="flex flex-wrap gap-4 p-4 bg-white rounded-lg items-center">
                     <div className="flex gap-1">
                       {[1, 2, 3, 4, 5].map((value) => (
                         <button
@@ -290,7 +290,7 @@ const ReceiverFeedback = () => {
                   <h2 className="text-[#111815] text-[22px] font-bold leading-tight tracking-[-0.015em] pb-4">
                     {t("Delivery Service")}
                   </h2>
-                  <div className="flex flex-wrap gap-4 p-4 bg-background-light rounded-lg items-center">
+                  <div className="flex flex-wrap gap-4 p-4 bg-white rounded-lg items-center">
                     <div className="flex gap-1">
                       {[1, 2, 3, 4, 5].map((value) => (
                         <button
@@ -319,7 +319,7 @@ const ReceiverFeedback = () => {
                     {t("Add Thoughts")}
                   </label>
                   <textarea
-                    className="w-full min-h-[160px] p-4 rounded-lg bg-background-light border-none text-[#111815] placeholder-[#618979] focus:ring-2 focus:ring-green-300 focus:outline-none"
+                    className="w-full min-h-[160px] p-4 rounded-lg bg-white border-none text-[#111815] placeholder-[#618979] focus:ring-2 focus:ring-green-300 focus:outline-none"
                     placeholder={t("Thoughts Placeholder")}
                     value={comments}
                     onChange={(event) => setComments(event.target.value)}
@@ -333,7 +333,7 @@ const ReceiverFeedback = () => {
                     {t("Upload Photo Hint")}
                   </p>
                   <div
-                    className="border-2 border-dashed border-[#dbe6e1] rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center gap-3 hover:border-primary transition-colors cursor-pointer bg-background-light/50"
+                    className="border-2 border-dashed border-[#dbe6e1] rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center gap-3 hover:border-primary transition-colors cursor-pointer bg-white/50"
                     onClick={handlePhotoClick}
                   >
                     {photoPreview ? (
@@ -368,7 +368,7 @@ const ReceiverFeedback = () => {
                   {selectedRequest?.logistics === "delivery" ? (
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
-                        className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-background-light border-none"
+                        className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-white border-none"
                         type="checkbox"
                         checked={deliveryReached}
                         onChange={(event) => setDeliveryReached(event.target.checked)}
@@ -381,7 +381,7 @@ const ReceiverFeedback = () => {
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       defaultChecked
-                      className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-background-light border-none"
+                      className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-white border-none"
                       type="checkbox"
                     />
                     <span className="text-[#111815] text-sm">

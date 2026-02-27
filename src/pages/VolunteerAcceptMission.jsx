@@ -298,7 +298,7 @@ const VolunteerAcceptMission = () => {
           <div className="relative">
             <button
               className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
-              onClick={() => setShowProfile((prev) => !prev)}
+              onClick={() => navigate("/profile")}
               type="button"
             >
               {resolveProfileImage(profile) ? (

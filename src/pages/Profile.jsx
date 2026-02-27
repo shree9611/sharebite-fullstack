@@ -291,7 +291,7 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#fbf6ea] px-4 py-10 sm:px-6 lg:px-10">
+      <div className="min-h-screen bg-white px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-5xl rounded-2xl border border-[#ece6d7] bg-white p-6 text-sm text-[#6f7368] shadow-sm">
           Loading profile...
         </div>
@@ -300,7 +300,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbf6ea] px-4 py-10 sm:px-6 lg:px-10">
+    <div className="min-h-screen bg-white px-4 py-10 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-6xl rounded-2xl border border-[#ece6d7] bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-extrabold text-[#2f2d26]">Profile</h1>

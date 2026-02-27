@@ -188,7 +188,7 @@ const UserDashboard = () => {
 
   if (!showReceiver) {
     return (
-      <div className="bg-transparent text-[#111814] min-h-screen">
+      <div className="bg-white text-[#111814] min-h-screen">
         <div className="min-h-screen flex items-center justify-center p-6">
           <div className="bg-white border border-[#dbe6e0] rounded-xl p-6 max-w-md text-center shadow-sm">
             <h2 className="text-lg font-bold">{t("Dashboard Unavailable")}</h2>
@@ -214,7 +214,7 @@ const UserDashboard = () => {
           <div className="flex flex-1 justify-end relative">
             <button
               className="flex cursor-pointer items-center justify-center rounded-full h-9 w-9 bg-[#f0f4f2] text-[#111814]"
-              onClick={() => setShowProfile((prev) => !prev)}
+              onClick={() => navigate("/profile")}
               type="button"
             >
               {resolveProfileImage(profile) ? (

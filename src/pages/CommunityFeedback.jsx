@@ -75,7 +75,7 @@ const CommunityFeedback = () => {
     ));
   };
   return (
-    <div className="bg-transparent min-h-screen">
+    <div className="bg-white min-h-screen">
       <div className="flex flex-col min-h-screen">
         <main className="flex-1">
           <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
@@ -89,7 +89,7 @@ const CommunityFeedback = () => {
               <div className="relative">
                 <button
                   className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
-                  onClick={() => setShowProfile((prev) => !prev)}
+                  onClick={() => navigate("/profile")}
                   type="button"
                 >
                   {resolveProfileImage(profile) ? (

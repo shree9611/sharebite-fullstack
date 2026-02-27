@@ -7,7 +7,7 @@ export default function Disclaimer() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-transparent text-[#111814]">
+    <div className="min-h-screen bg-white text-[#111814]">
       <div className="min-h-screen w-full">
         <header className="bg-white border-b border-[#e6eee9] px-4 sm:px-6 md:px-10 py-5">
           <div className="max-w-[1100px] mx-auto flex items-center justify-between">

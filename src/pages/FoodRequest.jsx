@@ -157,7 +157,7 @@ const FoodRequest = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-transparent">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-white">
       <div className="max-w-2xl w-full py-8 sm:py-12">
         <div className="text-center mb-8">
           <div className="flex justify-center items-center gap-2 mb-2">

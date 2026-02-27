@@ -126,7 +126,7 @@ const MyRequests = () => {
           <div className="flex items-center gap-4 relative">
             <button
               className="flex items-center justify-center rounded-full h-10 w-10 bg-[#f0f4f2] text-[#111814]"
-              onClick={() => setShowProfile((prev) => !prev)}
+              onClick={() => navigate("/profile")}
               type="button"
             >
               {resolveProfileImage(profile) ? (
