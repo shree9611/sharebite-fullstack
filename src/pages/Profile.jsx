@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetchWithFallback, getAuthHeaders, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
@@ -41,11 +41,13 @@ const Profile = () => {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [hasImageLoadError, setHasImageLoadError] = useState(false);
+  const [showAvatarDialog, setShowAvatarDialog] = useState(false);
   const [isPasswordPanelOpen, setIsPasswordPanelOpen] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordState, setPasswordState] = useState({ currentPassword: "", newPassword: "" });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const avatarInputRef = useRef(null);
 
   const isDonor = form.accountType === "Donor";
   const isReceiver = form.accountType === "Receiver";
@@ -179,6 +181,11 @@ const Profile = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleOpenFilePicker = () => {
+    setShowAvatarDialog(false);
+    avatarInputRef.current?.click();
+  };
+
   const handleSave = async () => {
     setError("");
     setSuccess("");
@@ -310,7 +317,13 @@ const Profile = () => {
     <div className="min-h-screen bg-[#f4f5f2] px-4 py-8 sm:px-6 md:py-10 lg:px-10">
       <div className="mx-auto max-w-5xl rounded-3xl border border-[#dde7dc] bg-white p-5 shadow-[0_20px_50px_-30px_rgba(24,66,33,0.35)] sm:p-8">
         <div className="flex flex-col items-center text-center">
-          <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-white bg-[#f3f7f2] shadow-md">
+          <button
+            type="button"
+            onClick={() => setShowAvatarDialog(true)}
+            className="h-28 w-28 overflow-hidden rounded-full border-4 border-white bg-[#f3f7f2] shadow-md transition hover:opacity-90"
+            disabled={isSaving}
+            title="Edit profile image"
+          >
             {profileImageSrc ? (
               <img
                 src={profileImageSrc}
@@ -319,25 +332,24 @@ const Profile = () => {
                 onError={() => setHasImageLoadError(true)}
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-[#809280]">
+              <div className="flex h-full w-full items-center justify-center text-[#809280]">
                 <span className="material-symbols-outlined text-4xl">account_circle</span>
               </div>
             )}
-          </div>
+          </button>
           <h1 className="mt-4 text-2xl font-extrabold text-[#1f2b1f]">{form.fullName || "Profile"}</h1>
           <span className="mt-2 inline-flex items-center rounded-full bg-[#eaf7ef] px-3 py-1 text-[11px] font-bold text-[#1f8a49]">
             {verificationBadge}
           </span>
-          <div className="mt-4 w-full max-w-xs">
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-              className="w-full text-xs text-[#5d705f]"
-              onChange={handleImageChange}
-              disabled={isSaving}
-            />
-            <p className="mt-1 text-[11px] text-[#819182]">JPG, JPEG, PNG only. Max 5MB.</p>
-          </div>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+            className="hidden"
+            onChange={handleImageChange}
+            disabled={isSaving}
+          />
+          <p className="mt-3 text-[11px] text-[#819182]">Click avatar to edit image. JPG, JPEG, PNG only. Max 5MB.</p>
         </div>
 
         {error ? <p className="mt-5 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
@@ -564,6 +576,31 @@ const Profile = () => {
           </div>
         ) : null}
       </div>
+
+      {showAvatarDialog ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <h3 className="text-base font-bold text-[#1f2b1f]">Profile Image</h3>
+            <p className="mt-1 text-sm text-[#607060]">Choose what you want to do.</p>
+            <div className="mt-4 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={handleOpenFilePicker}
+                className="h-11 rounded-xl border border-[#2f9f6a] bg-white px-4 text-sm font-semibold text-[#2f9f6a] transition hover:bg-[#eaf7ef]"
+              >
+                Edit / Change Image
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAvatarDialog(false)}
+                className="h-11 rounded-xl bg-[#eef1f4] px-4 text-sm font-semibold text-[#374151] transition hover:bg-[#e2e8f0]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {showDeleteModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
