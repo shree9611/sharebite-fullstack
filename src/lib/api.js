@@ -11,6 +11,17 @@ const resolveApiBaseUrl = () => {
 export const API_BASE_URL = resolveApiBaseUrl();
 
 export const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
+
+export const resolveAssetUrl = (assetPath) => {
+  const rawValue = String(assetPath || "").trim();
+  if (!rawValue) return "";
+  if (rawValue.startsWith("http://") || rawValue.startsWith("https://")) return rawValue;
+  if (rawValue.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(rawValue) ? rawValue : "";
+  if (rawValue.startsWith("//")) return `https:${rawValue}`;
+  if (rawValue.startsWith("/")) return buildApiUrl(rawValue);
+  return buildApiUrl(`/${rawValue.replace(/^\/+/, "")}`);
+};
 
 export const apiFetchWithFallback = async (path, options = {}) => {
   const primaryUrl = buildApiUrl(path);

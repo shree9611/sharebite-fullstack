@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { API_BASE_URL, apiFetchWithFallback } from "../lib/api.js";
+import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
-
-const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 const stringifyLocation = (value) => {
   if (!value) return "";
@@ -34,28 +32,19 @@ const stringifyLocation = (value) => {
 };
 
 const resolveDonationImage = (mission) => {
-  const imageUrl =
+  return resolveAssetUrl(
     mission?.donation?.imageUrl ||
     mission?.donation?.image ||
     mission?.donation?.foodImage ||
     mission?.imageUrl ||
     mission?.image ||
     mission?.foodImage ||
-    "";
-  if (!imageUrl) return "";
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return imageUrl;
-  if (imageUrl.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imageUrl) ? imageUrl : "";
-  if (imageUrl.startsWith("/")) return `${API_BASE_URL}${imageUrl}`;
-  return "";
+    ""
+  );
 };
 
 const resolveProfileImage = (profile) => {
-  const image = profile?.profileImageUrl || profile?.profileImage || "";
-  if (!image) return "";
-  if (image.startsWith("http://") || image.startsWith("https://")) return image;
-  if (image.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(image) ? image : "";
-  if (image.startsWith("/")) return `${API_BASE_URL}${image}`;
-  return "";
+  return resolveAssetUrl(profile?.profileImageUrl || profile?.profileImage || "");
 };
 
 const normalizeDeliveryStatus = (value) => {

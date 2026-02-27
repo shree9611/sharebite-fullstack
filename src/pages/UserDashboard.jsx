@@ -1,13 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { API_BASE_URL, buildApiUrl } from "../lib/api.js";
+import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 
-const API_BASE = API_BASE_URL;
 const NEARBY_RADIUS_KM = 10;
-const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 const toNumber = (value) => {
   const parsed = Number(value);
@@ -51,30 +49,11 @@ const haversineKm = (from, to) => {
 };
 
 const resolveDonationImage = (item) => {
-  if (item?.imageUrl) {
-    if (item.imageUrl.startsWith("http://") || item.imageUrl.startsWith("https://")) {
-      return item.imageUrl;
-    }
-    if (item.imageUrl.startsWith("/")) {
-      return `${API_BASE}${item.imageUrl}`;
-    }
-  }
-  const imagePath = item?.image;
-  if (!imagePath) return "";
-  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-    return imagePath;
-  }
-  if (imagePath.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imagePath) ? imagePath : "";
-  return `${API_BASE}${imagePath}`;
+  return resolveAssetUrl(item?.imageUrl || item?.image || "");
 };
 
 const resolveProfileImage = (profile) => {
-  const image = profile?.profileImageUrl || profile?.profileImage || "";
-  if (!image) return "";
-  if (image.startsWith("http://") || image.startsWith("https://")) return image;
-  if (image.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(image) ? image : "";
-  if (image.startsWith("/")) return `${API_BASE}${image}`;
-  return "";
+  return resolveAssetUrl(profile?.profileImageUrl || profile?.profileImage || "");
 };
 
 const UserDashboard = () => {
@@ -107,27 +86,39 @@ const UserDashboard = () => {
     setProfile(getCurrentProfile());
   }, []);
 
-  useEffect(() => {
-    const loadDonations = async () => {
-      setIsLoading(true);
-      setLoadError("");
-      try {
-        const response = await fetch(buildApiUrl("/api/donations"));
-        const data = await response.json().catch(() => []);
-        if (!response.ok) {
-          throw new Error(data?.message || "Failed to load donations.");
-        }
-        const list = Array.isArray(data) ? data : [];
-        setDonations(list);
-      } catch (error) {
-        setLoadError(error.message || "Unable to load donations.");
-      } finally {
-        setIsLoading(false);
+  const loadDonations = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError("");
+    try {
+      const response = await fetch(buildApiUrl("/api/donations"), {
+        cache: "no-store",
+      });
+      const data = await response.json().catch(() => []);
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to load donations.");
       }
-    };
-
-    loadDonations();
+      const list = Array.isArray(data) ? data : [];
+      setDonations(list);
+    } catch (error) {
+      setLoadError(error.message || "Unable to load donations.");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadDonations();
+  }, [loadDonations]);
+
+  useEffect(() => {
+    const onFocus = () => loadDonations();
+    const intervalId = window.setInterval(() => loadDonations(), 10000);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [loadDonations]);
 
   const visibleDonations = useMemo(() => {
     if (!showNearby || !userCoords) return donations;

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetchWithFallback, getAuthHeaders } from "../lib/api.js";
+import { apiFetchWithFallback, getAuthHeaders, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, setCurrentProfile } from "../lib/profile.js";
 
@@ -100,8 +100,8 @@ const Profile = () => {
   }, [photoFile]);
 
   const profileImageSrc = useMemo(() => {
-    return photoPreview || form.profileImageUrl || "";
-  }, [photoPreview, form.profileImageUrl]);
+    return resolveAssetUrl(photoPreview || form.profileImageUrl || form.profileImage || "");
+  }, [photoPreview, form.profileImageUrl, form.profileImage]);
 
   const handleSave = async () => {
     setError("");
