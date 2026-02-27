@@ -1,5 +1,6 @@
 const { Donation } = require("../models/donation.model");
 const { Request } = require("../models/request.model");
+const { User } = require("../models/user.model");
 const { eventBus } = require("../events/bus");
 
 async function approveRequest(req, res) {
@@ -49,6 +50,23 @@ async function approveRequest(req, res) {
       requestId: request._id,
       status: "approved",
     });
+
+    if (request.logistics === "delivery") {
+      const donor = await User.findById(request.donorId).select("city state").lean();
+      const coordinates = Array.isArray(donation?.location?.coordinates)
+        ? donation.location.coordinates
+        : [];
+      eventBus.emit("delivery.request.approved", {
+        donorId: request.donorId,
+        receiverId: request.receiverId,
+        requestId: request._id,
+        donationId: donation._id,
+        city: donor?.city || "",
+        state: donor?.state || "",
+        lng: coordinates[0],
+        lat: coordinates[1],
+      });
+    }
 
     return res.json({
       message: donation.status === "active"

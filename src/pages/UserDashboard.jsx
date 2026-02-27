@@ -4,6 +4,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
+import NotificationBell from "../components/NotificationBell.jsx";
 
 const NEARBY_RADIUS_KM = 10;
 
@@ -214,7 +215,8 @@ const UserDashboard = () => {
               <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">{t("ShareBite")}</h2>
             </div>
           </div>
-          <div className="flex flex-1 justify-end relative">
+          <div className="flex flex-1 justify-end relative items-center gap-2">
+            <NotificationBell />
             <button
               className="flex cursor-pointer items-center justify-center rounded-full h-9 w-9 bg-[#f0f4f2] text-[#111814]"
               onClick={() => navigate("/profile")}

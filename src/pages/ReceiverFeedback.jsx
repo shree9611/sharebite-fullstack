@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl, getAuthHeaders } from "../lib/api.js";
+import NotificationBell from "../components/NotificationBell.jsx";
 
 const ReceiverFeedback = () => {
   const location = useLocation();
@@ -142,7 +143,8 @@ const ReceiverFeedback = () => {
                   </span>
                   {t("ShareBite")}
                 </div>
-                <div className="flex flex-1 justify-end items-center relative">
+                <div className="flex flex-1 justify-end items-center relative gap-2">
+                  <NotificationBell />
                   <button
                     className="flex items-center justify-center rounded-full h-9 w-9 bg-[#f0f4f2] text-[#111814]"
                     onClick={() => navigate("/profile")}

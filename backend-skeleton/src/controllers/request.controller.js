@@ -54,6 +54,8 @@ async function createRequest(req, res) {
       donorId: donation.donorId,
       requestId: request._id,
       foodName: donation.foodName,
+      logistics: request.logistics,
+      donationId: donation._id,
     });
 
     return res.status(201).json(request);

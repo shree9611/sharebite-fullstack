@@ -4,6 +4,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
+import NotificationBell from "../components/NotificationBell.jsx";
 
 const statusClasses = {
   pending: "bg-orange-50 text-orange-600 border-orange-100",
@@ -126,7 +127,8 @@ const MyRequests = () => {
               <h2 className="text-lg font-bold leading-tight tracking-tight">{t("ShareBite")}</h2>
             </div>
           </div>
-          <div className="flex items-center gap-4 relative">
+          <div className="flex items-center gap-2 relative">
+            <NotificationBell />
             <button
               className="flex items-center justify-center rounded-full h-10 w-10 bg-[#f0f4f2] text-[#111814]"
               onClick={() => navigate("/profile")}

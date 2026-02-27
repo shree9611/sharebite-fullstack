@@ -4,6 +4,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { apiFetchWithFallback, buildApiUrl, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
+import NotificationBell from "../components/NotificationBell.jsx";
 
 const resolveDonationImage = (item) => {
   return resolveAssetUrl(item?.imageUrl || item?.image || item?.foodImage || "");
@@ -381,7 +382,8 @@ const DonateFood = () => {
                 </span>
                 {t("ShareBite")}
               </div>
-              <div className="relative">
+              <div className="relative flex items-center gap-2">
+                <NotificationBell />
                 <button
                   className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
                   onClick={() => navigate("/profile")}
