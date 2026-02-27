@@ -168,7 +168,10 @@ const VolunteerAcceptMission = () => {
 
   useEffect(() => {
     const onFocus = () => loadMissions();
-    const intervalId = window.setInterval(() => loadMissions(), 8000);
+    const intervalId = window.setInterval(() => {
+      if (document.hidden) return;
+      loadMissions();
+    }, 30000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);

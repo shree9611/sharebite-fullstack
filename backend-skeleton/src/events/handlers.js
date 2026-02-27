@@ -41,13 +41,15 @@ function registerEventHandlers() {
     });
   });
 
-  eventBus.on("feedback.created", async ({ donorId, feedbackId }) => {
+  eventBus.on("feedback.created", async ({ donorId, feedbackId, requestId, isDeliveryConfirmation }) => {
     await createNotification({
       userId: donorId,
-      type: "feedback_received",
-      title: "New feedback received",
-      body: "A receiver submitted feedback for your donation.",
-      data: { feedbackId },
+      type: isDeliveryConfirmation ? "delivery_confirmed_by_receiver" : "feedback_received",
+      title: isDeliveryConfirmation ? "Delivery confirmed by receiver" : "New feedback received",
+      body: isDeliveryConfirmation
+        ? "Receiver confirmed the food was delivered successfully."
+        : "A receiver submitted feedback for your donation.",
+      data: { feedbackId, requestId: requestId || "" },
     });
   });
 

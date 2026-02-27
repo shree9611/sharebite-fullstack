@@ -43,6 +43,8 @@ async function createFeedback(req, res) {
     eventBus.emit("feedback.created", {
       donorId: request.donorId,
       feedbackId: feedback._id,
+      requestId: request._id,
+      isDeliveryConfirmation: request.logistics === "delivery",
     });
 
     return res.status(201).json(feedback);

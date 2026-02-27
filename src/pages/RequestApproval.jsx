@@ -72,9 +72,12 @@ const RequestApproval = () => {
   }, [loadRequests]);
 
   useEffect(() => {
-    const refresh = () => loadRequests();
+    const refresh = () => {
+      if (document.hidden) return;
+      loadRequests();
+    };
     const onFocus = () => loadRequests();
-    const intervalId = window.setInterval(refresh, 10000);
+    const intervalId = window.setInterval(refresh, 30000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);

@@ -29,6 +29,8 @@ const donationSchema = new mongoose.Schema(
 );
 
 donationSchema.index({ location: "2dsphere" });
+donationSchema.index({ donorId: 1, createdAt: -1 });
+donationSchema.index({ status: 1, createdAt: -1 });
 
 const Donation = mongoose.model("Donation", donationSchema);
 module.exports = { Donation };

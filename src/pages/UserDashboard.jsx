@@ -112,7 +112,10 @@ const UserDashboard = () => {
 
   useEffect(() => {
     const onFocus = () => loadDonations();
-    const intervalId = window.setInterval(() => loadDonations(), 10000);
+    const intervalId = window.setInterval(() => {
+      if (document.hidden) return;
+      loadDonations();
+    }, 30000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);

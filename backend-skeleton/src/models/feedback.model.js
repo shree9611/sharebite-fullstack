@@ -13,6 +13,9 @@ const feedbackSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+feedbackSchema.index({ donorId: 1, createdAt: -1 });
+feedbackSchema.index({ receiverId: 1, createdAt: -1 });
+feedbackSchema.index({ requestId: 1, createdAt: -1 });
+
 const Feedback = mongoose.model("Feedback", feedbackSchema);
 module.exports = { Feedback };
-

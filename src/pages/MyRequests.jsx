@@ -71,7 +71,10 @@ const MyRequests = () => {
 
   useEffect(() => {
     const onFocus = () => loadRequests();
-    const intervalId = window.setInterval(() => loadRequests(), 10000);
+    const intervalId = window.setInterval(() => {
+      if (document.hidden) return;
+      loadRequests();
+    }, 30000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);

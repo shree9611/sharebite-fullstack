@@ -217,7 +217,10 @@ const DonateFood = () => {
 
   useEffect(() => {
     const onFocus = () => loadManagementData();
-    const intervalId = window.setInterval(() => loadManagementData(), 8000);
+    const intervalId = window.setInterval(() => {
+      if (document.hidden) return;
+      loadManagementData();
+    }, 30000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);
@@ -296,7 +299,7 @@ const DonateFood = () => {
       }
 
       setSubmitSuccess(data?.message || "Donation submitted successfully.");
-      await loadManagementData();
+      loadManagementData();
       setFormData({
         title: "",
         quantity: "",
@@ -349,7 +352,7 @@ const DonateFood = () => {
       if (!response.ok) {
         throw new Error(data?.message || "Failed to update request status.");
       }
-      await loadManagementData();
+      loadManagementData();
     } catch (error) {
       setManagementError(error.message || "Unable to update request status.");
     } finally {
