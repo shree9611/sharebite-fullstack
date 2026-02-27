@@ -261,7 +261,7 @@ const DonateFood = () => {
       }
       if (photoFile) payload.append("image", photoFile);
 
-      let response = await fetch(buildApiUrl("/api/donations"), {
+      let response = await apiFetchWithFallback("/api/donations", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -272,7 +272,7 @@ const DonateFood = () => {
       // Fallback for backends still expecting JSON payload.
       // Never retry with JSON when photo is selected because JSON cannot carry files.
       if (!response.ok && response.status === 400 && !photoFile) {
-        response = await fetch(buildApiUrl("/api/donations"), {
+        response = await apiFetchWithFallback("/api/donations", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -311,9 +311,19 @@ const DonateFood = () => {
         bakedType: "baked",
       });
       setPhotoFile(null);
+      setPhotoPreviewUrl("");
+      if (photoInputRef.current) {
+        photoInputRef.current.value = "";
+      }
       setLocationStatus("");
     } catch (error) {
-      setSubmitError(error.message || "Unable to connect to backend.");
+      if (error instanceof TypeError) {
+        setSubmitError(
+          "Unable to reach server. Check backend URL, internet, and CORS settings, then try again."
+        );
+      } else {
+        setSubmitError(error.message || "Unable to connect to backend.");
+      }
     } finally {
       setIsSubmitting(false);
     }
