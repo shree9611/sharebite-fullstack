@@ -288,7 +288,7 @@ const VolunteerAcceptMission = () => {
   };
 
   return (
-    <div className="bg-[#fbf6ea] min-h-screen text-[#111814]">
+    <div className="bg-white min-h-screen text-[#111814]">
       <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 font-bold text-lg relative">
           <div className="flex items-center gap-2">
@@ -309,7 +309,7 @@ const VolunteerAcceptMission = () => {
             </button>
             {showProfile && (
               <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
-                <div className="h-16 bg-[#f8efe3]" />
+                <div className="h-16 bg-slate-50" />
                 <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                   <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
                     {resolveProfileImage(profile) ? (
@@ -366,7 +366,7 @@ const VolunteerAcceptMission = () => {
               type="button"
               onClick={loadMissions}
               disabled={isLoading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d7e5de] bg-[#f8fbf9] px-4 py-2 text-xs font-semibold text-[#1f3b31] hover:bg-[#eef6f2] disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d7e5de] bg-white px-4 py-2 text-xs font-semibold text-[#1f3b31] hover:bg-[#eef6f2] disabled:opacity-60"
             >
               <span className="material-symbols-outlined text-[16px]">refresh</span>
               {isLoading ? "Refreshing..." : "Refresh List"}

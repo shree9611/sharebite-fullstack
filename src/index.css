@@ -9,7 +9,7 @@
   }
 
   body {
-    @apply overflow-x-hidden bg-[#fbf6ea] text-slate-900;
+    @apply overflow-x-hidden bg-white text-slate-900;
   }
   #root {
     @apply min-h-screen;

@@ -69,16 +69,10 @@ const toAbsoluteImageUrl = (req, imagePath) => {
   return `${proto}://${host}${encodeURI(imagePath)}`;
 };
 
-const sanitizeProfileImageDataUrl = (value) => {
+const sanitizeAvatarPath = (value) => {
   const input = String(value || "").trim();
   if (!input) return "";
-  if (/^data:image\/[a-zA-Z0-9.+-]+;base64,/i.test(input) && input.length <= 7_000_000) {
-    return input;
-  }
-  if (input.startsWith("http://") || input.startsWith("https://")) {
-    return input;
-  }
-  if (input.startsWith("/")) {
+  if (input.startsWith("/uploads/")) {
     return input;
   }
   return "";
@@ -170,7 +164,7 @@ const register = async (req, res) => {
         : { type: "Point", coordinates: [0, 0] },
       avatar: req.file
         ? toAvatarPath(req.file)
-        : sanitizeProfileImageDataUrl(profileImageDataUrl || profileImage || avatar),
+        : sanitizeAvatarPath(profileImageDataUrl || profileImage || avatar),
     });
 
     return issueAuthResponse(req, res, user, 201);

@@ -190,7 +190,7 @@ const RequestApproval = () => {
                 </button>
                 {showProfile && (
                   <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
-                    <div className="h-16 bg-[#f8efe3]" />
+                    <div className="h-16 bg-slate-50" />
                     <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                       <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
                         {resolveProfileImage(profile) ? (
@@ -280,7 +280,7 @@ const RequestApproval = () => {
               </nav>
             </aside>
 
-            <div className="flex-1 bg-[#fbf6ea]">
+            <div className="flex-1 bg-white">
               <div className="max-w-6xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8">
                 <div className="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div>
@@ -465,7 +465,7 @@ const RequestApproval = () => {
                         <p className="font-semibold text-sm text-slate-700">Food Image Preview</p>
                         <button type="button" onClick={() => setPreviewImage("")} className="text-slate-500 hover:text-slate-700">Close</button>
                       </div>
-                      <img src={previewImage} alt="Food preview" className="w-full max-h-[70vh] object-contain bg-[#f8f6ef]" />
+                      <img src={previewImage} alt="Food preview" className="w-full max-h-[70vh] object-contain bg-white" />
                     </div>
                   </div>
                 ) : null}

@@ -2,7 +2,6 @@ import React, { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl } from "../lib/api.js";
-import { setCurrentProfile, upsertProfile } from "../lib/profile.js";
 
 
 const AccountDetails = () => {
@@ -142,17 +141,6 @@ const AccountDetails = () => {
       }
 
       const userRole = roleMap[role] || "receiver";
-      const profile = upsertProfile({
-        name: fullName.trim(),
-        email: emailValue.trim(),
-        phone: phoneValue.trim(),
-        role,
-        profileImage: profileImageDataUrl,
-        profileImageUrl: profileImageDataUrl,
-      });
-      if (profile) {
-        setCurrentProfile(profile);
-      }
       const accountData = {
         name: fullName.trim(),
         email: emailValue.trim(),
@@ -208,7 +196,7 @@ const AccountDetails = () => {
     };
 
   return (
-    <div className="bg-[#fbf6ea] min-h-screen text-[#111815] transition-colors duration-300">
+    <div className="bg-white min-h-screen text-[#111815] transition-colors duration-300">
 
     {/* Header */}
 <header className="flex items-center justify-between border-b border-[#e0e5e3] px-4 sm:px-6 md:px-10 py-5 bg-white">
@@ -248,7 +236,7 @@ const AccountDetails = () => {
 
           {/* Form */}
           <form className="flex flex-col gap-4 sm:gap-5" onSubmit={handleContinue}>
-            <div className="rounded-xl border border-[#e6eee9] bg-[#f8fbf9] p-4">
+            <div className="rounded-xl border border-[#e6eee9] bg-white p-4">
               <p className="text-sm font-semibold text-[#111815] mb-3">Profile Image</p>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="h-20 w-20 rounded-full overflow-hidden border border-[#dce8e1] bg-white flex items-center justify-center">

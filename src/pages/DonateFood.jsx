@@ -356,7 +356,7 @@ const DonateFood = () => {
     }
   };
   return (
-    <div className="bg-[#fbf6ea] min-h-screen">
+    <div className="bg-white min-h-screen">
       <div className="flex flex-col min-h-screen">
         <main className="flex-1">
           <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
@@ -383,7 +383,7 @@ const DonateFood = () => {
                 </button>
                 {showProfile && (
                   <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
-                    <div className="h-16 bg-[#f8efe3]" />
+                    <div className="h-16 bg-slate-50" />
                     <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                       <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
                         {resolveProfileImage(profile) ? (
@@ -486,7 +486,7 @@ const DonateFood = () => {
                   </h3>
                 </div>
 
-                <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#e6eee9] rounded-xl p-5 bg-[#f8fbf9]">
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#e6eee9] rounded-xl p-5 bg-white">
                   <input
                     ref={photoInputRef}
                     type="file"
@@ -776,7 +776,7 @@ const DonateFood = () => {
                           : "bg-amber-50 text-amber-700 border-amber-200";
 
                   return (
-                    <div key={donationId || `${item?.foodName}-${item?.createdAt}`} className="rounded-xl border border-[#e6eee9] bg-[#fffef9] p-4 sm:p-5">
+                    <div key={donationId || `${item?.foodName}-${item?.createdAt}`} className="rounded-xl border border-[#e6eee9] bg-white p-4 sm:p-5">
                       <div className="flex flex-col lg:flex-row gap-4">
                         <div className="h-36 w-full lg:w-52 rounded-xl bg-[#f3f6f4] overflow-hidden border border-[#e6eee9]">
                           {resolveDonationImage(item) ? (

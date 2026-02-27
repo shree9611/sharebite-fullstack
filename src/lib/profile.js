@@ -1,47 +1,33 @@
-const PROFILES_KEY = "sharebite.profiles";
 const CURRENT_PROFILE_KEY = "sharebite.currentProfile";
 
-const readProfiles = () => {
-  try {
-    const raw = localStorage.getItem(PROFILES_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
+const sanitizeProfile = (profile) => {
+  if (!profile || typeof profile !== "object") return null;
+  return {
+    ...profile,
+    email: String(profile.email || "").trim(),
+  };
 };
-
-const writeProfiles = (profiles) => {
-  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
-};
-
-const emailKey = (email) => (email || "").trim().toLowerCase();
 
 export const upsertProfile = (profile) => {
-  const key = emailKey(profile?.email);
-  if (!key) return null;
-
-  const profiles = readProfiles();
-  const merged = {
-    ...profiles[key],
-    ...profile,
-    email: (profile.email || "").trim(),
-  };
-  profiles[key] = merged;
-  writeProfiles(profiles);
+  const current = getCurrentProfile() || {};
+  const merged = sanitizeProfile({ ...current, ...profile });
+  if (!merged?.email) return null;
+  localStorage.setItem(CURRENT_PROFILE_KEY, JSON.stringify(merged));
   return merged;
 };
 
 export const getProfileByEmail = (email) => {
-  const key = emailKey(email);
-  if (!key) return null;
-  const profiles = readProfiles();
-  return profiles[key] || null;
+  const current = getCurrentProfile();
+  if (!current) return null;
+  const target = String(email || "").trim().toLowerCase();
+  if (!target) return null;
+  return String(current.email || "").trim().toLowerCase() === target ? current : null;
 };
 
 export const setCurrentProfile = (profile) => {
-  if (!profile) return;
-  localStorage.setItem(CURRENT_PROFILE_KEY, JSON.stringify(profile));
+  const sanitized = sanitizeProfile(profile);
+  if (!sanitized) return;
+  localStorage.setItem(CURRENT_PROFILE_KEY, JSON.stringify(sanitized));
 };
 
 export const getCurrentProfile = () => {

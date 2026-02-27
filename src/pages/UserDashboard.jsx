@@ -200,7 +200,7 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="bg-[#fbf6ea] text-[#111814] min-h-screen">
+    <div className="bg-white text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-solid border-orange-100 bg-white px-4 sm:px-6 md:px-10 py-5 shadow-sm">
           <div className="flex items-center gap-4 text-[#111814]">
@@ -225,7 +225,7 @@ const UserDashboard = () => {
             </button>
             {showProfile && (
               <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden">
-                <div className="h-16 bg-[#f8efe3]" />
+                <div className="h-16 bg-slate-50" />
                 <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                   <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
                     {resolveProfileImage(profile) ? (

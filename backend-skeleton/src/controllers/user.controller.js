@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const { User } = require("../models/user.model");
 const { Request } = require("../models/request.model");
 const { Feedback } = require("../models/feedback.model");
+const { Donation } = require("../models/donation.model");
 
 const hashPassword = (password, salt) => crypto.scryptSync(password, salt, 64).toString("hex");
 
@@ -57,8 +58,7 @@ const resolveAvatarInput = (patch, file) => {
   if (typeof directAvatar !== "string") return undefined;
   const value = directAvatar.trim();
   if (!value) return "";
-  if (value.startsWith("http://") || value.startsWith("https://")) return value;
-  if (value.startsWith("/")) return value;
+  if (value.startsWith("/uploads/")) return value;
   return undefined;
 };
 
@@ -68,12 +68,35 @@ async function getCurrentUserProfile(req, res) {
     if (!user) return res.status(404).json({ message: "User not found." });
 
     const role = String(user.role || "");
+    const isDonor = role === "donor";
+    const isReceiver = role === "receiver";
+
+    let totalDonationsCount = Number(user.totalDonationsCount || 0);
+    let totalFoodReceived = Number(user.totalFoodReceived || 0);
+    let peopleServed = Number(user.peopleServed || 0);
+
+    if (isDonor) {
+      totalDonationsCount = await Donation.countDocuments({ donorId: user._id });
+    }
+
+    if (isReceiver) {
+      const approvedRequests = await Request.find({
+        receiverId: user._id,
+        status: { $in: ["approved", "completed"] },
+      })
+        .select("peopleCount")
+        .lean();
+      totalFoodReceived = approvedRequests.reduce((sum, row) => sum + Number(row?.peopleCount || 0), 0);
+      peopleServed = totalFoodReceived;
+    }
+
     const profile = {
       id: String(user._id),
       fullName: user.name || "",
       email: user.email || "",
       phoneNumber: user.phone || "",
       address: user.address || "",
+      role,
       accountType: role === "admin" ? "Volunteer" : role === "donor" ? "Donor" : "Receiver",
       city: user.city || "",
       state: user.state || "",
@@ -82,11 +105,11 @@ async function getCurrentUserProfile(req, res) {
       profileImageUrl: toAbsoluteImageUrl(req, user.avatar || ""),
       organizationName: user.organizationName || "",
       foodTypeUsuallyDonated: user.foodTypeUsuallyDonated || "",
-      totalDonationsCount: Number(user.totalDonationsCount || 0),
+      totalDonationsCount,
       donorRating: Number(user.donorRating || 0),
       receiverOrganizationName: user.receiverOrganizationName || "",
-      peopleServed: Number(user.peopleServed || 0),
-      totalFoodReceived: Number(user.totalFoodReceived || 0),
+      peopleServed,
+      totalFoodReceived,
       receiverRating: Number(user.receiverRating || 0),
     };
 
@@ -108,8 +131,6 @@ async function updateCurrentUserProfile(req, res) {
       organizationName: patch.organizationName ?? undefined,
       foodTypeUsuallyDonated: patch.foodTypeUsuallyDonated ?? undefined,
       receiverOrganizationName: patch.receiverOrganizationName ?? undefined,
-      peopleServed: Number.isFinite(Number(patch.peopleServed)) ? Number(patch.peopleServed) : undefined,
-      totalFoodReceived: Number.isFinite(Number(patch.totalFoodReceived)) ? Number(patch.totalFoodReceived) : undefined,
     };
 
     Object.keys(update).forEach((key) => update[key] === undefined && delete update[key]);
@@ -120,11 +141,39 @@ async function updateCurrentUserProfile(req, res) {
     const user = await User.findByIdAndUpdate(req.user.id, update, { new: true }).lean();
     if (!user) return res.status(404).json({ message: "User not found." });
 
+    const role = String(user.role || "");
+    let totalDonationsCount = Number(user.totalDonationsCount || 0);
+    let totalFoodReceived = Number(user.totalFoodReceived || 0);
+    let peopleServed = Number(user.peopleServed || 0);
+
+    if (role === "donor") {
+      totalDonationsCount = await Donation.countDocuments({ donorId: user._id });
+    }
+    if (role === "receiver") {
+      const approvedRequests = await Request.find({
+        receiverId: user._id,
+        status: { $in: ["approved", "completed"] },
+      })
+        .select("peopleCount")
+        .lean();
+      totalFoodReceived = approvedRequests.reduce((sum, row) => sum + Number(row?.peopleCount || 0), 0);
+      peopleServed = totalFoodReceived;
+    }
+
     return res.json({
       message: "Profile updated successfully.",
+      role,
+      accountType:
+        role === "admin"
+          ? "Volunteer"
+          : role === "donor"
+            ? "Donor"
+            : "Receiver",
+      userId: String(user._id),
       profileImage: user.avatar || "",
       profileImageUrl: toAbsoluteImageUrl(req, user.avatar || ""),
       fullName: user.name || "",
+      email: user.email || "",
       phoneNumber: user.phone || "",
       address: user.address || "",
       city: user.city || "",
@@ -132,8 +181,11 @@ async function updateCurrentUserProfile(req, res) {
       organizationName: user.organizationName || "",
       foodTypeUsuallyDonated: user.foodTypeUsuallyDonated || "",
       receiverOrganizationName: user.receiverOrganizationName || "",
-      peopleServed: Number(user.peopleServed || 0),
-      totalFoodReceived: Number(user.totalFoodReceived || 0),
+      totalDonationsCount,
+      donorRating: Number(user.donorRating || 0),
+      peopleServed,
+      totalFoodReceived,
+      receiverRating: Number(user.receiverRating || 0),
     });
   } catch (error) {
     return res.status(500).json({ message: error.message || "Failed to update profile." });

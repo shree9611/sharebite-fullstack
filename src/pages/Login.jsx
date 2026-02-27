@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl } from "../lib/api.js";
 import { decodeJwtPayload, getRoleHomePath, normalizeRole } from "../lib/auth.js";
-import { getProfileByEmail, setCurrentProfile, upsertProfile } from "../lib/profile.js";
+import { setCurrentProfile } from "../lib/profile.js";
 
 const Login = () => {
   const { t } = useLanguage();
@@ -71,22 +71,21 @@ const Login = () => {
         const resolvedRole =
           normalizeRole(payload?.role) || normalizeRole(role) || "Receiver";
         localStorage.setItem("sharebite.role", resolvedRole);
-        const savedProfile = getProfileByEmail(email.trim());
-        let currentProfile = upsertProfile({
-          name: savedProfile?.name || "User",
+        let currentProfile = {
+          name: "User",
           email: email.trim(),
-          phone: savedProfile?.phone || "",
+          phone: "",
           role: resolvedRole,
-          profileImage: savedProfile?.profileImage || "",
-          profileImageUrl: savedProfile?.profileImageUrl || "",
-        });
+          profileImage: "",
+          profileImageUrl: "",
+        };
         try {
           const profileResponse = await fetch(buildApiUrl("/api/users/profile"), {
             headers: { Authorization: `Bearer ${data.token}` },
           });
           const profileData = await profileResponse.json().catch(() => ({}));
           if (profileResponse.ok) {
-            currentProfile = upsertProfile({
+            currentProfile = {
               ...currentProfile,
               name: profileData?.fullName || currentProfile?.name || "User",
               email: profileData?.email || email.trim(),
@@ -97,14 +96,12 @@ const Login = () => {
               city: profileData?.city || "",
               state: profileData?.state || "",
               address: profileData?.address || "",
-            });
+            };
           }
         } catch {
-          // Fallback to local profile cache when backend profile fetch is unavailable.
+          // Keep minimal profile payload from login when profile API is temporarily unavailable.
         }
-        if (currentProfile) {
-          setCurrentProfile(currentProfile);
-        }
+        setCurrentProfile(currentProfile);
 
         if (rememberMe) {
           localStorage.setItem("sharebite.remember", "true");

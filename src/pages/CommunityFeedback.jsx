@@ -102,7 +102,7 @@ const CommunityFeedback = () => {
                 </button>
                 {showProfile && (
                   <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
-                    <div className="h-16 bg-[#f8efe3]" />
+                    <div className="h-16 bg-slate-50" />
                     <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                       <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
                         {resolveProfileImage(profile) ? (

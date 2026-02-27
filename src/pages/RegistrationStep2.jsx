@@ -2,7 +2,6 @@ import React, { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl } from "../lib/api.js";
-import { setCurrentProfile, upsertProfile } from "../lib/profile.js";
 
 const RegistrationStep2 = () => {
   const location = useLocation();
@@ -225,29 +224,6 @@ const RegistrationStep2 = () => {
           throw new Error("Server error while creating account. Please try again.");
         }
         throw new Error(data?.message || "Registration failed");
-      }
-      const locationParts = [streetAddress.trim(), city.trim(), pincode.trim()].filter(Boolean);
-      const exactLocation =
-        coords?.latitude && coords?.longitude
-          ? `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`
-          : "";
-      const profile = upsertProfile({
-        name: fullName.trim(),
-        email: emailValue.trim(),
-        phone: phoneValue.trim(),
-        role,
-        streetAddress: streetAddress.trim(),
-        city: city.trim(),
-        pincode: pincode.trim(),
-        location: locationParts.join(", "),
-        exactLocation,
-        latitude: coords?.latitude ?? null,
-        longitude: coords?.longitude ?? null,
-        profileImage: accountData?.profileImageDataUrl || "",
-        profileImageUrl: accountData?.profileImageDataUrl || "",
-      });
-      if (profile) {
-        setCurrentProfile(profile);
       }
       sessionStorage.removeItem("sharebite.accountData");
       sessionStorage.removeItem("sharebite.roleLabel");
