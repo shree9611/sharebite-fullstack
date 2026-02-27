@@ -3,13 +3,31 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-primary: #2f9f6a;
+    --color-primary-dark: #248c5a;
+    --color-primary-soft: #eaf7f0;
+    --color-accent: #f59e0b;
+    --color-accent-soft: #fff4de;
+    --color-bg: #f8f6f1;
+    --color-surface: #ffffff;
+    --color-surface-alt: #fffdf8;
+    --color-border: #e8e0cf;
+    --color-text-main: #1f1b13;
+    --color-text-muted: #6e685c;
+  }
+}
+
+@layer base {
   input[type="password"]::-ms-reveal,
   input[type="password"]::-ms-clear {
     display: none;
   }
 
   body {
-    @apply overflow-x-hidden bg-white text-slate-900;
+    @apply overflow-x-hidden;
+    background-color: var(--color-bg);
+    color: var(--color-text-main);
   }
   #root {
     @apply min-h-screen;

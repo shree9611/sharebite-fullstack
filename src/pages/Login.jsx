@@ -271,16 +271,6 @@ const Login = () => {
 
 {/* Social Login */}
 <div className="flex flex-col sm:flex-row gap-4">
-  {/* Apple */}
-  <button className="flex-1 h-12 sm:h-14 border rounded-full flex items-center justify-center gap-2 hover:bg-gray-50 transition">
-    <img
-      src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
-      alt="Apple"
-      className="w-5 h-5"
-    />
-    <span className="font-semibold">{t("Apple")}</span>
-  </button>
-
   {/* Google */}
   <button className="flex-1 h-12 sm:h-14 border rounded-full flex items-center justify-center gap-2 hover:bg-gray-50 transition">
     <img

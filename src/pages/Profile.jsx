@@ -419,44 +419,52 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={handleToggleEditMode}
-            disabled={isSaving}
-            className="rounded-xl border border-[#d8c7ac] bg-white px-4 py-2 text-sm font-semibold text-[#5b5242] hover:bg-[#f7efe2] disabled:opacity-60"
-          >
-            Edit Profile
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!isEditMode || isSaving}
-            className="rounded-xl bg-[#2f9f6a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#248c5a] disabled:opacity-60"
-          >
-            {isSaving ? "Saving..." : "Save Changes"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsPasswordPanelOpen((prev) => !prev)}
-            className="rounded-xl border border-[#cfd9e5] bg-white px-4 py-2 text-sm font-semibold text-[#35527a] hover:bg-[#f3f7fc]"
-          >
-            Change Password
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="rounded-xl border border-[#ddccb0] bg-white px-4 py-2 text-sm font-semibold text-[#6b6252] hover:bg-[#f8efe0]"
-          >
-            Logout
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowDeleteModal(true)}
-            className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
-          >
-            Delete Account
-          </button>
+        <div className="mt-[30px] mx-auto w-full max-w-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={handleToggleEditMode}
+              disabled={isSaving}
+              className="h-12 w-full sm:flex-1 rounded-xl border border-[#2f9f6a] bg-white px-4 text-sm font-semibold text-[#2f9f6a] transition-all duration-300 ease-in-out hover:bg-[#eaf7f0] disabled:opacity-60"
+            >
+              Edit Profile
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!isEditMode || isSaving}
+              className="h-12 w-full sm:flex-1 rounded-xl bg-[#2f9f6a] px-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 ease-in-out hover:bg-[#248c5a] hover:shadow-md disabled:opacity-60"
+            >
+              {isSaving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+
+          <div className="mt-3 sm:mt-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsPasswordPanelOpen((prev) => !prev)}
+              className="h-12 w-full rounded-xl border border-[#9db7d9] bg-white px-4 text-sm font-semibold text-[#35527a] transition-all duration-300 ease-in-out hover:bg-[#eef5ff]"
+            >
+              Change Password
+            </button>
+          </div>
+
+          <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="h-12 w-full sm:flex-1 rounded-xl bg-[#eef1f4] px-4 text-sm font-semibold text-[#374151] transition-all duration-300 ease-in-out hover:bg-[#e2e8f0]"
+            >
+              Logout
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="h-12 w-full sm:flex-1 rounded-xl border border-red-300 bg-white px-4 text-sm font-semibold text-red-600 transition-all duration-300 ease-in-out hover:bg-red-600 hover:text-white"
+            >
+              Delete Account
+            </button>
+          </div>
         </div>
 
         {isPasswordPanelOpen ? (
