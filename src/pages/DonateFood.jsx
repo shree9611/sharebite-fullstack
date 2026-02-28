@@ -81,6 +81,7 @@ const DonateFood = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
   const photoInputRef = useRef(null);
+  const submitLockRef = useRef(false);
 
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
@@ -231,6 +232,8 @@ const DonateFood = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
     setSubmitError("");
     setSubmitSuccess("");
     setIsSubmitting(true);
@@ -326,6 +329,9 @@ const DonateFood = () => {
         setSubmitError(error.message || "Unable to connect to backend.");
       }
     } finally {
+      window.setTimeout(() => {
+        submitLockRef.current = false;
+      }, 1200);
       setIsSubmitting(false);
     }
   };

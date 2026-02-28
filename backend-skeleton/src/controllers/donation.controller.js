@@ -48,6 +48,23 @@ async function createDonation(req, res) {
       return res.status(400).json({ message: "foodName, quantity, expiryTime are required." });
     }
 
+    // Prevent accidental double-click submit: block only near-identical payloads in a short window.
+    const duplicateWindowMs = 4000;
+    const recentCutoff = new Date(Date.now() - duplicateWindowMs);
+    const recentDuplicate = await Donation.findOne({
+      donorId: req.user.id,
+      foodName: String(foodName || "").trim(),
+      quantity: qty,
+      locationText: String(location || "").trim(),
+      expiryTime: new Date(expiryTime),
+      createdAt: { $gte: recentCutoff },
+    }).lean();
+    if (recentDuplicate) {
+      return res.status(429).json({
+        message: "Looks like a duplicate click. Please wait a few seconds before submitting again.",
+      });
+    }
+
     const donation = await Donation.create({
       donorId: req.user.id,
       foodName,
