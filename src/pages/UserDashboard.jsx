@@ -50,7 +50,7 @@ const haversineKm = (from, to) => {
 };
 
 const resolveDonationImage = (item) => {
-  return resolveAssetUrl(item?.imageUrl || item?.image || "");
+  return resolveAssetUrl(item?.image || item?.imageUrl || "");
 };
 
 const resolveProfileImage = (profile) => {

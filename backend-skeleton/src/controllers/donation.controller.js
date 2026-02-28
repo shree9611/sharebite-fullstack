@@ -9,14 +9,7 @@ function toAbsoluteImageUrl(req, imagePath) {
   if (imagePath.startsWith("data:")) {
     return SAFE_DATA_IMAGE_RE.test(imagePath) ? imagePath : "";
   }
-  const forwardedProto = req.headers["x-forwarded-proto"];
-  const proto =
-    process.env.NODE_ENV === "production"
-      ? "https"
-      : (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || req.protocol || "http";
-  const host = req.get("host");
-  if (!host) return imagePath;
-  return `${proto}://${host}${encodeURI(imagePath)}`;
+  return imagePath.startsWith("/") ? imagePath : `/${String(imagePath).replace(/^\/+/, "")}`;
 }
 
 function buildImageValue(file) {

@@ -16,7 +16,7 @@ const resolveProfileImage = (profile) => {
   return resolveAssetUrl(profile?.profileImageUrl || profile?.profileImage || "");
 };
 const resolveDonationImage = (reqItem) => {
-  return resolveAssetUrl(reqItem?.donation?.imageUrl || reqItem?.donation?.image || "");
+  return resolveAssetUrl(reqItem?.donation?.image || reqItem?.donation?.imageUrl || "");
 };
 
 const MyRequests = () => {
