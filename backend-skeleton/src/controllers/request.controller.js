@@ -41,6 +41,9 @@ async function createRequest(req, res) {
       donationId: donation._id,
       donorId: donation.donorId,
       receiverId: req.user.id,
+      donationFoodName: donation.foodName || "",
+      donationImage: donation.image || "",
+      donationOriginalQuantity: Number(donation.quantity || 0),
       peopleCount: qty,
       requestedLocation: requestedLocation || "",
       logistics: logistics || "pickup",
@@ -134,7 +137,14 @@ async function listRequests(req, res) {
             image: row.donationId.image,
             imageUrl: toAbsoluteImageUrl(req, row.donationId.image),
           }
-        : null,
+        : {
+            _id: row.donationId || row.donationId?._id || null,
+            foodName: row.donationFoodName || "Food",
+            quantity: Number(row.donationOriginalQuantity || 0),
+            location: "",
+            image: row.donationImage || "",
+            imageUrl: toAbsoluteImageUrl(req, row.donationImage || ""),
+          },
     }));
 
     return res.json(payload);
@@ -209,7 +219,7 @@ async function completeMission(req, res) {
 
     request.status = "completed";
     request.deliveryStatus = "delivered";
-    donation.status = "delivered";
+    donation.status = Number(donation.quantity || 0) > 0 ? "active" : "delivered";
 
     await Promise.all([request.save(), donation.save()]);
 

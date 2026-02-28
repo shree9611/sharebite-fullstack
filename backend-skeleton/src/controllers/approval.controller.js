@@ -19,10 +19,6 @@ async function approveRequest(req, res) {
       return res.status(400).json({ message: "Only pending request can be approved." });
     }
 
-    request.status = "approved";
-    if (request.logistics === "delivery" && request.deliveryStatus === "not_applicable") {
-      request.deliveryStatus = "unassigned";
-    }
     const donation = await Donation.findById(request.donationId);
     if (!donation) {
       return res.status(404).json({ message: "Donation not found." });
@@ -39,10 +35,28 @@ async function approveRequest(req, res) {
       return res.status(400).json({ message: "Requested quantity exceeds remaining donation quantity." });
     }
 
-    donation.quantity = donation.quantity - requestedQty;
-    donation.status = donation.quantity > 0 ? "active" : "claimed";
+    const donationAfterAllocation = await Donation.findOneAndUpdate(
+      {
+        _id: donation._id,
+        status: "active",
+        quantity: { $gte: requestedQty },
+      },
+      { $inc: { quantity: -requestedQty } },
+      { new: true }
+    );
+    if (!donationAfterAllocation) {
+      return res.status(400).json({ message: "Requested quantity is no longer available." });
+    }
 
-    await donation.save();
+    if (donationAfterAllocation.quantity <= 0 && donationAfterAllocation.status !== "claimed") {
+      donationAfterAllocation.status = "claimed";
+      await donationAfterAllocation.save();
+    }
+
+    request.status = "approved";
+    if (request.logistics === "delivery" && request.deliveryStatus === "not_applicable") {
+      request.deliveryStatus = "unassigned";
+    }
     await request.save();
 
     eventBus.emit("request.updated", {
@@ -60,7 +74,7 @@ async function approveRequest(req, res) {
         donorId: request.donorId,
         receiverId: request.receiverId,
         requestId: request._id,
-        donationId: donation._id,
+        donationId: donationAfterAllocation._id,
         city: donor?.city || "",
         state: donor?.state || "",
         lng: coordinates[0],
@@ -69,14 +83,14 @@ async function approveRequest(req, res) {
     }
 
     return res.json({
-      message: donation.status === "active"
-        ? `Request approved. ${donation.quantity} portions still available.`
+      message: donationAfterAllocation.status === "active"
+        ? `Request approved. ${donationAfterAllocation.quantity} portions still available.`
         : "Request approved. Donation fully claimed.",
       request,
       donation: {
-        _id: donation._id,
-        quantity: donation.quantity,
-        status: donation.status,
+        _id: donationAfterAllocation._id,
+        quantity: donationAfterAllocation.quantity,
+        status: donationAfterAllocation.status,
       },
     });
   } catch (error) {

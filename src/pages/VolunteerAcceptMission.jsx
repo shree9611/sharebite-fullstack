@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
@@ -30,18 +30,6 @@ const stringifyLocation = (value) => {
     }
   }
   return "";
-};
-
-const resolveDonationImage = (mission) => {
-  return resolveAssetUrl(
-    mission?.donation?.imageUrl ||
-    mission?.donation?.image ||
-    mission?.donation?.foodImage ||
-    mission?.imageUrl ||
-    mission?.image ||
-    mission?.foodImage ||
-    ""
-  );
 };
 
 const resolveProfileImage = (profile) => {
@@ -101,7 +89,6 @@ const VolunteerAcceptMission = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [activeRequestId, setActiveRequestId] = useState("");
   const [activePickupId, setActivePickupId] = useState("");
-  const [brokenImageIds, setBrokenImageIds] = useState({});
   const [profile, setProfile] = useState(() => getCurrentProfile());
   const { t } = useLanguage();
 
@@ -179,14 +166,6 @@ const VolunteerAcceptMission = () => {
       window.removeEventListener("focus", onFocus);
     };
   }, [loadMissions]);
-
-  const missionStats = useMemo(() => {
-    const total = missions.length;
-    return {
-      total,
-      routesAvailable: missions.filter((mission) => mission?.deliveryStatus !== "delivered").length,
-    };
-  }, [missions]);
 
   const handleAcceptMission = async (requestId) => {
     const token = localStorage.getItem("sharebite.token");
@@ -292,8 +271,8 @@ const VolunteerAcceptMission = () => {
   };
 
   return (
-    <div className="bg-white min-h-screen text-[#111814]">
-      <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
+    <div className="bg-[#fffdf7] min-h-screen text-[#111814]">
+      <header className="border-b border-[#efe8d8] bg-[#fffdf7] px-4 sm:px-6 md:px-10 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 font-bold text-lg relative">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-green-500">volunteer_activism</span>
@@ -378,22 +357,6 @@ const VolunteerAcceptMission = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
-            <div className="rounded-xl bg-[#f2fbf6] border border-[#d6f1e1] px-4 py-3">
-              <p className="text-[11px] uppercase tracking-wide font-semibold text-[#4d7d66]">
-                Total Missions
-              </p>
-              <p className="text-2xl font-extrabold text-[#0f6b4b] mt-1">{missionStats.total}</p>
-            </div>
-            <div className="rounded-xl bg-[#fffbf3] border border-[#f8e5bf] px-4 py-3">
-              <p className="text-[11px] uppercase tracking-wide font-semibold text-[#8a6a2e]">
-                Routes Available
-              </p>
-              <p className="text-2xl font-extrabold text-[#9b6a11] mt-1">
-                {missionStats.routesAvailable}
-              </p>
-            </div>
-          </div>
         </div>
 
         <div className="mt-6 space-y-4">
@@ -442,8 +405,6 @@ const VolunteerAcceptMission = () => {
             const isCompleting =
               activePickupId &&
               (activePickupId === mission?.pickupId || activePickupId === mission?.requestId || activePickupId === missionId);
-            const imageSrc = brokenImageIds[missionId] ? "" : resolveDonationImage(mission);
-
             return (
               <div key={missionId} className="bg-white rounded-2xl border border-[#e6eee9] p-5 sm:p-6 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
@@ -454,19 +415,7 @@ const VolunteerAcceptMission = () => {
                     <h3 className="text-lg font-extrabold text-[#111814] mt-1">
                       Delivery: {mission?.donation?.foodName || "Food"}
                     </h3>
-                    {imageSrc ? (
-                      <img
-                        src={imageSrc}
-                        alt={mission?.donation?.foodName || "Food"}
-                        className="mt-3 h-20 w-28 rounded-lg object-cover border border-[#e6eee9]"
-                        onError={() => setBrokenImageIds((prev) => ({ ...prev, [missionId]: true }))}
-                      />
-                    ) : (
-                      <div className="mt-3 h-20 w-28 rounded-lg border border-[#e6eee9] bg-[#f3f7f5] flex items-center justify-center text-[#93a29b]">
-                        <span className="material-symbols-outlined text-[18px]">image_not_supported</span>
-                      </div>
-                    )}
-                    <p className="text-xs text-[#8aa19a] mt-1">
+                    <p className="text-xs text-[#8aa19a] mt-2">
                       Assigned for receiver: {mission?.receiver?.name || "Receiver"}
                     </p>
                     <div className="mt-2">
@@ -517,7 +466,7 @@ const VolunteerAcceptMission = () => {
                       {mission?.donor?.name || "Donor"}
                     </p>
                     <p className="text-xs text-[#6b7f77] mt-1">
-                      Phone: {mission?.donorPhone || "Not available"}
+                      Donor Phone Number: {mission?.donorPhone || "Not available"}
                     </p>
                     <p className="text-xs text-[#6b7f77] mt-2">
                       {donorLocation}
@@ -531,7 +480,7 @@ const VolunteerAcceptMission = () => {
                       {mission?.receiver?.name || "Receiver"}
                     </p>
                     <p className="text-xs text-[#6b7f77] mt-1">
-                      Phone: {mission?.receiverPhone || "Not available"}
+                      Receiver Phone Number: {mission?.receiverPhone || "Not available"}
                     </p>
                     <p className="text-xs text-[#6b7f77] mt-2">
                       {receiverLocation}

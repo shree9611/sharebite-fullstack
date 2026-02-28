@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
@@ -15,6 +15,9 @@ const statusClasses = {
 const resolveProfileImage = (profile) => {
   return resolveAssetUrl(profile?.profileImageUrl || profile?.profileImage || "");
 };
+const resolveDonationImage = (reqItem) => {
+  return resolveAssetUrl(reqItem?.donation?.imageUrl || reqItem?.donation?.image || "");
+};
 
 const MyRequests = () => {
   const location = useLocation();
@@ -25,6 +28,10 @@ const MyRequests = () => {
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [showPastHistory, setShowPastHistory] = useState(false);
+  const [deliveryNotice, setDeliveryNotice] = useState("");
+  const deliveredRequestIdsRef = useRef(new Set());
+  const hasHydratedDeliveryStateRef = useRef(false);
 
   const isAvailable = location.pathname === "/dashboard";
   const isMyRequests = location.pathname === "/my-requests";
@@ -58,7 +65,28 @@ const MyRequests = () => {
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load my requests.");
       }
-      setRequests(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      setRequests(list);
+
+      const deliveredNow = list.filter((row) =>
+        String(row?.deliveryStatus || "").toLowerCase() === "delivered" ||
+        String(row?.status || "").toLowerCase() === "completed"
+      );
+
+      if (!hasHydratedDeliveryStateRef.current) {
+        deliveredRequestIdsRef.current = new Set(deliveredNow.map((row) => String(row?._id || "")));
+        hasHydratedDeliveryStateRef.current = true;
+      } else {
+        const newDelivered = deliveredNow.filter(
+          (row) => !deliveredRequestIdsRef.current.has(String(row?._id || ""))
+        );
+        if (newDelivered.length > 0) {
+          setDeliveryNotice("Delivery confirmed. Your request status is now Delivered.");
+        }
+        for (const row of deliveredNow) {
+          deliveredRequestIdsRef.current.add(String(row?._id || ""));
+        }
+      }
     } catch (error) {
       setLoadError(error.message || "Unable to load requests.");
     } finally {
@@ -75,7 +103,7 @@ const MyRequests = () => {
     const intervalId = window.setInterval(() => {
       if (document.hidden) return;
       loadRequests();
-    }, 30000);
+    }, 10000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);
@@ -83,21 +111,17 @@ const MyRequests = () => {
     };
   }, [loadRequests]);
 
-  const sortedRequests = useMemo(() => {
-    return [...requests].sort((a, b) => {
-      const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
-      const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
-      return bTime - aTime;
-    });
-  }, [requests]);
-
-  const statusLabel = (status) => {
+  const statusLabel = (status, deliveryStatus) => {
+    if (deliveryStatus === "delivered" || status === "completed") return "Delivered";
     if (status === "approved") return "Approved";
-    if (status === "declined") return "Declined";
+    if (status === "declined") return "Rejected";
     return "Pending";
   };
 
   const statusNote = (status) => {
+    if (status === "completed") {
+      return "Delivered successfully.";
+    }
     if (status === "approved") {
       return "Approved by donor. Please complete pickup or delivery soon.";
     }
@@ -115,13 +139,45 @@ const MyRequests = () => {
     return "";
   };
 
+  const sortedRequests = useMemo(() => {
+    return [...requests].sort((a, b) => {
+      const aTime = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
+      const bTime = new Date(b?.updatedAt || b?.createdAt || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [requests]);
+
+  const activeRequests = useMemo(
+    () =>
+      sortedRequests.filter((row) => {
+        const status = String(row?.status || "").toLowerCase();
+        const deliveryStatus = String(row?.deliveryStatus || "").toLowerCase();
+        const inHistory =
+          status === "approved" || status === "declined" || status === "completed" || deliveryStatus === "delivered";
+        return !inHistory;
+      }),
+    [sortedRequests]
+  );
+
+  const pastRequests = useMemo(
+    () =>
+      sortedRequests.filter((row) => {
+        const status = String(row?.status || "").toLowerCase();
+        const deliveryStatus = String(row?.deliveryStatus || "").toLowerCase();
+        return (
+          status === "approved" || status === "declined" || status === "completed" || deliveryStatus === "delivered"
+        );
+      }),
+    [sortedRequests]
+  );
+
   return (
-    <div className="bg-white text-[#111814] min-h-screen">
+    <div className="bg-[#fffdf7] text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
-        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[#e5e9e7] bg-white px-4 sm:px-6 md:px-10 py-5">
+        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[#efe8d8] bg-[#fffdf7] px-4 sm:px-6 md:px-10 py-5">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="text-primary flex items-center">
+              <div className="text-[#12c76a] flex items-center">
                 <span className="material-symbols-outlined text-2xl font-semibold">volunteer_activism</span>
               </div>
               <h2 className="text-lg font-bold leading-tight tracking-tight">{t("ShareBite")}</h2>
@@ -182,7 +238,7 @@ const MyRequests = () => {
         </header>
 
         <div className="flex flex-1 flex-col lg:flex-row">
-          <aside className="w-full lg:w-64 border-b lg:border-r border-[#e5e9e7] bg-white p-4 flex flex-col gap-6 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)]">
+          <aside className="w-full lg:w-64 border-b lg:border-r border-[#efe8d8] bg-[#fffdf7] p-4 flex flex-col gap-6 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)]">
             <nav className="flex flex-col gap-1">
               <Link
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
@@ -214,32 +270,65 @@ const MyRequests = () => {
             </nav>
           </aside>
 
-          <main className="flex-1 bg-white">
+          <main className="flex-1 bg-[#fffdf7]">
             <div className="p-4 sm:p-6 lg:p-12 max-w-6xl mx-auto">
               <div className="flex flex-col mb-10 gap-2">
                 <h1 className="text-[#111814] text-2xl sm:text-3xl font-bold tracking-tight">{t("My Requests Title")}</h1>
                 <p className="text-[#618972]">{t("My Requests Subtitle")}</p>
               </div>
 
+              {deliveryNotice ? (
+                <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{deliveryNotice}</span>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+                      onClick={() => setDeliveryNotice("")}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               {isLoading ? <p className="text-sm text-[#618972]">Loading requests...</p> : null}
               {loadError ? <p className="text-sm text-red-600">{loadError}</p> : null}
 
               {!isLoading && !loadError && sortedRequests.length === 0 ? (
-                <div className="rounded-xl border border-[#e5e9e7] bg-white p-6 text-sm text-[#618972]">
+                <div className="rounded-xl border border-[#efe8d8] bg-white p-6 text-sm text-[#618972]">
                   No requests yet.
                 </div>
               ) : null}
 
+              <div className="mb-5 flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowPastHistory((prev) => !prev)}
+                  className="rounded-full border border-[#dce8e1] bg-white px-4 py-2 text-xs font-bold text-[#2e5b48] hover:bg-[#f6fbf8]"
+                >
+                  {showPastHistory ? "Hide Past History" : "Past History"}
+                </button>
+              </div>
+
               <div className="flex flex-col gap-3">
-                {sortedRequests.map((reqItem) => (
+                {activeRequests.map((reqItem) => (
                   <div
                     key={reqItem._id}
-                    className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border border-[#e5e9e7] rounded-2xl hover:border-primary/30 hover:shadow-sm transition-all"
+                    className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border border-[#efe8d8] rounded-2xl hover:border-[#d4e6dd] hover:shadow-sm transition-all"
                   >
                     <div className="flex items-center gap-4 w-full sm:w-1/3">
-                      <div className="size-12 rounded-xl bg-[#f0f4f2] flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-primary text-2xl">restaurant</span>
-                      </div>
+                      {resolveDonationImage(reqItem) ? (
+                        <img
+                          src={resolveDonationImage(reqItem)}
+                          alt={reqItem?.donation?.foodName || "Food"}
+                          className="size-12 rounded-xl border border-[#e5ece8] object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="size-12 rounded-xl bg-[#f0f4f2] flex items-center justify-center shrink-0">
+                          <span className="material-symbols-outlined text-[#12c76a] text-2xl">restaurant</span>
+                        </div>
+                      )}
                       <div>
                         <h3 className="font-bold text-[#111814]">{reqItem?.donation?.foodName || "Food"}</h3>
                         <div
@@ -247,16 +336,14 @@ const MyRequests = () => {
                             statusClasses[reqItem?.status] || statusClasses.pending
                           }`}
                         >
-                          {statusLabel(reqItem?.status)}
+                          {statusLabel(reqItem?.status, reqItem?.deliveryStatus)}
                         </div>
                       </div>
                     </div>
 
                     <div className="w-full sm:w-2/3 text-xs text-[#4a6b57] space-y-1">
-                      <p><strong>Requested Serves:</strong> {reqItem?.peopleCount || "-"}</p>
+                      <p><strong>Requested Quantity:</strong> {reqItem?.peopleCount || "-"}</p>
                       <p><strong>Preference:</strong> {reqItem?.foodPreference || "any"}</p>
-                      <p><strong>Your Location:</strong> {reqItem?.requestedLocation || "-"}</p>
-
                       {reqItem?.logistics === "delivery" && reqItem?.deliveryAddress ? (
                         <p><strong>Delivery Address:</strong> {reqItem.deliveryAddress}</p>
                       ) : null}
@@ -268,6 +355,63 @@ const MyRequests = () => {
                   </div>
                 ))}
               </div>
+
+              {!isLoading && !loadError && activeRequests.length === 0 ? (
+                <div className="mt-3 rounded-xl border border-[#efe8d8] bg-white p-5 text-sm text-[#618972]">
+                  No active requests right now.
+                </div>
+              ) : null}
+
+              {showPastHistory ? (
+                <div className="mt-8">
+                  <h2 className="text-lg font-bold text-[#111814] mb-3">Past History</h2>
+                  {pastRequests.length === 0 ? (
+                    <div className="rounded-xl border border-[#efe8d8] bg-white p-5 text-sm text-[#618972]">
+                      No past request history yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {pastRequests.map((reqItem) => {
+                        const finalStatus = statusLabel(reqItem?.status, reqItem?.deliveryStatus);
+                        const statusClass =
+                          finalStatus === "Delivered"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : finalStatus === "Approved"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : "bg-red-50 text-red-700 border-red-200";
+                        return (
+                          <div
+                            key={`history-${reqItem._id}`}
+                            className="rounded-2xl border border-[#efe8d8] bg-white p-4 shadow-sm"
+                          >
+                            <div className="h-32 rounded-xl border border-[#eef3ef] bg-[#f6faf8] overflow-hidden flex items-center justify-center">
+                              {resolveDonationImage(reqItem) ? (
+                                <img
+                                  src={resolveDonationImage(reqItem)}
+                                  alt={reqItem?.donation?.foodName || "Food"}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <span className="material-symbols-outlined text-[#95a99f] text-3xl">photo_camera</span>
+                              )}
+                            </div>
+                            <div className="mt-3 space-y-1 text-sm text-[#33473e]">
+                              <p className="font-bold text-[#111814]">{reqItem?.donation?.foodName || "Food"}</p>
+                              <p><strong>Quantity:</strong> {reqItem?.peopleCount || "-"}</p>
+                              <p><strong>Date:</strong> {new Date(reqItem?.updatedAt || reqItem?.createdAt || Date.now()).toLocaleString()}</p>
+                            </div>
+                            <div className="mt-3">
+                              <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${statusClass}`}>
+                                {finalStatus}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : null}
 
             </div>
 

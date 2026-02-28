@@ -80,7 +80,12 @@ async function createDonation(req, res) {
 
 async function listDonations(req, res) {
   try {
-    const items = await Donation.find({})
+    const now = new Date();
+    const items = await Donation.find({
+      status: "active",
+      quantity: { $gt: 0 },
+      expiryTime: { $gt: now },
+    })
       .sort({ createdAt: -1 })
       .lean();
 

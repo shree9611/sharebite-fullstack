@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { buildApiUrl } from "../lib/api.js";
+import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
 import { getCurrentProfile } from "../lib/profile.js";
 
 const FoodRequest = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const donation = location.state || {};
+  const selectedFoodImage = resolveAssetUrl(donation?.imageUrl || donation?.image || "");
   const donationId = donation?.donationId;
   const availableQuantity = Number(donation?.quantity);
   const hasQuantityLimit = Number.isFinite(availableQuantity) && availableQuantity > 0;
@@ -157,7 +158,7 @@ const FoodRequest = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-white">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#fffdf7]">
       <div className="max-w-2xl w-full py-8 sm:py-12">
         <div className="text-center mb-8">
           <div className="flex justify-center items-center gap-2 mb-2">
@@ -170,6 +171,11 @@ const FoodRequest = () => {
         <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-6 sm:p-8 md:p-12">
           <form className="space-y-8" onSubmit={handleSubmit}>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              {selectedFoodImage ? (
+                <div className="mb-3 h-36 w-full rounded-xl overflow-hidden border border-slate-200 bg-white">
+                  <img src={selectedFoodImage} alt={donation?.foodName || "Selected food"} className="h-full w-full object-cover" />
+                </div>
+              ) : null}
               <p><strong>Selected Food:</strong> {donation?.foodName || "Not selected"}</p>
               <p><strong>Quantity:</strong> {donation?.quantity || "-"}</p>
               <p><strong>Location:</strong> {donation?.location || "-"}</p>

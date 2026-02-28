@@ -3,9 +3,17 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl } from "../lib/api.js";
 
+const PROFILE_IMAGE_PRELOAD_LIMIT = 200000;
+
 const getStoredAccountData = () => {
   try {
-    return JSON.parse(sessionStorage.getItem("sharebite.accountData") || "null");
+    const parsed = JSON.parse(sessionStorage.getItem("sharebite.accountData") || "null");
+    if (!parsed || typeof parsed !== "object") return null;
+    const profileImageDataUrl = String(parsed.profileImageDataUrl || "");
+    if (profileImageDataUrl.length > PROFILE_IMAGE_PRELOAD_LIMIT) {
+      return { ...parsed, profileImageDataUrl: "" };
+    }
+    return parsed;
   } catch {
     return null;
   }

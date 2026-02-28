@@ -99,7 +99,17 @@ const UserDashboard = () => {
         throw new Error(data?.message || "Failed to load donations.");
       }
       const list = Array.isArray(data) ? data : [];
-      setDonations(list);
+      const uniqueActive = [];
+      const seen = new Set();
+      for (const row of list) {
+        const key = String(row?._id || "");
+        if (!key || seen.has(key)) continue;
+        const isVisible = String(row?.status || "").toLowerCase() === "active" && Number(row?.quantity || 0) > 0;
+        if (!isVisible) continue;
+        seen.add(key);
+        uniqueActive.push(row);
+      }
+      setDonations(uniqueActive);
     } catch (error) {
       setLoadError(error.message || "Unable to load donations.");
     } finally {
@@ -116,7 +126,7 @@ const UserDashboard = () => {
     const intervalId = window.setInterval(() => {
       if (document.hidden) return;
       loadDonations();
-    }, 30000);
+    }, 10000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);
@@ -204,9 +214,9 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="bg-white text-[#111814] min-h-screen">
+    <div className="bg-[#fffdf7] text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
-        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-solid border-orange-100 bg-white px-4 sm:px-6 md:px-10 py-5 shadow-sm">
+        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-solid border-[#f3ecdc] bg-[#fffdf7] px-4 sm:px-6 md:px-10 py-5 shadow-sm">
           <div className="flex items-center gap-4 text-[#111814]">
             <div className="flex items-center gap-2">
               <div className="size-6 text-[#12c76a]">
@@ -270,7 +280,7 @@ const UserDashboard = () => {
         </header>
 
         <div className="flex flex-1 flex-col lg:flex-row">
-          <aside className="w-full lg:w-60 border-b lg:border-r border-[#dbe6e0] bg-white/90 p-4 flex flex-col gap-6 shadow-sm">
+          <aside className="w-full lg:w-60 border-b lg:border-r border-[#f3ecdc] bg-[#fffdf7] p-4 flex flex-col gap-6 shadow-sm">
             <div className="flex flex-col gap-2">
               <nav className="flex flex-col gap-1">
                 <Link
@@ -394,6 +404,8 @@ const UserDashboard = () => {
                             foodName: item.foodName,
                             quantity: item.quantity,
                             location: item.location,
+                            image: item.image,
+                            imageUrl: item.imageUrl,
                           }}
                         >
                           {t("Request Food")}
