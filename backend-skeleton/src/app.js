@@ -28,31 +28,24 @@ const parseAllowedOrigins = () => {
 const allowedOrigins = parseAllowedOrigins();
 const isProduction = process.env.NODE_ENV === "production";
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      // Allow server-to-server and local tools with no Origin header.
-      if (!origin) return callback(null, true);
-
-      // If no allowlist is configured, allow all origins to avoid accidental lockout.
-      if (allowedOrigins.length === 0) {
-        return callback(null, true);
-      }
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // In development, do not block requests even if allowlist is present/mismatched.
-      if (!isProduction) {
-        return callback(null, true);
-      }
-
-      return callback(new Error("CORS policy: origin not allowed."), false);
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+    if (!isProduction) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error("CORS policy: origin not allowed."), false);
+  },
+  credentials: true,
+  exposedHeaders: ["Access-Control-Allow-Origin"],
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 const uploadsDir = path.resolve(__dirname, "..", "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
