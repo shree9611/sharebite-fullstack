@@ -7,7 +7,7 @@ import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
 
 const resolveDonationImage = (item) => {
-  return resolveAssetUrl(item?.imageUrl || item?.image || item?.foodImage || "");
+  return resolveAssetUrl(item?.image || item?.imageUrl || item?.foodImage || "");
 };
 
 const resolveProfileImage = (profile) => {

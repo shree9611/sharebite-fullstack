@@ -7,7 +7,13 @@ import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
 
 const resolveDonationImage = (reqItem) => {
-  return resolveAssetUrl(reqItem?.donation?.imageUrl || reqItem?.donation?.image || "");
+  return resolveAssetUrl(
+    reqItem?.donation?.image ||
+    reqItem?.donation?.imageUrl ||
+    reqItem?.donationImage ||
+    reqItem?.donationImageUrl ||
+    ""
+  );
 };
 
 const resolveProfileImage = (profile) => {

@@ -105,6 +105,8 @@ async function listRequests(req, res) {
         : null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      donationImage: row?.donationId?.image || row.donationImage || "",
+      donationImageUrl: toAbsoluteImageUrl(req, row?.donationId?.image || row.donationImage || ""),
       donor: row.donorId
         ? {
             _id: row.donorId._id,
