@@ -3,30 +3,31 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl } from "../lib/api.js";
 
+const getStoredAccountData = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem("sharebite.accountData") || "null");
+  } catch {
+    return null;
+  }
+};
 
 const AccountDetails = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const role = location.state?.role;
-    const storedAccountData = (() => {
-      try {
-        return JSON.parse(sessionStorage.getItem("sharebite.accountData") || "null");
-      } catch {
-        return null;
-      }
-    })();
     const { t } = useLanguage();
     const inputRefs = useRef([]);
     const profileImageInputRef = useRef(null);
-    const [fullName, setFullName] = useState(storedAccountData?.name || "");
-    const [emailValue, setEmailValue] = useState(storedAccountData?.email || "");
-    const [phoneValue, setPhoneValue] = useState(storedAccountData?.phone || "");
+    const [storedAccountData] = useState(getStoredAccountData);
+    const [fullName, setFullName] = useState(() => storedAccountData?.name || "");
+    const [emailValue, setEmailValue] = useState(() => storedAccountData?.email || "");
+    const [phoneValue, setPhoneValue] = useState(() => storedAccountData?.phone || "");
     const [passwordValue, setPasswordValue] = useState("");
     const [confirmValue, setConfirmValue] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [submitError, setSubmitError] = useState("");
-    const [profileImageDataUrl, setProfileImageDataUrl] = useState(storedAccountData?.profileImageDataUrl || "");
+    const [profileImageDataUrl, setProfileImageDataUrl] = useState(() => storedAccountData?.profileImageDataUrl || "");
     const [profileImageError, setProfileImageError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [touched, setTouched] = useState({

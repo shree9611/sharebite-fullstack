@@ -209,7 +209,7 @@ const UserDashboard = () => {
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-solid border-orange-100 bg-white px-4 sm:px-6 md:px-10 py-5 shadow-sm">
           <div className="flex items-center gap-4 text-[#111814]">
             <div className="flex items-center gap-2">
-              <div className="size-6 text-primary">
+              <div className="size-6 text-[#12c76a]">
                 <span className="material-symbols-outlined text-3xl">volunteer_activism</span>
               </div>
               <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">{t("ShareBite")}</h2>
