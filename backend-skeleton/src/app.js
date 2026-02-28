@@ -25,7 +25,10 @@ const parseAllowedOrigins = () => {
     .filter(Boolean);
 };
 
-const allowedOrigins = parseAllowedOrigins();
+const defaultFrontendOrigin = "https://sharebite-beta.vercel.app";
+const allowedOrigins = Array.from(
+  new Set([...parseAllowedOrigins(), defaultFrontendOrigin])
+);
 const isProduction = process.env.NODE_ENV === "production";
 
 const corsOptions = {
