@@ -49,9 +49,7 @@ export const resolveAssetUrl = (assetPath) => {
   const normalizedPath = rawValue.startsWith("/")
     ? rawValue
     : `/${rawValue.replace(/^\/+/, "")}`;
-  const baseForAssets =
-    IS_VERCEL_FRONTEND && CONFIGURED_API_BASE_URL ? CONFIGURED_API_BASE_URL : API_BASE_URL;
-  return buildUrlWithBase(baseForAssets, normalizedPath);
+  return buildUrlWithBase(API_BASE_URL, normalizedPath);
 };
 
 export const apiFetchWithFallback = async (path, options = {}) => {
@@ -59,9 +57,6 @@ export const apiFetchWithFallback = async (path, options = {}) => {
     new Set([
       buildApiUrl(path),
       path,
-      ...(IS_VERCEL_FRONTEND && CONFIGURED_API_BASE_URL
-        ? [buildUrlWithBase(CONFIGURED_API_BASE_URL, path)]
-        : []),
     ])
   );
 
