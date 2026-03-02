@@ -27,6 +27,10 @@ function toAbsoluteImageUrl(req, imagePath) {
 
 function buildImageValue(file) {
   if (!file) return "";
+  if (file.buffer && file.mimetype && file.mimetype.startsWith("image/")) {
+    const base64 = file.buffer.toString("base64");
+    return `data:${file.mimetype};base64,${base64}`;
+  }
   if (file.path) {
     const normalizedPath = String(file.path).replace(/\\/g, "/");
     const marker = "/uploads/";

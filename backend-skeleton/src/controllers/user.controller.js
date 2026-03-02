@@ -3,6 +3,7 @@ const { User } = require("../models/user.model");
 const { Request } = require("../models/request.model");
 const { Feedback } = require("../models/feedback.model");
 const { Donation } = require("../models/donation.model");
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 const hashPassword = (password, salt) => crypto.scryptSync(password, salt, 64).toString("hex");
 
@@ -42,6 +43,10 @@ const toAbsoluteImageUrl = (req, imagePath) => {
 };
 
 const toAvatarPath = (file) => {
+  if (file?.buffer && file?.mimetype?.startsWith("image/")) {
+    const base64 = file.buffer.toString("base64");
+    return `data:${file.mimetype};base64,${base64}`;
+  }
   if (!file?.path) return "";
   const normalizedPath = String(file.path).replace(/\\/g, "/");
   const marker = "/uploads/";
@@ -59,6 +64,7 @@ const resolveAvatarInput = (patch, file) => {
   const value = directAvatar.trim();
   if (!value) return "";
   if (value.startsWith("/uploads/")) return value;
+  if (value.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(value) ? value : undefined;
   return undefined;
 };
 

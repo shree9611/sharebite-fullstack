@@ -5,6 +5,7 @@ const JWT_SECRET =
   process.env.JWT_SECRET ||
   (process.env.NODE_ENV === "production" ? "" : "sharebite-dev-secret");
 const JWT_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
+const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is required in production.");
@@ -75,10 +76,17 @@ const sanitizeAvatarPath = (value) => {
   if (input.startsWith("/uploads/")) {
     return input;
   }
+  if (input.startsWith("data:")) {
+    return SAFE_DATA_IMAGE_RE.test(input) ? input : "";
+  }
   return "";
 };
 
 const toAvatarPath = (file) => {
+  if (file?.buffer && file?.mimetype?.startsWith("image/")) {
+    const base64 = file.buffer.toString("base64");
+    return `data:${file.mimetype};base64,${base64}`;
+  }
   if (!file?.path) return "";
   const normalizedPath = String(file.path).replace(/\\/g, "/");
   const marker = "/uploads/";
