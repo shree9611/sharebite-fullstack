@@ -49,6 +49,17 @@ const corsOptions = {
   exposedHeaders: ["Access-Control-Allow-Origin"],
 };
 app.use(cors(corsOptions));
+
+// handle CORS preflight explicitly so all requested headers/methods are exposed
+app.options("/*", (req, res) => {
+  res.header("Access-Control-Allow-Origin", allowedOrigins.join(", "));
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    req.header("Access-Control-Request-Headers") || "Content-Type, Authorization"
+  );
+  return res.sendStatus(204);
+});
 app.use(express.json());
 const uploadsDir = path.resolve(__dirname, "..", "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
