@@ -32,13 +32,14 @@ const allowedOrigins = Array.from(
   new Set([...parseAllowedOrigins(), normalizeOrigin(defaultFrontendOrigin)])
 );
 const isProduction = process.env.NODE_ENV === "production";
+const vercelSharebiteOriginRe = /^https:\/\/sharebite-beta(?:-[a-z0-9-]+)?\.vercel\.app$/i;
 
 const corsOptions = {
   origin(origin, callback) {
     if (!origin) return callback(null, true);
     const requestOrigin = normalizeOrigin(origin);
     if (allowedOrigins.length === 0) return callback(null, true);
-    if (allowedOrigins.includes(requestOrigin)) {
+    if (allowedOrigins.includes(requestOrigin) || vercelSharebiteOriginRe.test(requestOrigin)) {
       callback(null, true);
       return;
     }
