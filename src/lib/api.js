@@ -1,4 +1,13 @@
 const resolveApiBaseUrl = () => {
+  const isVercelFrontend =
+    typeof window !== "undefined" &&
+    /(?:^|\.)vercel\.app$/i.test(window.location.hostname || "");
+
+  if (isVercelFrontend) {
+    // Route through Vercel rewrites to avoid browser CORS preflight issues.
+    return "";
+  }
+
   // Use explicit backend URL when provided (dev + production).
   // Falls back to same-origin when env is not set.
   if (import.meta.env.VITE_API_BASE_URL) {

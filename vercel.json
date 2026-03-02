@@ -1,7 +1,15 @@
 {
   "rewrites": [
     {
-      "source": "/((?!assets/|favicon.svg|vite.svg).*)",
+      "source": "/api/(.*)",
+      "destination": "https://sharebite-backend-r0pa.onrender.com/api/$1"
+    },
+    {
+      "source": "/uploads/(.*)",
+      "destination": "https://sharebite-backend-r0pa.onrender.com/uploads/$1"
+    },
+    {
+      "source": "/((?!api/|uploads/|assets/|favicon.svg|vite.svg).*)",
       "destination": "/index.html"
     }
   ],
