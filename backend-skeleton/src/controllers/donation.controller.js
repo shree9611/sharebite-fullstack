@@ -9,7 +9,20 @@ function toAbsoluteImageUrl(req, imagePath) {
   if (imagePath.startsWith("data:")) {
     return SAFE_DATA_IMAGE_RE.test(imagePath) ? imagePath : "";
   }
-  return imagePath.startsWith("/") ? imagePath : `/${String(imagePath).replace(/^\/+/, "")}`;
+  const normalizedPath = imagePath.startsWith("/")
+    ? imagePath
+    : `/${String(imagePath).replace(/^\/+/, "")}`;
+  const forwardedHost = req.headers["x-forwarded-host"];
+  const host =
+    (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ||
+    req.get("host");
+  if (!host) return normalizedPath;
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const proto =
+    process.env.NODE_ENV === "production"
+      ? "https"
+      : (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || req.protocol || "http";
+  return `${proto}://${host}${encodeURI(normalizedPath)}`;
 }
 
 function buildImageValue(file) {
@@ -81,6 +94,7 @@ async function createDonation(req, res) {
 
     return res.status(201).json({
       ...donation.toObject(),
+      image: toAbsoluteImageUrl(req, donation.image),
       imageUrl: toAbsoluteImageUrl(req, donation.image),
     });
   } catch (error) {
@@ -105,7 +119,7 @@ async function listDonations(req, res) {
       foodName: item.foodName,
       quantity: item.quantity,
       location: item.locationText,
-      image: item.image,
+      image: toAbsoluteImageUrl(req, item.image),
       imageUrl: toAbsoluteImageUrl(req, item.image),
       latitude: item.location?.coordinates?.[1],
       longitude: item.location?.coordinates?.[0],
@@ -136,7 +150,7 @@ async function listMyDonations(req, res) {
       foodName: item.foodName,
       quantity: item.quantity,
       location: item.locationText,
-      image: item.image,
+      image: toAbsoluteImageUrl(req, item.image),
       imageUrl: toAbsoluteImageUrl(req, item.image),
       latitude: item.location?.coordinates?.[1],
       longitude: item.location?.coordinates?.[0],

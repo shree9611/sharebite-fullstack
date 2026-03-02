@@ -13,6 +13,8 @@ const userRoutes = require("./routes/user.routes");
 
 const app = express();
 
+const normalizeOrigin = (origin) => String(origin || "").trim().replace(/\/+$/, "");
+
 const parseAllowedOrigins = () => {
   const raw =
     process.env.CORS_ORIGINS ||
@@ -21,21 +23,22 @@ const parseAllowedOrigins = () => {
     "";
   return raw
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => normalizeOrigin(origin))
     .filter(Boolean);
 };
 
 const defaultFrontendOrigin = "https://sharebite-beta.vercel.app";
 const allowedOrigins = Array.from(
-  new Set([...parseAllowedOrigins(), defaultFrontendOrigin])
+  new Set([...parseAllowedOrigins(), normalizeOrigin(defaultFrontendOrigin)])
 );
 const isProduction = process.env.NODE_ENV === "production";
 
 const corsOptions = {
   origin(origin, callback) {
     if (!origin) return callback(null, true);
+    const requestOrigin = normalizeOrigin(origin);
     if (allowedOrigins.length === 0) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(requestOrigin)) {
       callback(null, true);
       return;
     }
@@ -50,16 +53,8 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// handle CORS preflight explicitly so all requested headers/methods are exposed
-app.options("/*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", allowedOrigins.join(", "));
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.header(
-    "Access-Control-Allow-Headers",
-    req.header("Access-Control-Request-Headers") || "Content-Type, Authorization"
-  );
-  return res.sendStatus(204);
-});
+// Preflight handling should use the same CORS policy logic.
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 const uploadsDir = path.resolve(__dirname, "..", "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });

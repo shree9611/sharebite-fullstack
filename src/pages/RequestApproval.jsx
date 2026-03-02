@@ -8,10 +8,10 @@ import NotificationBell from "../components/NotificationBell.jsx";
 
 const resolveDonationImage = (reqItem) => {
   return resolveAssetUrl(
-    reqItem?.donation?.image ||
     reqItem?.donation?.imageUrl ||
-    reqItem?.donationImage ||
+    reqItem?.donation?.image ||
     reqItem?.donationImageUrl ||
+    reqItem?.donationImage ||
     ""
   );
 };

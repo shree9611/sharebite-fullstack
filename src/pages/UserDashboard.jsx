@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
+import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
@@ -50,7 +50,7 @@ const haversineKm = (from, to) => {
 };
 
 const resolveDonationImage = (item) => {
-  return resolveAssetUrl(item?.image || item?.imageUrl || "");
+  return resolveAssetUrl(item?.imageUrl || item?.image || "");
 };
 
 const resolveProfileImage = (profile) => {
@@ -91,7 +91,7 @@ const UserDashboard = () => {
     setIsLoading(true);
     setLoadError("");
     try {
-      const response = await fetch(buildApiUrl("/api/donations"), {
+      const response = await apiFetchWithFallback("/api/donations", {
         cache: "no-store",
       });
       const data = await response.json().catch(() => []);
@@ -111,7 +111,11 @@ const UserDashboard = () => {
       }
       setDonations(uniqueActive);
     } catch (error) {
-      setLoadError(error.message || "Unable to load donations.");
+      const message =
+        error instanceof TypeError
+          ? "Unable to reach server. Please check backend URL, internet, and CORS settings, then try again."
+          : error.message || "Unable to load donations.";
+      setLoadError(message);
     } finally {
       setIsLoading(false);
     }
@@ -432,3 +436,4 @@ const UserDashboard = () => {
 };
 
 export default UserDashboard;
+

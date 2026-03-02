@@ -7,7 +7,20 @@ function toAbsoluteImageUrl(req, imagePath) {
   if (!imagePath) return "";
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) return imagePath;
   if (imagePath.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(imagePath) ? imagePath : "";
-  return imagePath.startsWith("/") ? imagePath : `/${String(imagePath).replace(/^\/+/, "")}`;
+  const normalizedPath = imagePath.startsWith("/")
+    ? imagePath
+    : `/${String(imagePath).replace(/^\/+/, "")}`;
+  const forwardedHost = req.headers["x-forwarded-host"];
+  const host =
+    (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ||
+    req.get("host");
+  if (!host) return normalizedPath;
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const proto =
+    process.env.NODE_ENV === "production"
+      ? "https"
+      : (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto) || req.protocol || "http";
+  return `${proto}://${host}${encodeURI(normalizedPath)}`;
 }
 
 async function createRequest(req, res) {
@@ -105,7 +118,7 @@ async function listRequests(req, res) {
         : null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-      donationImage: row?.donationId?.image || row.donationImage || "",
+      donationImage: toAbsoluteImageUrl(req, row?.donationId?.image || row.donationImage || ""),
       donationImageUrl: toAbsoluteImageUrl(req, row?.donationId?.image || row.donationImage || ""),
       donor: row.donorId
         ? {
@@ -129,7 +142,7 @@ async function listRequests(req, res) {
             foodName: row.donationId.foodName,
             quantity: row.donationId.quantity,
             location: row.donationId.locationText,
-            image: row.donationId.image,
+            image: toAbsoluteImageUrl(req, row.donationId.image),
             imageUrl: toAbsoluteImageUrl(req, row.donationId.image),
           }
         : {
@@ -137,7 +150,7 @@ async function listRequests(req, res) {
             foodName: row.donationFoodName || "Food",
             quantity: Number(row.donationOriginalQuantity || 0),
             location: "",
-            image: row.donationImage || "",
+            image: toAbsoluteImageUrl(req, row.donationImage || ""),
             imageUrl: toAbsoluteImageUrl(req, row.donationImage || ""),
           },
     }));
