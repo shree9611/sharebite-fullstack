@@ -1,17 +1,20 @@
-const resolveApiBaseUrl = () => {
-  const isVercelFrontend =
-    typeof window !== "undefined" &&
-    /(?:^|\.)vercel\.app$/i.test(window.location.hostname || "");
+const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/+$/, "")
+  : "";
+const IS_VERCEL_FRONTEND =
+  typeof window !== "undefined" &&
+  /(?:^|\.)vercel\.app$/i.test(window.location.hostname || "");
 
-  if (isVercelFrontend) {
+const resolveApiBaseUrl = () => {
+  if (IS_VERCEL_FRONTEND) {
     // Route through Vercel rewrites to avoid browser CORS preflight issues.
     return "";
   }
 
   // Use explicit backend URL when provided (dev + production).
   // Falls back to same-origin when env is not set.
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return String(import.meta.env.VITE_API_BASE_URL).replace(/\/+$/, "");
+  if (CONFIGURED_API_BASE_URL) {
+    return CONFIGURED_API_BASE_URL;
   }
   // Fallback when env is not set.
   return "";
@@ -20,6 +23,7 @@ const resolveApiBaseUrl = () => {
 export const API_BASE_URL = resolveApiBaseUrl();
 
 export const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
+const buildUrlWithBase = (base, path) => `${base || ""}${path}`;
 const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 
 export const resolveAssetUrl = (assetPath) => {
@@ -42,19 +46,35 @@ export const resolveAssetUrl = (assetPath) => {
   }
   if (rawValue.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(rawValue) ? rawValue : "";
   if (rawValue.startsWith("//")) return `https:${rawValue}`;
-  if (rawValue.startsWith("/")) return buildApiUrl(rawValue);
-  return buildApiUrl(`/${rawValue.replace(/^\/+/, "")}`);
+  const normalizedPath = rawValue.startsWith("/")
+    ? rawValue
+    : `/${rawValue.replace(/^\/+/, "")}`;
+  const baseForAssets =
+    IS_VERCEL_FRONTEND && CONFIGURED_API_BASE_URL ? CONFIGURED_API_BASE_URL : API_BASE_URL;
+  return buildUrlWithBase(baseForAssets, normalizedPath);
 };
 
 export const apiFetchWithFallback = async (path, options = {}) => {
-  const primaryUrl = buildApiUrl(path);
-  const fallbackUrl = path;
-  const urlsToTry = primaryUrl === fallbackUrl ? [primaryUrl] : [primaryUrl, fallbackUrl];
+  const urlsToTry = Array.from(
+    new Set([
+      buildApiUrl(path),
+      path,
+      ...(IS_VERCEL_FRONTEND && CONFIGURED_API_BASE_URL
+        ? [buildUrlWithBase(CONFIGURED_API_BASE_URL, path)]
+        : []),
+    ])
+  );
 
   let lastNetworkError = null;
+  let lastServerErrorResponse = null;
   for (const url of urlsToTry) {
     try {
-      return await fetch(url, options);
+      const response = await fetch(url, options);
+      if (response.status >= 500) {
+        lastServerErrorResponse = response;
+        continue;
+      }
+      return response;
     } catch (error) {
       if (error instanceof TypeError) {
         lastNetworkError = error;
@@ -66,6 +86,10 @@ export const apiFetchWithFallback = async (path, options = {}) => {
 
   if (lastNetworkError) {
     throw lastNetworkError;
+  }
+
+  if (lastServerErrorResponse) {
+    return lastServerErrorResponse;
   }
 
   throw new Error("Unable to reach server.");
