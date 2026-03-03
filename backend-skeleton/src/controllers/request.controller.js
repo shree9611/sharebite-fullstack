@@ -75,12 +75,13 @@ async function createRequest(req, res) {
 
 async function listRequests(req, res) {
   try {
+    const role = String(req.user?.role || "").toLowerCase();
     let query = {};
-    if (req.user.role === "donor") {
+    if (role === "donor") {
       query = { donorId: req.user.id };
-    } else if (req.user.role === "receiver") {
+    } else if (role === "receiver") {
       query = { receiverId: req.user.id };
-    } else if (req.user.role === "admin") {
+    } else if (role === "admin") {
       // Volunteers (admin role) should see active delivery missions.
       query = {
         logistics: "delivery",
@@ -119,6 +120,9 @@ async function listRequests(req, res) {
       requestQuery = requestQuery.limit(limit);
     }
     const rows = await requestQuery.lean();
+    if (!rows || rows.length === 0) {
+      return res.json([]);
+    }
 
     const payload = rows.map((row) => ({
       _id: row._id,
@@ -176,7 +180,7 @@ async function listRequests(req, res) {
           },
     }));
 
-    return res.json(payload);
+    return res.json(payload || []);
   } catch (error) {
     return res.status(500).json({ message: error.message || "Failed to list requests." });
   }

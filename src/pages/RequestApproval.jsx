@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
+import { apiFetchWithFallback, buildApiUrl, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
@@ -75,7 +75,7 @@ const RequestApproval = () => {
 
   const loadRequests = useCallback(async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
-    if (showLoading) setLoadError("");
+    setLoadError("");
     const token = localStorage.getItem("sharebite.token");
     if (!token) {
       setLoadError("Please login first.");
@@ -84,12 +84,22 @@ const RequestApproval = () => {
     }
 
     try {
-      const response = await apiFetchWithFallback("/api/requests?status=pending&limit=80", {
+      const apiPath = "/api/requests?status=pending&limit=80";
+      const response = await apiFetchWithFallback(apiPath, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
       });
       const data = await response.json().catch(() => []);
+      // Debug: keep this to verify response shape/status in production quickly.
+      // eslint-disable-next-line no-console
+      console.info("[RequestApproval] loadRequests", {
+        url: buildApiUrl(apiPath) || apiPath,
+        status: response.status,
+        ok: response.ok,
+        rows: Array.isArray(data) ? data.length : 0,
+      });
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load requests.");
       }
@@ -123,12 +133,21 @@ const RequestApproval = () => {
     }
 
     try {
-      const response = await apiFetchWithFallback("/api/requests?status=approved&limit=120", {
+      const apiPath = "/api/requests?status=approved&limit=120";
+      const response = await apiFetchWithFallback(apiPath, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
       });
       const data = await response.json().catch(() => []);
+      // eslint-disable-next-line no-console
+      console.info("[RequestApproval] loadApprovedRequests", {
+        url: buildApiUrl(apiPath) || apiPath,
+        status: response.status,
+        ok: response.ok,
+        rows: Array.isArray(data) ? data.length : 0,
+      });
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load approved requests.");
       }
@@ -390,7 +409,7 @@ const RequestApproval = () => {
 
                 {!isLoading && !loadError && pendingRequests.length === 0 ? (
                   <div className="bg-white rounded-3xl border border-[#e6ebf1] p-6 text-sm text-[#8aa19a]">
-                    No pending receiver requests yet.
+                    No incoming requests.
                   </div>
                 ) : null}
 

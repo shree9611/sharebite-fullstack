@@ -47,7 +47,7 @@ function authMiddleware(req, res, next) {
 
   req.user = {
     id: payload.sub || payload.id,
-    role: payload.role || "receiver",
+    role: String(payload.role || "receiver").toLowerCase(),
     email: payload.email || "",
   };
 
