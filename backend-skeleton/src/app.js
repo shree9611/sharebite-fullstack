@@ -73,4 +73,18 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
+app.use("/api", (_req, res) => {
+  return res.status(404).json({ message: "API route not found." });
+});
+
+app.use((error, _req, res, _next) => {
+  // eslint-disable-next-line no-console
+  console.error("Unhandled API error:", error);
+  const statusCode = Number(error?.status || error?.statusCode) || 500;
+  if (res.headersSent) return;
+  res.status(statusCode).json({
+    message: error?.message || "Internal server error.",
+  });
+});
+
 module.exports = { app };

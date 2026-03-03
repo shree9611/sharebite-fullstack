@@ -6,16 +6,16 @@ const IS_VERCEL_FRONTEND =
   /(?:^|\.)vercel\.app$/i.test(window.location.hostname || "");
 
 const resolveApiBaseUrl = () => {
+  // If explicitly configured, always prefer this base URL.
+  if (CONFIGURED_API_BASE_URL) {
+    return CONFIGURED_API_BASE_URL;
+  }
+
   if (IS_VERCEL_FRONTEND) {
     // Route through Vercel rewrites to avoid browser CORS preflight issues.
     return "";
   }
 
-  // Use explicit backend URL when provided (dev + production).
-  // Falls back to same-origin when env is not set.
-  if (CONFIGURED_API_BASE_URL) {
-    return CONFIGURED_API_BASE_URL;
-  }
   // Fallback when env is not set.
   return "";
 };

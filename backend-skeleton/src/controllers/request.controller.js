@@ -92,7 +92,10 @@ async function listRequests(req, res) {
       return res.status(403).json({ message: "Not authorized to view requests." });
     }
 
-    const rawStatusFilter = String(req.query?.status || "").trim().toLowerCase();
+    const statusParam = req.query?.status;
+    const rawStatusFilter = String(Array.isArray(statusParam) ? statusParam.join(",") : statusParam || "")
+      .trim()
+      .toLowerCase();
     if (rawStatusFilter) {
       const allowed = new Set(["pending", "approved", "declined", "completed"]);
       const statusValues = rawStatusFilter
@@ -104,7 +107,8 @@ async function listRequests(req, res) {
       }
     }
 
-    const requestedLimit = Number(req.query?.limit);
+    const limitParam = Array.isArray(req.query?.limit) ? req.query.limit[0] : req.query?.limit;
+    const requestedLimit = Number(limitParam);
     const limit =
       Number.isFinite(requestedLimit) && requestedLimit > 0
         ? Math.min(Math.floor(requestedLimit), 200)
