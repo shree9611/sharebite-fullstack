@@ -46,13 +46,13 @@ const RequestApproval = () => {
     setProfile(getCurrentProfile());
   }, []);
 
-  const loadRequests = useCallback(async () => {
-    setIsLoading(true);
+  const loadRequests = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     setLoadError("");
     const token = localStorage.getItem("sharebite.token");
     if (!token) {
       setLoadError("Please login first.");
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
       return;
     }
 
@@ -70,7 +70,7 @@ const RequestApproval = () => {
     } catch (error) {
       setLoadError(error.message || "Unable to load requests.");
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   }, []);
 
@@ -81,10 +81,10 @@ const RequestApproval = () => {
   useEffect(() => {
     const refresh = () => {
       if (document.hidden) return;
-      loadRequests();
+      loadRequests(false);
     };
-    const onFocus = () => loadRequests();
-    const intervalId = window.setInterval(refresh, 30000);
+    const onFocus = () => loadRequests(false);
+    const intervalId = window.setInterval(refresh, 60000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);
