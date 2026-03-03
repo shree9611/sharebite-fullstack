@@ -29,7 +29,9 @@ const requestSchema = new mongoose.Schema(
 );
 
 requestSchema.index({ donorId: 1, updatedAt: -1 });
+requestSchema.index({ donorId: 1, status: 1, updatedAt: -1 });
 requestSchema.index({ receiverId: 1, updatedAt: -1 });
+requestSchema.index({ receiverId: 1, status: 1, updatedAt: -1 });
 requestSchema.index({ volunteerId: 1, updatedAt: -1 });
 requestSchema.index({ donationId: 1, updatedAt: -1 });
 requestSchema.index({ logistics: 1, status: 1, deliveryStatus: 1, updatedAt: -1 });

@@ -75,6 +75,10 @@ async function createRequest(req, res) {
 
 async function listRequests(req, res) {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const role = String(req.user?.role || "").toLowerCase();
     let query = {};
     if (role === "donor") {
@@ -115,6 +119,7 @@ async function listRequests(req, res) {
         : 0;
 
     let requestQuery = Request.find(query)
+      .maxTimeMS(8000)
       .populate("donationId", "foodName quantity locationText image")
       .populate("donorId", "name email phone")
       .populate("receiverId", "name email phone")
@@ -186,7 +191,15 @@ async function listRequests(req, res) {
 
     return res.json(payload || []);
   } catch (error) {
-    return res.status(500).json({ message: error.message || "Failed to list requests." });
+    const message = error?.message || "Failed to list requests.";
+    const isTimeout =
+      error?.name === "MongooseError" ||
+      error?.name === "MongoServerError" ||
+      /timed out|maxTimeMS/i.test(message);
+    if (isTimeout && /timed out|maxTimeMS/i.test(message)) {
+      return res.status(503).json({ message: "Request query timed out. Please retry." });
+    }
+    return res.status(500).json({ message });
   }
 }
 

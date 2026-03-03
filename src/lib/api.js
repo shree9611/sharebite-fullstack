@@ -1,18 +1,32 @@
 const CONFIGURED_API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/+$/, "")
   : "";
+const DEFAULT_RENDER_API_BASE_URL = "https://sharebite-backend-r0pa.onrender.com";
 const IS_VERCEL_FRONTEND =
   typeof window !== "undefined" &&
   /(?:^|\.)vercel\.app$/i.test(window.location.hostname || "");
 
+const parseOrigin = (value) => {
+  try {
+    return new URL(String(value)).origin;
+  } catch {
+    return "";
+  }
+};
+
+const isLocalOrigin = (origin) =>
+  /^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(String(origin || ""));
+
 const resolveApiBaseUrl = () => {
   const isBrowser = typeof window !== "undefined";
   const isHttpsPage = isBrowser && window.location.protocol === "https:";
-  const hasLocalhostBase = /^(http:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?$/i.test(CONFIGURED_API_BASE_URL);
+  const configuredOrigin = parseOrigin(CONFIGURED_API_BASE_URL);
+  const hasLocalhostBase = isLocalOrigin(configuredOrigin || CONFIGURED_API_BASE_URL);
 
   if (isHttpsPage && hasLocalhostBase) {
     // Safety guard: never use localhost API base on deployed HTTPS frontend.
-    return "";
+    // Fall back to stable Render backend directly to avoid CSP and Vercel proxy 502.
+    return DEFAULT_RENDER_API_BASE_URL;
   }
 
   // If explicitly configured, always prefer this base URL.
@@ -21,12 +35,12 @@ const resolveApiBaseUrl = () => {
   }
 
   if (IS_VERCEL_FRONTEND) {
-    // Route through Vercel rewrites to avoid browser CORS preflight issues.
-    return "";
+    // Prefer direct Render URL to avoid intermittent Vercel proxy 502 on /api rewrites.
+    return DEFAULT_RENDER_API_BASE_URL;
   }
 
   // Fallback when env is not set.
-  return "";
+  return DEFAULT_RENDER_API_BASE_URL;
 };
 
 export const API_BASE_URL = resolveApiBaseUrl();
@@ -62,12 +76,9 @@ export const resolveAssetUrl = (assetPath) => {
 };
 
 export const apiFetchWithFallback = async (path, options = {}) => {
-  const urlsToTry = Array.from(
-    new Set([
-      buildApiUrl(path),
-      path,
-    ])
-  );
+  const primaryUrl = buildApiUrl(path);
+  const shouldTryRelativeFallback = !API_BASE_URL;
+  const urlsToTry = Array.from(new Set([primaryUrl, ...(shouldTryRelativeFallback ? [path] : [])]));
 
   let lastNetworkError = null;
   let lastServerErrorResponse = null;
