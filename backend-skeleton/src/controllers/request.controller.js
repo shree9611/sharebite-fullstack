@@ -91,13 +91,34 @@ async function listRequests(req, res) {
       return res.status(403).json({ message: "Not authorized to view requests." });
     }
 
-    const rows = await Request.find(query)
+    const rawStatusFilter = String(req.query?.status || "").trim().toLowerCase();
+    if (rawStatusFilter) {
+      const allowed = new Set(["pending", "approved", "declined", "completed"]);
+      const statusValues = rawStatusFilter
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter((value) => allowed.has(value));
+      if (statusValues.length > 0) {
+        query.status = statusValues.length === 1 ? statusValues[0] : { $in: statusValues };
+      }
+    }
+
+    const requestedLimit = Number(req.query?.limit);
+    const limit =
+      Number.isFinite(requestedLimit) && requestedLimit > 0
+        ? Math.min(Math.floor(requestedLimit), 200)
+        : 0;
+
+    let requestQuery = Request.find(query)
       .populate("donationId", "foodName quantity locationText image")
       .populate("donorId", "name email phone")
       .populate("receiverId", "name email phone")
       .populate("volunteerId", "name email phone")
-      .sort({ updatedAt: -1 })
-      .lean();
+      .sort({ updatedAt: -1 });
+    if (limit > 0) {
+      requestQuery = requestQuery.limit(limit);
+    }
+    const rows = await requestQuery.lean();
 
     const payload = rows.map((row) => ({
       _id: row._id,
