@@ -57,6 +57,17 @@ const resolveProfileImage = (profile) => {
   return resolveAssetUrl(profile?.profileImageUrl || profile?.profileImage || "");
 };
 
+const resolvePastStatus = (item) => {
+  const expiry = item?.expiryTime ? new Date(item.expiryTime).getTime() : null;
+  if (expiry && expiry <= Date.now()) return "Expired";
+  if (Number(item?.quantity || 0) <= 0) return "Fully Claimed";
+  const status = String(item?.status || "").toLowerCase();
+  if (status === "delivered") return "Delivered";
+  if (status === "claimed") return "Claimed";
+  if (status && status !== "active") return status[0].toUpperCase() + status.slice(1);
+  return "Unavailable";
+};
+
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -70,6 +81,8 @@ const UserDashboard = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState(() => getCurrentProfile());
   const [donations, setDonations] = useState([]);
+  const [pastDonations, setPastDonations] = useState([]);
+  const [showPastList, setShowPastList] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -110,6 +123,18 @@ const UserDashboard = () => {
         uniqueActive.push(row);
       }
       setDonations(uniqueActive);
+
+      try {
+        const historyResponse = await apiFetchWithFallback("/api/donations/history", {
+          cache: "no-store",
+        });
+        const historyData = await historyResponse.json().catch(() => []);
+        if (historyResponse.ok && Array.isArray(historyData)) {
+          setPastDonations(historyData);
+        }
+      } catch {
+        // Keep active list usable even if history fails.
+      }
     } catch (error) {
       const message =
         error instanceof TypeError
@@ -427,6 +452,54 @@ const UserDashboard = () => {
                   </div>
                 )})}
               </div>
+
+              <div className="mt-8">
+                <button
+                  type="button"
+                  onClick={() => setShowPastList((prev) => !prev)}
+                  className="rounded-full border border-[#dce8e1] bg-white px-4 py-2 text-xs font-bold text-[#2e5b48] hover:bg-[#f6fbf8]"
+                >
+                  {showPastList ? "Hide Past Food List" : `Past Food List (${pastDonations.length})`}
+                </button>
+              </div>
+
+              {showPastList ? (
+                <div className="mt-4">
+                  {pastDonations.length === 0 ? (
+                    <div className="bg-white rounded-xl border border-[#e6eee9] p-6 text-sm text-[#7a9087]">
+                      No past food records yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {pastDonations.map((item, index) => (
+                        <div key={`past-${item?._id || item?.createdAt || index}`} className="bg-white rounded-xl overflow-hidden border border-[#e6eee9] flex flex-col shadow-sm">
+                          <div className="relative h-32 w-full bg-[#f3f6f4] flex items-center justify-center">
+                            {resolveDonationImage(item) ? (
+                              <img
+                                src={resolveDonationImage(item)}
+                                alt={item?.foodName || "Food"}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="material-symbols-outlined text-[#7a9087] text-4xl">photo_camera</span>
+                            )}
+                            <div className="absolute bottom-2 right-2 text-[9px] font-bold px-2 py-1 rounded-full bg-slate-200 text-slate-700">
+                              {resolvePastStatus(item)}
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <h3 className="font-bold text-[#111814]">{item?.foodName || "Food Item"}</h3>
+                            <p className="text-[11px] text-[#7a9087] mt-1">{item?.location || "Location not provided"}</p>
+                            <p className="text-[11px] text-[#7a9087] mt-1">
+                              {item?.createdAt ? new Date(item.createdAt).toLocaleString() : ""}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
           </main>
         </div>
