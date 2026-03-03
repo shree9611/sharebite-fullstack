@@ -6,6 +6,8 @@ import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
 
+const REQUEST_CACHE_KEY = "sharebite.donor.pendingRequests";
+
 const resolveDonationImage = (reqItem) => {
   return resolveAssetUrl(
     reqItem?.donation?.imageUrl ||
@@ -46,6 +48,15 @@ const RequestApproval = () => {
 
   useEffect(() => {
     setProfile(getCurrentProfile());
+    try {
+      const cached = JSON.parse(localStorage.getItem(REQUEST_CACHE_KEY) || "[]");
+      if (Array.isArray(cached) && cached.length > 0) {
+        setRequests(cached);
+        setIsLoading(false);
+      }
+    } catch {
+      // ignore cache parse issues
+    }
   }, []);
 
   const mergeRequestsById = useCallback((rows) => {
@@ -82,7 +93,13 @@ const RequestApproval = () => {
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load requests.");
       }
-      setRequests(Array.isArray(data) ? data : []);
+      const rows = Array.isArray(data) ? data : [];
+      setRequests(rows);
+      try {
+        localStorage.setItem(REQUEST_CACHE_KEY, JSON.stringify(rows));
+      } catch {
+        // ignore storage issues
+      }
     } catch (error) {
       const message =
         error?.message?.includes("502") || error?.message?.includes("503")
