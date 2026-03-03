@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
+import { apiFetchWithFallback, getAuthHeaders, resolveAssetUrl } from "../lib/api.js";
 import { getCurrentProfile } from "../lib/profile.js";
 
 const FoodRequest = () => {
@@ -8,7 +8,7 @@ const FoodRequest = () => {
   const navigate = useNavigate();
   const donation = location.state || {};
   const selectedFoodImage = resolveAssetUrl(donation?.imageUrl || donation?.image || "");
-  const donationId = donation?.donationId;
+  const donationId = donation?.donationId || donation?._id;
   const availableQuantity = Number(donation?.quantity);
   const hasQuantityLimit = Number.isFinite(availableQuantity) && availableQuantity > 0;
   const profile = getCurrentProfile();
@@ -120,17 +120,17 @@ const FoodRequest = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(buildApiUrl("/api/requests"), {
+      const response = await apiFetchWithFallback("/api/requests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           donationId,
           peopleCount: Number(peopleCount),
           foodPreference,
-          requestedLocation: "",
+          requestedLocation: receiverLocation || "",
           logistics,
           deliveryAddress: logistics === "delivery" ? address.trim() : "",
         }),
