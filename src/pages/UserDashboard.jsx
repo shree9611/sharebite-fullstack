@@ -83,6 +83,8 @@ const UserDashboard = () => {
   const [donations, setDonations] = useState([]);
   const [pastDonations, setPastDonations] = useState([]);
   const [showPastList, setShowPastList] = useState(false);
+  const [isPastLoading, setIsPastLoading] = useState(false);
+  const [pastLoaded, setPastLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -123,18 +125,6 @@ const UserDashboard = () => {
         uniqueActive.push(row);
       }
       setDonations(uniqueActive);
-
-      try {
-        const historyResponse = await apiFetchWithFallback("/api/donations/history", {
-          cache: "no-store",
-        });
-        const historyData = await historyResponse.json().catch(() => []);
-        if (historyResponse.ok && Array.isArray(historyData)) {
-          setPastDonations(historyData);
-        }
-      } catch {
-        // Keep active list usable even if history fails.
-      }
     } catch (error) {
       const message =
         error instanceof TypeError
@@ -149,6 +139,23 @@ const UserDashboard = () => {
   useEffect(() => {
     loadDonations();
   }, [loadDonations]);
+
+  const loadPastDonations = useCallback(async () => {
+    if (pastLoaded || isPastLoading) return;
+    setIsPastLoading(true);
+    try {
+      const historyResponse = await apiFetchWithFallback("/api/donations/history", {
+        cache: "no-store",
+      });
+      const historyData = await historyResponse.json().catch(() => []);
+      if (historyResponse.ok && Array.isArray(historyData)) {
+        setPastDonations(historyData);
+        setPastLoaded(true);
+      }
+    } finally {
+      setIsPastLoading(false);
+    }
+  }, [pastLoaded, isPastLoading]);
 
   useEffect(() => {
     const onFocus = () => loadDonations(false);
@@ -456,7 +463,11 @@ const UserDashboard = () => {
               <div className="mt-8">
                 <button
                   type="button"
-                  onClick={() => setShowPastList((prev) => !prev)}
+                  onClick={() => {
+                    const next = !showPastList;
+                    setShowPastList(next);
+                    if (next) loadPastDonations();
+                  }}
                   className="rounded-full border border-[#dce8e1] bg-white px-4 py-2 text-xs font-bold text-[#2e5b48] hover:bg-[#f6fbf8]"
                 >
                   {showPastList ? "Hide Past Food List" : `Past Food List (${pastDonations.length})`}
@@ -465,11 +476,16 @@ const UserDashboard = () => {
 
               {showPastList ? (
                 <div className="mt-4">
-                  {pastDonations.length === 0 ? (
+                  {isPastLoading ? (
+                    <div className="bg-white rounded-xl border border-[#e6eee9] p-6 text-sm text-[#7a9087]">
+                      Loading past food list...
+                    </div>
+                  ) : null}
+                  {!isPastLoading && pastDonations.length === 0 ? (
                     <div className="bg-white rounded-xl border border-[#e6eee9] p-6 text-sm text-[#7a9087]">
                       No past food records yet.
                     </div>
-                  ) : (
+                  ) : !isPastLoading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                       {pastDonations.map((item, index) => (
                         <div key={`past-${item?._id || item?.createdAt || index}`} className="bg-white rounded-xl overflow-hidden border border-[#e6eee9] flex flex-col shadow-sm">
@@ -497,7 +513,7 @@ const UserDashboard = () => {
                         </div>
                       ))}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               ) : null}
             </div>

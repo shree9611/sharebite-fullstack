@@ -164,7 +164,7 @@ async function listPastDonations(req, res) {
       ],
     })
       .sort({ updatedAt: -1, createdAt: -1 })
-      .limit(80)
+      .limit(24)
       .lean();
 
     return res.json(items.map((item) => toDonationPayload(req, item)));
