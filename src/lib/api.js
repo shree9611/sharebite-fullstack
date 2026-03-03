@@ -6,6 +6,15 @@ const IS_VERCEL_FRONTEND =
   /(?:^|\.)vercel\.app$/i.test(window.location.hostname || "");
 
 const resolveApiBaseUrl = () => {
+  const isBrowser = typeof window !== "undefined";
+  const isHttpsPage = isBrowser && window.location.protocol === "https:";
+  const hasLocalhostBase = /^(http:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?$/i.test(CONFIGURED_API_BASE_URL);
+
+  if (isHttpsPage && hasLocalhostBase) {
+    // Safety guard: never use localhost API base on deployed HTTPS frontend.
+    return "";
+  }
+
   // If explicitly configured, always prefer this base URL.
   if (CONFIGURED_API_BASE_URL) {
     return CONFIGURED_API_BASE_URL;
