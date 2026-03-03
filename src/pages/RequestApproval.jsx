@@ -6,8 +6,6 @@ import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
 
-const REQUEST_LOAD_TIMEOUT_MS = 20000;
-
 const resolveDonationImage = (reqItem) => {
   return resolveAssetUrl(
     reqItem?.donation?.imageUrl ||
@@ -75,15 +73,11 @@ const RequestApproval = () => {
     }
 
     try {
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_LOAD_TIMEOUT_MS);
       const response = await apiFetchWithFallback("/api/requests?status=pending&limit=80", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        signal: controller.signal,
       });
-      window.clearTimeout(timeoutId);
       const data = await response.json().catch(() => []);
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load requests.");
@@ -91,9 +85,7 @@ const RequestApproval = () => {
       setRequests(Array.isArray(data) ? data : []);
     } catch (error) {
       const message =
-        error?.name === "AbortError"
-          ? "Request is taking too long. Please retry."
-          : error?.message?.includes("502") || error?.message?.includes("503")
+        error?.message?.includes("502") || error?.message?.includes("503")
           ? "Server temporarily unavailable. Please retry in a moment."
           : error.message || "Unable to load requests.";
       setLoadError(message);
