@@ -6,6 +6,8 @@ import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
 
+const REQUEST_TIMEOUT_MS = 12000;
+
 const resolveDonationImage = (reqItem) => {
   return resolveAssetUrl(
     reqItem?.donation?.imageUrl ||
@@ -57,18 +59,25 @@ const RequestApproval = () => {
     }
 
     try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
       const response = await apiFetchWithFallback("/api/requests", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
+        signal: controller.signal,
+      }).finally(() => window.clearTimeout(timeoutId));
       const data = await response.json().catch(() => []);
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load requests.");
       }
       setRequests(Array.isArray(data) ? data : []);
     } catch (error) {
-      setLoadError(error.message || "Unable to load requests.");
+      const message =
+        error?.name === "AbortError"
+          ? "Request timed out. Please retry."
+          : error.message || "Unable to load requests.";
+      setLoadError(message);
     } finally {
       if (showLoading) setIsLoading(false);
     }
@@ -306,7 +315,18 @@ const RequestApproval = () => {
                 </div>
 
                 {isLoading ? <p className="text-sm text-[#8aa19a]">Loading requests...</p> : null}
-                {loadError ? <p className="text-sm text-red-600">{loadError}</p> : null}
+                {loadError ? (
+                  <div className="mb-3 flex items-center gap-3">
+                    <p className="text-sm text-red-600">{loadError}</p>
+                    <button
+                      type="button"
+                      onClick={() => loadRequests(true)}
+                      className="rounded-lg border border-[#d7e0ea] px-3 py-1 text-xs font-semibold text-[#4c6077] hover:bg-[#f6f9fc]"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : null}
                 {actionError ? <p className="text-sm text-red-600 mb-3">{actionError}</p> : null}
 
                 {!isLoading && !loadError && pendingRequests.length === 0 ? (
