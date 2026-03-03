@@ -8,10 +8,10 @@ const NotificationBell = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const refreshNotifications = useCallback(async () => {
+  const refreshNotifications = useCallback(async (showLoading = true) => {
     const token = localStorage.getItem("sharebite.token");
     if (!token) return;
-    setIsLoading(true);
+    if (showLoading) setIsLoading(true);
     setError("");
     try {
       const response = await apiFetchWithFallback("/api/notifications", {
@@ -27,7 +27,7 @@ const NotificationBell = () => {
     } catch (loadError) {
       setError(loadError.message || "Unable to load notifications.");
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   }, []);
 
@@ -38,9 +38,9 @@ const NotificationBell = () => {
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       if (document.hidden) return;
-      refreshNotifications();
-    }, 30000);
-    const onFocus = () => refreshNotifications();
+      refreshNotifications(false);
+    }, 60000);
+    const onFocus = () => refreshNotifications(false);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);

@@ -181,11 +181,11 @@ const DonateFood = () => {
     setProfile(getCurrentProfile());
   }, []);
 
-  const loadManagementData = useCallback(async () => {
+  const loadManagementData = useCallback(async (showLoading = true) => {
     const token = localStorage.getItem("sharebite.token");
     if (!token) return;
 
-    setIsRecentLoading(true);
+    if (showLoading) setIsRecentLoading(true);
     setManagementError("");
     try {
       const [donationsResponse, requestsResponse] = await Promise.all([
@@ -209,7 +209,7 @@ const DonateFood = () => {
     } catch (error) {
       setManagementError(error.message || "Unable to load donation management details.");
     } finally {
-      setIsRecentLoading(false);
+      if (showLoading) setIsRecentLoading(false);
     }
   }, []);
 
@@ -218,11 +218,11 @@ const DonateFood = () => {
   }, [loadManagementData]);
 
   useEffect(() => {
-    const onFocus = () => loadManagementData();
+    const onFocus = () => loadManagementData(false);
     const intervalId = window.setInterval(() => {
       if (document.hidden) return;
-      loadManagementData();
-    }, 30000);
+      loadManagementData(false);
+    }, 60000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);

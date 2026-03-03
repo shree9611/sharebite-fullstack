@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
+import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
 import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
@@ -47,18 +47,18 @@ const MyRequests = () => {
     setProfile(getCurrentProfile());
   }, []);
 
-  const loadRequests = useCallback(async () => {
-    setIsLoading(true);
+  const loadRequests = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     setLoadError("");
     const token = localStorage.getItem("sharebite.token");
     if (!token) {
       setLoadError("Please login first.");
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(buildApiUrl("/api/requests"), {
+      const response = await apiFetchWithFallback("/api/requests", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json().catch(() => []);
@@ -90,7 +90,7 @@ const MyRequests = () => {
     } catch (error) {
       setLoadError(error.message || "Unable to load requests.");
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   }, []);
 
@@ -99,11 +99,11 @@ const MyRequests = () => {
   }, [loadRequests]);
 
   useEffect(() => {
-    const onFocus = () => loadRequests();
+    const onFocus = () => loadRequests(false);
     const intervalId = window.setInterval(() => {
       if (document.hidden) return;
-      loadRequests();
-    }, 10000);
+      loadRequests(false);
+    }, 60000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);

@@ -87,8 +87,8 @@ const UserDashboard = () => {
     setProfile(getCurrentProfile());
   }, []);
 
-  const loadDonations = useCallback(async () => {
-    setIsLoading(true);
+  const loadDonations = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     setLoadError("");
     try {
       const response = await apiFetchWithFallback("/api/donations", {
@@ -117,7 +117,7 @@ const UserDashboard = () => {
           : error.message || "Unable to load donations.";
       setLoadError(message);
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   }, []);
 
@@ -126,11 +126,11 @@ const UserDashboard = () => {
   }, [loadDonations]);
 
   useEffect(() => {
-    const onFocus = () => loadDonations();
+    const onFocus = () => loadDonations(false);
     const intervalId = window.setInterval(() => {
       if (document.hidden) return;
-      loadDonations();
-    }, 10000);
+      loadDonations(false);
+    }, 60000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);
