@@ -79,23 +79,40 @@ export const apiFetchWithFallback = async (path, options = {}) => {
   const primaryUrl = buildApiUrl(path);
   const shouldTryRelativeFallback = !API_BASE_URL;
   const urlsToTry = Array.from(new Set([primaryUrl, ...(shouldTryRelativeFallback ? [path] : [])]));
+  const timeoutMs = Number(options?.timeoutMs) > 0 ? Number(options.timeoutMs) : 12000;
+  const fetchOptions = { ...options };
+  delete fetchOptions.timeoutMs;
 
   let lastNetworkError = null;
   let lastServerErrorResponse = null;
   for (const url of urlsToTry) {
+    let timeoutId = null;
     try {
-      const response = await fetch(url, options);
+      const controller = new AbortController();
+      timeoutId = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: controller.signal,
+      });
       if (response.status >= 500) {
         lastServerErrorResponse = response;
         continue;
       }
       return response;
     } catch (error) {
+      if (error?.name === "AbortError") {
+        lastNetworkError = new TypeError("Request timed out. Please retry.");
+        continue;
+      }
       if (error instanceof TypeError) {
         lastNetworkError = error;
         continue;
       }
       throw error;
+    } finally {
+      if (timeoutId !== null) {
+        globalThis.clearTimeout(timeoutId);
+      }
     }
   }
 
