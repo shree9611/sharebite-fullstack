@@ -40,8 +40,6 @@ const RequestApproval = () => {
   const [actionError, setActionError] = useState("");
   const [activeActionId, setActiveActionId] = useState("");
   const [showPastApprovals, setShowPastApprovals] = useState(false);
-  const [isPastLoading, setIsPastLoading] = useState(false);
-  const [pastLoaded, setPastLoaded] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
   const [lastUpdatedAt, setLastUpdatedAt] = useState("");
   const loadInFlightRef = useRef(false);
@@ -67,20 +65,6 @@ const RequestApproval = () => {
     }
   }, []);
 
-  const mergeRequestsById = useCallback((rows) => {
-    setRequests((prev) => {
-      const map = new Map(prev.map((item) => [String(item?._id || ""), item]));
-      for (const row of rows) {
-        const key = String(row?._id || "");
-        if (!key) continue;
-        map.set(key, row);
-      }
-      return Array.from(map.values()).sort(
-        (a, b) => new Date(b?.updatedAt || b?.createdAt || 0).getTime() - new Date(a?.updatedAt || a?.createdAt || 0).getTime()
-      );
-    });
-  }, []);
-
   const loadRequests = useCallback(async (showLoading = true) => {
     if (loadInFlightRef.current) return;
     loadInFlightRef.current = true;
@@ -95,7 +79,8 @@ const RequestApproval = () => {
     }
 
     try {
-      const apiPath = "/api/requests?status=pending&limit=80";
+      // Load both sections together so past approvals are always available.
+      const apiPath = "/api/requests?status=pending,approved&limit=200";
       const response = await apiFetchWithFallback(apiPath, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -140,47 +125,6 @@ const RequestApproval = () => {
       loadInFlightRef.current = false;
     }
   }, []);
-
-  const loadApprovedRequests = useCallback(async () => {
-    if (pastLoaded || isPastLoading) return;
-    setIsPastLoading(true);
-    setLoadError("");
-    const token = localStorage.getItem("sharebite.token");
-    if (!token) {
-      setLoadError("Please login first.");
-      setIsPastLoading(false);
-      return;
-    }
-
-    try {
-      const apiPath = "/api/requests?status=approved&limit=120";
-      const response = await apiFetchWithFallback(apiPath, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        timeoutMs: 25000,
-      });
-      const data = await response.json().catch(() => []);
-      // eslint-disable-next-line no-console
-      console.info("[RequestApproval] loadApprovedRequests", {
-        url: buildApiUrl(apiPath) || apiPath,
-        status: response.status,
-        ok: response.ok,
-        rows: Array.isArray(data) ? data.length : 0,
-      });
-      if (!response.ok) {
-        throw new Error(data?.message || "Failed to load approved requests.");
-      }
-      const rows = normalizeRequestsPayload(data);
-      mergeRequestsById(rows);
-      setPastLoaded(true);
-    } catch (error) {
-      setLoadError(error.message || "Unable to load approved requests.");
-    } finally {
-      setIsPastLoading(false);
-    }
-  }, [isPastLoading, mergeRequestsById, pastLoaded]);
 
   useEffect(() => {
     loadRequests();
@@ -536,11 +480,7 @@ const RequestApproval = () => {
                 <div className="mt-10 text-center">
                   <button
                     type="button"
-                    onClick={() => {
-                      const next = !showPastApprovals;
-                      setShowPastApprovals(next);
-                      if (next) loadApprovedRequests();
-                    }}
+                    onClick={() => setShowPastApprovals((prev) => !prev)}
                     className="text-[#8fa0b2] font-semibold hover:text-[#62758a]"
                   >
                     {showPastApprovals ? "Hide Past Donation Approvals" : "View Past Donation Approvals"}
@@ -549,16 +489,11 @@ const RequestApproval = () => {
 
                 {showPastApprovals && (
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {isPastLoading ? (
-                      <div className="bg-white rounded-2xl border border-[#e6ebf1] p-4 text-sm text-[#8aa19a]">
-                        Loading approved requests...
-                      </div>
-                    ) : null}
-                    {!isPastLoading && approvedRequests.length === 0 ? (
+                    {approvedRequests.length === 0 ? (
                       <div className="bg-white rounded-2xl border border-[#e6ebf1] p-4 text-sm text-[#8aa19a]">
                         No past approvals yet.
                       </div>
-                    ) : !isPastLoading ? (
+                    ) : (
                       approvedRequests.map((reqItem) => (
                         <div
                           key={`approved-${reqItem._id}`}
@@ -604,7 +539,7 @@ const RequestApproval = () => {
                           </div>
                         </div>
                       ))
-                    ) : null}
+                    )}
                   </div>
                 )}
 
