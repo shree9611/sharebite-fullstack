@@ -179,8 +179,17 @@ async function listMyDonations(req, res) {
       return res.status(403).json({ message: "Only donor can view own donations." });
     }
 
+    const limitParam = Array.isArray(req.query?.limit) ? req.query.limit[0] : req.query?.limit;
+    const requestedLimit = Number(limitParam);
+    const limit =
+      Number.isFinite(requestedLimit) && requestedLimit > 0
+        ? Math.min(Math.floor(requestedLimit), 100)
+        : 40;
+
     const items = await Donation.find({ donorId: req.user.id })
+      .maxTimeMS(8000)
       .sort({ createdAt: -1 })
+      .limit(limit)
       .lean();
 
     const payload = items.map((item) => toDonationPayload(req, item));

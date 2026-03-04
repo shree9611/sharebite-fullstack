@@ -116,7 +116,7 @@ async function listRequests(req, res) {
     const limit =
       Number.isFinite(requestedLimit) && requestedLimit > 0
         ? Math.min(Math.floor(requestedLimit), 200)
-        : 0;
+        : 100;
 
     let requestQuery = Request.find(query)
       .maxTimeMS(8000)
@@ -125,9 +125,7 @@ async function listRequests(req, res) {
       .populate("receiverId", "name email phone")
       .populate("volunteerId", "name email phone")
       .sort({ updatedAt: -1 });
-    if (limit > 0) {
-      requestQuery = requestQuery.limit(limit);
-    }
+    requestQuery = requestQuery.limit(limit);
     const rows = await requestQuery.lean();
     if (!rows || rows.length === 0) {
       return res.json([]);

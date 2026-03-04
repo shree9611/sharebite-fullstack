@@ -189,10 +189,10 @@ const DonateFood = () => {
     setManagementError("");
     try {
       const [donationsResponse, requestsResponse] = await Promise.all([
-        apiFetchWithFallback("/api/donations/mine", {
+        apiFetchWithFallback("/api/donations/mine?limit=40", {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        apiFetchWithFallback("/api/requests", {
+        apiFetchWithFallback("/api/requests?limit=120", {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);

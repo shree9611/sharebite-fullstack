@@ -17,6 +17,7 @@ const notificationSchema = new mongoose.Schema(
 );
 
 notificationSchema.index({ receiverUserId: 1, createdAt: -1 });
+notificationSchema.index({ userId: 1, createdAt: -1 });
 notificationSchema.index(
   { receiverUserId: 1, dedupeKey: 1 },
   { unique: true, partialFilterExpression: { dedupeKey: { $type: "string", $ne: "" } } }

@@ -63,10 +63,13 @@ async function createNotification({
 }
 
 async function listNotifications(userId) {
+  const safeLimit = 40;
   return Notification.find({
     $or: [{ receiverUserId: userId }, { userId }],
   })
+    .maxTimeMS(8000)
     .sort({ createdAt: -1 })
+    .limit(safeLimit)
     .lean();
 }
 
