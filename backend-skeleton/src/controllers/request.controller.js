@@ -2,6 +2,12 @@ const { Donation } = require("../models/donation.model");
 const { Request } = require("../models/request.model");
 const { eventBus } = require("../events/bus");
 const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
+const REQUEST_STATUS_VALUES = new Set(["pending", "approved", "declined", "completed"]);
+
+const normalizeRequestStatus = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return REQUEST_STATUS_VALUES.has(normalized) ? normalized : "pending";
+};
 
 function toAbsoluteImageUrl(req, imagePath) {
   if (!imagePath) return "";
@@ -101,13 +107,13 @@ async function listRequests(req, res) {
       .trim()
       .toLowerCase();
     if (rawStatusFilter) {
-      const allowed = new Set(["pending", "approved", "declined", "completed"]);
       const statusValues = rawStatusFilter
         .split(",")
         .map((value) => value.trim().toLowerCase())
-        .filter((value) => allowed.has(value));
+        .filter((value) => REQUEST_STATUS_VALUES.has(value));
       if (statusValues.length > 0) {
-        query.status = statusValues.length === 1 ? statusValues[0] : { $in: statusValues };
+        const regexes = statusValues.map((value) => new RegExp(`^${value}$`, "i"));
+        query.status = regexes.length === 1 ? regexes[0] : { $in: regexes };
       }
     }
 
@@ -119,6 +125,7 @@ async function listRequests(req, res) {
         : 100;
 
     let requestQuery = Request.find(query)
+      .maxTimeMS(8000)
       .populate("donationId", "foodName quantity locationText image")
       .populate("donorId", "name email phone")
       .populate("receiverId", "name email phone")
@@ -132,7 +139,7 @@ async function listRequests(req, res) {
 
     const payload = rows.map((row) => ({
       _id: row._id,
-      status: row.status,
+      status: normalizeRequestStatus(row.status),
       peopleCount: row.peopleCount,
       foodPreference: row.foodPreference,
       requestedLocation: row.requestedLocation,
@@ -188,7 +195,15 @@ async function listRequests(req, res) {
 
     return res.json(payload || []);
   } catch (error) {
-    return res.status(500).json({ message: error?.message || "Failed to list requests." });
+    const message = error?.message || "Failed to list requests.";
+    const isTimeout =
+      error?.name === "MongooseError" ||
+      error?.name === "MongoServerError" ||
+      /timed out|maxTimeMS/i.test(message);
+    if (isTimeout && /timed out|maxTimeMS/i.test(message)) {
+      return res.status(503).json({ message: "Request query timed out. Please retry." });
+    }
+    return res.status(500).json({ message });
   }
 }
 
