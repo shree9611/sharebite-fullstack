@@ -21,6 +21,12 @@ const resolveDonationImage = (reqItem) => {
 const resolveProfileImage = (profile) => {
   return resolveAssetUrl(profile?.profileImageUrl || profile?.profileImage || "");
 };
+const normalizeRequestsPayload = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.rows)) return data.rows;
+  return [];
+};
 
 const RequestApproval = () => {
   const { t } = useLanguage();
@@ -59,7 +65,7 @@ const RequestApproval = () => {
     } catch {
       // ignore cache parse issues
     }
-  }, [requests.length]);
+  }, []);
 
   const mergeRequestsById = useCallback((rows) => {
     setRequests((prev) => {
@@ -78,7 +84,7 @@ const RequestApproval = () => {
   const loadRequests = useCallback(async (showLoading = true) => {
     if (loadInFlightRef.current) return;
     loadInFlightRef.current = true;
-    if (showLoading && requests.length === 0) setIsLoading(true);
+    if (showLoading) setIsLoading(true);
     setLoadError("");
     const token = localStorage.getItem("sharebite.token");
     if (!token) {
@@ -88,19 +94,14 @@ const RequestApproval = () => {
       return;
     }
 
-    let fallbackStopId = null;
     try {
       const apiPath = "/api/requests?status=pending&limit=80";
-      const controller = new AbortController();
-      fallbackStopId = globalThis.setTimeout(() => controller.abort(), 20000);
       const response = await apiFetchWithFallback(apiPath, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
-        signal: controller.signal,
       });
-      globalThis.clearTimeout(fallbackStopId);
       const data = await response.json().catch(() => []);
       // Debug: keep this to verify response shape/status in production quickly.
       // eslint-disable-next-line no-console
@@ -113,7 +114,7 @@ const RequestApproval = () => {
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load requests.");
       }
-      const rows = Array.isArray(data) ? data : [];
+      const rows = normalizeRequestsPayload(data);
       setRequests(rows);
       setLastUpdatedAt(new Date().toLocaleTimeString());
       try {
@@ -125,7 +126,7 @@ const RequestApproval = () => {
       const message =
         error?.message?.includes("502") || error?.message?.includes("503")
           ? "Server temporarily unavailable. Please retry in a moment."
-          : "Unable to load requests. Please tap Refresh.";
+          : error?.message || "Unable to load requests. Please tap Refresh.";
       if (showLoading) {
         setLoadError(message);
       } else {
@@ -134,7 +135,6 @@ const RequestApproval = () => {
         console.warn("[RequestApproval] background refresh failed:", message);
       }
     } finally {
-      if (fallbackStopId !== null) globalThis.clearTimeout(fallbackStopId);
       if (showLoading) setIsLoading(false);
       loadInFlightRef.current = false;
     }
@@ -170,7 +170,7 @@ const RequestApproval = () => {
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load approved requests.");
       }
-      const rows = Array.isArray(data) ? data : [];
+      const rows = normalizeRequestsPayload(data);
       mergeRequestsById(rows);
       setPastLoaded(true);
     } catch (error) {
