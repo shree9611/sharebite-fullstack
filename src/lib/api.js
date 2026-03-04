@@ -25,7 +25,8 @@ const resolveApiBaseUrl = () => {
 
   if (isHttpsPage && hasLocalhostBase) {
     // Safety guard: never use localhost API base on deployed HTTPS frontend.
-    // Fall back to stable Render backend directly to avoid CSP and Vercel proxy 502.
+    // On Vercel, force same-origin so requests go through rewrites (/api -> backend).
+    if (IS_VERCEL_FRONTEND) return "";
     return DEFAULT_RENDER_API_BASE_URL;
   }
 
@@ -35,8 +36,8 @@ const resolveApiBaseUrl = () => {
   }
 
   if (IS_VERCEL_FRONTEND) {
-    // Prefer direct Render URL to avoid intermittent Vercel proxy 502 on /api rewrites.
-    return DEFAULT_RENDER_API_BASE_URL;
+    // Use same-origin API on Vercel so browser CORS is not involved.
+    return "";
   }
 
   // Fallback when env is not set.
