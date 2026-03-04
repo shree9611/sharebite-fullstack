@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
+const mongoose = require("mongoose");
 
 const authRoutes = require("./routes/auth.routes");
 const donationRoutes = require("./routes/donation.routes");
@@ -56,6 +58,41 @@ app.use(cors(corsOptions));
 
 // Preflight handling should use the same CORS policy logic.
 app.options(/.*/, cors(corsOptions));
+
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  const requestId = crypto.randomUUID();
+  req.requestId = requestId;
+  res.setHeader("x-request-id", requestId);
+  res.on("finish", () => {
+    const elapsedMs = Date.now() - startedAt;
+    // eslint-disable-next-line no-console
+    console.info(`[${requestId}] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${elapsedMs}ms)`);
+  });
+  next();
+});
+
+app.use("/api", (req, res, next) => {
+  if (mongoose.connection.readyState === 1) {
+    return next();
+  }
+  // eslint-disable-next-line no-console
+  console.error(`[${req.requestId || "n/a"}] DB not ready. readyState=${mongoose.connection.readyState}`);
+  return res.status(503).json({
+    message: "Database is reconnecting. Please retry in a moment.",
+  });
+});
+
+app.use("/api", (req, res, next) => {
+  res.setTimeout(25000, () => {
+    if (res.headersSent) return;
+    // eslint-disable-next-line no-console
+    console.error(`[${req.requestId || "n/a"}] API response timeout on ${req.method} ${req.originalUrl}`);
+    res.status(503).json({ message: "Request timed out. Please retry." });
+  });
+  next();
+});
+
 app.use(express.json());
 const uploadsDir = path.resolve(__dirname, "..", "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
