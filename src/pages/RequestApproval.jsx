@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { apiFetchWithFallback, buildApiUrl, resolveAssetUrl } from "../lib/api.js";
@@ -37,6 +37,8 @@ const RequestApproval = () => {
   const [isPastLoading, setIsPastLoading] = useState(false);
   const [pastLoaded, setPastLoaded] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
+  const [lastUpdatedAt, setLastUpdatedAt] = useState("");
+  const loadInFlightRef = useRef(false);
 
   const isActive = (path) => location.pathname === path;
 
@@ -74,12 +76,15 @@ const RequestApproval = () => {
   }, []);
 
   const loadRequests = useCallback(async (showLoading = true) => {
+    if (loadInFlightRef.current) return;
+    loadInFlightRef.current = true;
     if (showLoading) setIsLoading(true);
     setLoadError("");
     const token = localStorage.getItem("sharebite.token");
     if (!token) {
       setLoadError("Please login first.");
       if (showLoading) setIsLoading(false);
+      loadInFlightRef.current = false;
       return;
     }
 
@@ -105,6 +110,7 @@ const RequestApproval = () => {
       }
       const rows = Array.isArray(data) ? data : [];
       setRequests(rows);
+      setLastUpdatedAt(new Date().toLocaleTimeString());
       try {
         localStorage.setItem(REQUEST_CACHE_KEY, JSON.stringify(rows));
       } catch {
@@ -118,6 +124,7 @@ const RequestApproval = () => {
       setLoadError(message);
     } finally {
       if (showLoading) setIsLoading(false);
+      loadInFlightRef.current = false;
     }
   }, []);
 
@@ -171,7 +178,7 @@ const RequestApproval = () => {
       loadRequests(false);
     };
     const onFocus = () => loadRequests(false);
-    const intervalId = window.setInterval(refresh, 60000);
+    const intervalId = window.setInterval(refresh, 120000);
     window.addEventListener("focus", onFocus);
     return () => {
       window.clearInterval(intervalId);
@@ -388,11 +395,22 @@ const RequestApproval = () => {
                         {pendingRequests.length}
                       </span>
                     </h2>
+                    {lastUpdatedAt ? (
+                      <p className="mt-1 text-xs text-[#8aa19a]">Last updated: {lastUpdatedAt}</p>
+                    ) : null}
                   </div>
-
+                  <button
+                    type="button"
+                    onClick={() => loadRequests(true)}
+                    className="self-start rounded-lg border border-[#d7e0ea] px-3 py-2 text-xs font-semibold text-[#4c6077] hover:bg-[#f6f9fc]"
+                  >
+                    Refresh
+                  </button>
                 </div>
 
-                {isLoading ? <p className="text-sm text-[#8aa19a]">Loading requests...</p> : null}
+                {isLoading && pendingRequests.length === 0 ? (
+                  <p className="text-sm text-[#8aa19a]">Loading requests...</p>
+                ) : null}
                 {loadError ? (
                   <div className="mb-3 flex items-center gap-3">
                     <p className="text-sm text-red-600">{loadError}</p>
