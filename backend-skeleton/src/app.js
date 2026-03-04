@@ -85,16 +85,6 @@ app.use("/api", (req, res, next) => {
   });
 });
 
-app.use("/api", (req, res, next) => {
-  res.setTimeout(25000, () => {
-    if (res.headersSent) return;
-    // eslint-disable-next-line no-console
-    console.error(`[${req.requestId || "n/a"}] API response timeout on ${req.method} ${req.originalUrl}`);
-    res.status(503).json({ message: "Request timed out. Please retry." });
-  });
-  next();
-});
-
 app.use(express.json());
 const uploadsDir = path.resolve(__dirname, "..", "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });

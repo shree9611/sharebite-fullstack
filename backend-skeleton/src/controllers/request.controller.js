@@ -3,25 +3,6 @@ const { Request } = require("../models/request.model");
 const { eventBus } = require("../events/bus");
 const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 const REQUEST_STATUS_VALUES = new Set(["pending", "approved", "declined", "completed"]);
-const LIST_REQUESTS_TIMEOUT_MS = 15000;
-
-async function withTimeout(promise, timeoutMs, timeoutMessage) {
-  let timeoutId = null;
-  const timeoutPromise = new Promise((_, reject) => {
-    timeoutId = setTimeout(() => {
-      const timeoutError = new Error(timeoutMessage);
-      timeoutError.code = "API_TIMEOUT";
-      reject(timeoutError);
-    }, timeoutMs);
-  });
-  try {
-    return await Promise.race([promise, timeoutPromise]);
-  } finally {
-    if (timeoutId !== null) {
-      clearTimeout(timeoutId);
-    }
-  }
-}
 
 const normalizeRequestStatus = (value) => {
   const normalized = String(value || "").trim().toLowerCase();
@@ -149,18 +130,13 @@ async function listRequests(req, res) {
     console.info(`[${requestId}] listRequests start role=${role} status=${rawStatusFilter || "none"} limit=${limit}`);
 
     let requestQuery = Request.find(query)
-      .maxTimeMS(12000)
       .populate("donationId", "foodName quantity locationText image")
       .populate("donorId", "name email phone")
       .populate("receiverId", "name email phone")
       .populate("volunteerId", "name email phone")
       .sort({ updatedAt: -1 });
     requestQuery = requestQuery.limit(limit);
-    const rows = await withTimeout(
-      requestQuery.lean(),
-      LIST_REQUESTS_TIMEOUT_MS,
-      "API handler timeout while listing requests."
-    );
+    const rows = await requestQuery.lean();
     if (!rows || rows.length === 0) {
       // eslint-disable-next-line no-console
       console.info(`[${requestId}] listRequests complete rows=0 durationMs=${Date.now() - startedAt}`);
@@ -228,21 +204,6 @@ async function listRequests(req, res) {
     return res.json(payload || []);
   } catch (error) {
     const message = error?.message || "Failed to list requests.";
-    const isTimeout =
-      error?.code === "API_TIMEOUT" ||
-      error?.name === "MongooseError" ||
-      error?.name === "MongoServerError" ||
-      /timed out|maxTimeMS/i.test(message);
-    if (isTimeout && /timed out|maxTimeMS/i.test(message)) {
-      // eslint-disable-next-line no-console
-      console.error(`[${requestId}] listRequests timeout durationMs=${Date.now() - startedAt} message=${message}`);
-      return res.status(503).json({ message: "Request query timed out. Please retry." });
-    }
-    if (error?.code === "API_TIMEOUT") {
-      // eslint-disable-next-line no-console
-      console.error(`[${requestId}] listRequests api-timeout durationMs=${Date.now() - startedAt}`);
-      return res.status(503).json({ message: "Request timed out. Please retry." });
-    }
     // eslint-disable-next-line no-console
     console.error(`[${requestId}] listRequests failed durationMs=${Date.now() - startedAt} message=${message}`);
     return res.status(500).json({ message });
