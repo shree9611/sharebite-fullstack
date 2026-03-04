@@ -19,6 +19,13 @@ const resolveDonationImage = (reqItem) => {
   return resolveAssetUrl(reqItem?.donation?.imageUrl || reqItem?.donation?.image || "");
 };
 
+const normalizeRequestsPayload = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.rows)) return data.rows;
+  return [];
+};
+
 const MyRequests = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,6 +39,7 @@ const MyRequests = () => {
   const [deliveryNotice, setDeliveryNotice] = useState("");
   const deliveredRequestIdsRef = useRef(new Set());
   const hasHydratedDeliveryStateRef = useRef(false);
+  const autoExpandedPastRef = useRef(false);
 
   const isAvailable = location.pathname === "/dashboard";
   const isMyRequests = location.pathname === "/my-requests";
@@ -60,12 +68,13 @@ const MyRequests = () => {
     try {
       const response = await apiFetchWithFallback("/api/requests", {
         headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
       });
       const data = await response.json().catch(() => []);
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load my requests.");
       }
-      const list = Array.isArray(data) ? data : [];
+      const list = normalizeRequestsPayload(data);
       setRequests(list);
 
       const deliveredNow = list.filter((row) =>
@@ -170,6 +179,14 @@ const MyRequests = () => {
       }),
     [sortedRequests]
   );
+
+  useEffect(() => {
+    if (autoExpandedPastRef.current) return;
+    if (activeRequests.length === 0 && pastRequests.length > 0) {
+      setShowPastHistory(true);
+      autoExpandedPastRef.current = true;
+    }
+  }, [activeRequests.length, pastRequests.length]);
 
   return (
     <div className="bg-[#fffdf7] text-[#111814] min-h-screen">
