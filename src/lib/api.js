@@ -79,7 +79,7 @@ export const apiFetchWithFallback = async (path, options = {}) => {
   const primaryUrl = buildApiUrl(path);
   const shouldTryRelativeFallback = !API_BASE_URL;
   const urlsToTry = Array.from(new Set([primaryUrl, ...(shouldTryRelativeFallback ? [path] : [])]));
-  const timeoutMs = Number(options?.timeoutMs) > 0 ? Number(options.timeoutMs) : 12000;
+  const timeoutMs = Number(options?.timeoutMs) > 0 ? Number(options.timeoutMs) : 25000;
   const fetchOptions = { ...options };
   delete fetchOptions.timeoutMs;
 

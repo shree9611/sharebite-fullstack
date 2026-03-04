@@ -121,7 +121,13 @@ const RequestApproval = () => {
         error?.message?.includes("502") || error?.message?.includes("503")
           ? "Server temporarily unavailable. Please retry in a moment."
           : error.message || "Unable to load requests.";
-      setLoadError(message);
+      if (showLoading) {
+        setLoadError(message);
+      } else {
+        // Keep existing rows visible during background refresh failures.
+        // eslint-disable-next-line no-console
+        console.warn("[RequestApproval] background refresh failed:", message);
+      }
     } finally {
       if (showLoading) setIsLoading(false);
       loadInFlightRef.current = false;
