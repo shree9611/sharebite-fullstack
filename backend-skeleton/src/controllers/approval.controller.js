@@ -2,6 +2,7 @@ const { Donation } = require("../models/donation.model");
 const { Request } = require("../models/request.model");
 const { User } = require("../models/user.model");
 const { eventBus } = require("../events/bus");
+const normalizeStatus = (value) => String(value || "").trim().toLowerCase();
 
 async function approveRequest(req, res) {
   try {
@@ -15,7 +16,7 @@ async function approveRequest(req, res) {
     if (String(request.donorId) !== String(req.user.id)) {
       return res.status(403).json({ message: "Not allowed." });
     }
-    if (request.status !== "pending") {
+    if (normalizeStatus(request.status) !== "pending") {
       return res.status(400).json({ message: "Only pending request can be approved." });
     }
 
@@ -110,7 +111,7 @@ async function declineRequest(req, res) {
     if (String(request.donorId) !== String(req.user.id)) {
       return res.status(403).json({ message: "Not allowed." });
     }
-    if (request.status !== "pending") {
+    if (normalizeStatus(request.status) !== "pending") {
       return res.status(400).json({ message: "Only pending request can be declined." });
     }
 

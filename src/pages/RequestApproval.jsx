@@ -101,6 +101,7 @@ const RequestApproval = () => {
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
+        timeoutMs: 25000,
       });
       const data = await response.json().catch(() => []);
       // Debug: keep this to verify response shape/status in production quickly.
@@ -158,6 +159,7 @@ const RequestApproval = () => {
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
+        timeoutMs: 25000,
       });
       const data = await response.json().catch(() => []);
       // eslint-disable-next-line no-console

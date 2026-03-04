@@ -6,6 +6,8 @@ import { clearSession } from "../lib/auth.js";
 import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
 
+const REQUESTS_CACHE_KEY = "sharebite.receiver.requests";
+
 const statusClasses = {
   pending: "bg-orange-50 text-orange-600 border-orange-100",
   approved: "bg-emerald-50 text-emerald-700 border-emerald-100",
@@ -40,6 +42,7 @@ const MyRequests = () => {
   const deliveredRequestIdsRef = useRef(new Set());
   const hasHydratedDeliveryStateRef = useRef(false);
   const autoExpandedPastRef = useRef(false);
+  const loadInFlightRef = useRef(false);
 
   const isAvailable = location.pathname === "/dashboard";
   const isMyRequests = location.pathname === "/my-requests";
@@ -53,9 +56,20 @@ const MyRequests = () => {
 
   useEffect(() => {
     setProfile(getCurrentProfile());
+    try {
+      const cached = JSON.parse(localStorage.getItem(REQUESTS_CACHE_KEY) || "[]");
+      if (Array.isArray(cached) && cached.length > 0) {
+        setRequests(cached);
+        setIsLoading(false);
+      }
+    } catch {
+      // ignore cache parse issues
+    }
   }, []);
 
   const loadRequests = useCallback(async (showLoading = true) => {
+    if (loadInFlightRef.current) return;
+    loadInFlightRef.current = true;
     if (showLoading) setIsLoading(true);
     setLoadError("");
     const token = localStorage.getItem("sharebite.token");
@@ -69,6 +83,7 @@ const MyRequests = () => {
       const response = await apiFetchWithFallback("/api/requests", {
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
+        timeoutMs: 25000,
       });
       const data = await response.json().catch(() => []);
       if (!response.ok) {
@@ -76,6 +91,11 @@ const MyRequests = () => {
       }
       const list = normalizeRequestsPayload(data);
       setRequests(list);
+      try {
+        localStorage.setItem(REQUESTS_CACHE_KEY, JSON.stringify(list));
+      } catch {
+        // ignore storage issues
+      }
 
       const deliveredNow = list.filter((row) =>
         String(row?.deliveryStatus || "").toLowerCase() === "delivered" ||
@@ -97,9 +117,16 @@ const MyRequests = () => {
         }
       }
     } catch (error) {
-      setLoadError(error.message || "Unable to load requests.");
+      const message = error?.message || "Unable to load requests.";
+      if (showLoading) {
+        setLoadError(message);
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn("[MyRequests] background refresh failed:", message);
+      }
     } finally {
       if (showLoading) setIsLoading(false);
+      loadInFlightRef.current = false;
     }
   }, []);
 

@@ -30,14 +30,15 @@ const resolveApiBaseUrl = () => {
     return DEFAULT_RENDER_API_BASE_URL;
   }
 
+  if (IS_VERCEL_FRONTEND) {
+    // Always use same-origin API on Vercel. This prevents CORS breakage
+    // even if VITE_API_BASE_URL is accidentally configured to a cross-origin host.
+    return "";
+  }
+
   // If explicitly configured, always prefer this base URL.
   if (CONFIGURED_API_BASE_URL) {
     return CONFIGURED_API_BASE_URL;
-  }
-
-  if (IS_VERCEL_FRONTEND) {
-    // Use same-origin API on Vercel so browser CORS is not involved.
-    return "";
   }
 
   // Fallback when env is not set.
@@ -80,23 +81,47 @@ export const apiFetchWithFallback = async (path, options = {}) => {
   const primaryUrl = buildApiUrl(path);
   const shouldTryRelativeFallback = !API_BASE_URL;
   const urlsToTry = Array.from(new Set([primaryUrl, ...(shouldTryRelativeFallback ? [path] : [])]));
+  const timeoutMs = Number(options?.timeoutMs) > 0 ? Number(options.timeoutMs) : 20000;
+  const fetchOptions = { ...options };
+  delete fetchOptions.timeoutMs;
 
   let lastNetworkError = null;
   let lastServerErrorResponse = null;
   for (const url of urlsToTry) {
+    let timeoutId = null;
     try {
-      const response = await fetch(url, options);
+      const controller = new AbortController();
+      const externalSignal = fetchOptions?.signal;
+      if (externalSignal) {
+        if (externalSignal.aborted) {
+          throw new DOMException("The operation was aborted.", "AbortError");
+        }
+        externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
+      }
+      timeoutId = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: controller.signal,
+      });
       if (response.status >= 500) {
         lastServerErrorResponse = response;
         continue;
       }
       return response;
     } catch (error) {
+      if (error?.name === "AbortError") {
+        lastNetworkError = new TypeError("Request timed out. Please retry.");
+        continue;
+      }
       if (error instanceof TypeError) {
         lastNetworkError = error;
         continue;
       }
       throw error;
+    } finally {
+      if (timeoutId !== null) {
+        globalThis.clearTimeout(timeoutId);
+      }
     }
   }
 
