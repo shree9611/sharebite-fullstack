@@ -112,8 +112,7 @@ async function listRequests(req, res) {
         .map((value) => value.trim().toLowerCase())
         .filter((value) => REQUEST_STATUS_VALUES.has(value));
       if (statusValues.length > 0) {
-        const regexes = statusValues.map((value) => new RegExp(`^${value}$`, "i"));
-        query.status = regexes.length === 1 ? regexes[0] : { $in: regexes };
+        query.status = statusValues.length === 1 ? statusValues[0] : { $in: statusValues };
       }
     }
 
@@ -125,7 +124,7 @@ async function listRequests(req, res) {
         : 100;
 
     let requestQuery = Request.find(query)
-      .maxTimeMS(8000)
+      .maxTimeMS(12000)
       .populate("donationId", "foodName quantity locationText image")
       .populate("donorId", "name email phone")
       .populate("receiverId", "name email phone")
