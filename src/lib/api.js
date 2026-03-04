@@ -92,27 +92,13 @@ export const apiFetchWithFallback = async (path, options = {}) => {
       ...(shouldTryDirectBackendFallback ? [directBackendUrl] : []),
     ])
   );
-  const timeoutMs = Number(options?.timeoutMs) > 0 ? Number(options.timeoutMs) : 20000;
-  const fetchOptions = { ...options };
-  delete fetchOptions.timeoutMs;
 
   let lastNetworkError = null;
   let lastServerErrorResponse = null;
   for (const url of urlsToTry) {
-    let timeoutId = null;
     try {
-      const controller = new AbortController();
-      const externalSignal = fetchOptions?.signal;
-      if (externalSignal) {
-        if (externalSignal.aborted) {
-          throw new DOMException("The operation was aborted.", "AbortError");
-        }
-        externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
-      }
-      timeoutId = globalThis.setTimeout(() => controller.abort(), timeoutMs);
       const response = await fetch(url, {
-        ...fetchOptions,
-        signal: controller.signal,
+        ...options,
       });
       if (response.status >= 500) {
         lastServerErrorResponse = response;
@@ -120,19 +106,11 @@ export const apiFetchWithFallback = async (path, options = {}) => {
       }
       return response;
     } catch (error) {
-      if (error?.name === "AbortError") {
-        lastNetworkError = new TypeError("Request timed out. Please retry.");
-        continue;
-      }
       if (error instanceof TypeError) {
         lastNetworkError = error;
         continue;
       }
       throw error;
-    } finally {
-      if (timeoutId !== null) {
-        globalThis.clearTimeout(timeoutId);
-      }
     }
   }
 

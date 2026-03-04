@@ -83,7 +83,6 @@ const MyRequests = () => {
       const response = await apiFetchWithFallback("/api/requests", {
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
-        timeoutMs: 25000,
       });
       const data = await response.json().catch(() => []);
       if (!response.ok) {
@@ -120,9 +119,6 @@ const MyRequests = () => {
       const message = error?.message || "Unable to load requests.";
       if (showLoading) {
         setLoadError(message);
-      } else {
-        // eslint-disable-next-line no-console
-        console.warn("[MyRequests] background refresh failed:", message);
       }
     } finally {
       if (showLoading) setIsLoading(false);

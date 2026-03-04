@@ -86,7 +86,6 @@ const RequestApproval = () => {
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
-        timeoutMs: 25000,
       });
       const data = await response.json().catch(() => []);
       // Debug: keep this to verify response shape/status in production quickly.
@@ -115,10 +114,6 @@ const RequestApproval = () => {
           : error?.message || "Unable to load requests. Please tap Refresh.";
       if (showLoading) {
         setLoadError(message);
-      } else {
-        // Keep existing rows visible during background refresh failures.
-        // eslint-disable-next-line no-console
-        console.warn("[RequestApproval] background refresh failed:", message);
       }
     } finally {
       if (showLoading) setIsLoading(false);
