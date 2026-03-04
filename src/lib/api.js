@@ -80,7 +80,18 @@ export const resolveAssetUrl = (assetPath) => {
 export const apiFetchWithFallback = async (path, options = {}) => {
   const primaryUrl = buildApiUrl(path);
   const shouldTryRelativeFallback = !API_BASE_URL;
-  const urlsToTry = Array.from(new Set([primaryUrl, ...(shouldTryRelativeFallback ? [path] : [])]));
+  const directBackendUrl = buildUrlWithBase(DEFAULT_RENDER_API_BASE_URL, path);
+  const shouldTryDirectBackendFallback =
+    IS_VERCEL_FRONTEND &&
+    String(path || "").startsWith("/") &&
+    !String(path || "").startsWith("//");
+  const urlsToTry = Array.from(
+    new Set([
+      primaryUrl,
+      ...(shouldTryRelativeFallback ? [path] : []),
+      ...(shouldTryDirectBackendFallback ? [directBackendUrl] : []),
+    ])
+  );
   const timeoutMs = Number(options?.timeoutMs) > 0 ? Number(options.timeoutMs) : 20000;
   const fetchOptions = { ...options };
   delete fetchOptions.timeoutMs;
