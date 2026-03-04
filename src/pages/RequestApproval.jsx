@@ -88,14 +88,19 @@ const RequestApproval = () => {
       return;
     }
 
+    let fallbackStopId = null;
     try {
       const apiPath = "/api/requests?status=pending&limit=80";
+      const controller = new AbortController();
+      fallbackStopId = globalThis.setTimeout(() => controller.abort(), 20000);
       const response = await apiFetchWithFallback(apiPath, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
         credentials: "include",
+        signal: controller.signal,
       });
+      globalThis.clearTimeout(fallbackStopId);
       const data = await response.json().catch(() => []);
       // Debug: keep this to verify response shape/status in production quickly.
       // eslint-disable-next-line no-console
@@ -120,7 +125,7 @@ const RequestApproval = () => {
       const message =
         error?.message?.includes("502") || error?.message?.includes("503")
           ? "Server temporarily unavailable. Please retry in a moment."
-          : error.message || "Unable to load requests.";
+          : "Unable to load requests. Please tap Refresh.";
       if (showLoading) {
         setLoadError(message);
       } else {
@@ -129,6 +134,7 @@ const RequestApproval = () => {
         console.warn("[RequestApproval] background refresh failed:", message);
       }
     } finally {
+      if (fallbackStopId !== null) globalThis.clearTimeout(fallbackStopId);
       if (showLoading) setIsLoading(false);
       loadInFlightRef.current = false;
     }
@@ -195,7 +201,7 @@ const RequestApproval = () => {
   const pendingRequests = useMemo(
     () =>
       requests
-        .filter((reqItem) => reqItem?.status === "pending")
+        .filter((reqItem) => String(reqItem?.status || "").toLowerCase() === "pending")
         .sort(
           (a, b) =>
             new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime()
@@ -205,7 +211,7 @@ const RequestApproval = () => {
   const approvedRequests = useMemo(
     () =>
       requests
-        .filter((reqItem) => reqItem?.status === "approved")
+        .filter((reqItem) => String(reqItem?.status || "").toLowerCase() === "approved")
         .sort(
           (a, b) =>
             new Date(b?.updatedAt || b?.createdAt || 0).getTime() -
