@@ -67,7 +67,6 @@ async function listNotifications(userId) {
   return Notification.find({
     $or: [{ receiverUserId: userId }, { userId }],
   })
-    .maxTimeMS(8000)
     .sort({ createdAt: -1 })
     .limit(safeLimit)
     .lean();

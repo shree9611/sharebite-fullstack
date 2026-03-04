@@ -187,7 +187,6 @@ async function listMyDonations(req, res) {
         : 40;
 
     const items = await Donation.find({ donorId: req.user.id })
-      .maxTimeMS(8000)
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();

@@ -59,7 +59,7 @@ const RequestApproval = () => {
     } catch {
       // ignore cache parse issues
     }
-  }, []);
+  }, [requests.length]);
 
   const mergeRequestsById = useCallback((rows) => {
     setRequests((prev) => {
@@ -78,7 +78,7 @@ const RequestApproval = () => {
   const loadRequests = useCallback(async (showLoading = true) => {
     if (loadInFlightRef.current) return;
     loadInFlightRef.current = true;
-    if (showLoading) setIsLoading(true);
+    if (showLoading && requests.length === 0) setIsLoading(true);
     setLoadError("");
     const token = localStorage.getItem("sharebite.token");
     if (!token) {
