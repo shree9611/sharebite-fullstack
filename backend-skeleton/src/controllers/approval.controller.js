@@ -2,7 +2,20 @@ const { Donation } = require("../models/donation.model");
 const { Request } = require("../models/request.model");
 const { User } = require("../models/user.model");
 const { eventBus } = require("../events/bus");
+
 const normalizeStatus = (value) => String(value || "").trim().toLowerCase();
+
+const getDonorOwnedPendingRequest = async (requestId, donorId) => {
+  const request = await Request.findById(requestId);
+  if (!request) return { error: { code: 404, message: "Request not found." } };
+  if (String(request.donorId) !== String(donorId)) {
+    return { error: { code: 403, message: "Not allowed." } };
+  }
+  if (normalizeStatus(request.status) !== "pending") {
+    return { error: { code: 400, message: "Only pending request can be updated." } };
+  }
+  return { request };
+};
 
 async function approveRequest(req, res) {
   try {
@@ -11,13 +24,9 @@ async function approveRequest(req, res) {
     }
 
     const { requestId } = req.params;
-    const request = await Request.findById(requestId);
-    if (!request) return res.status(404).json({ message: "Request not found." });
-    if (String(request.donorId) !== String(req.user.id)) {
-      return res.status(403).json({ message: "Not allowed." });
-    }
-    if (normalizeStatus(request.status) !== "pending") {
-      return res.status(400).json({ message: "Only pending request can be approved." });
+    const { request, error: requestError } = await getDonorOwnedPendingRequest(requestId, req.user.id);
+    if (requestError) {
+      return res.status(requestError.code).json({ message: requestError.message });
     }
 
     const donation = await Donation.findById(request.donationId);
@@ -32,11 +41,8 @@ async function approveRequest(req, res) {
     if (!Number.isFinite(requestedQty) || requestedQty <= 0) {
       return res.status(400).json({ message: "Invalid requested quantity." });
     }
-    if (requestedQty > donation.quantity) {
-      return res.status(400).json({ message: "Requested quantity exceeds remaining donation quantity." });
-    }
 
-    const donationAfterAllocation = await Donation.findOneAndUpdate(
+    const allocatedDonation = await Donation.findOneAndUpdate(
       {
         _id: donation._id,
         status: "active",
@@ -45,13 +51,13 @@ async function approveRequest(req, res) {
       { $inc: { quantity: -requestedQty } },
       { new: true }
     );
-    if (!donationAfterAllocation) {
+    if (!allocatedDonation) {
       return res.status(400).json({ message: "Requested quantity is no longer available." });
     }
 
-    if (donationAfterAllocation.quantity <= 0 && donationAfterAllocation.status !== "claimed") {
-      donationAfterAllocation.status = "claimed";
-      await donationAfterAllocation.save();
+    if (allocatedDonation.quantity <= 0 && allocatedDonation.status !== "claimed") {
+      allocatedDonation.status = "claimed";
+      await allocatedDonation.save();
     }
 
     request.status = "approved";
@@ -68,14 +74,14 @@ async function approveRequest(req, res) {
 
     if (request.logistics === "delivery") {
       const donor = await User.findById(request.donorId).select("city state").lean();
-      const coordinates = Array.isArray(donation?.location?.coordinates)
+      const coordinates = Array.isArray(donation.location?.coordinates)
         ? donation.location.coordinates
         : [];
       eventBus.emit("delivery.request.approved", {
         donorId: request.donorId,
         receiverId: request.receiverId,
         requestId: request._id,
-        donationId: donationAfterAllocation._id,
+        donationId: allocatedDonation._id,
         city: donor?.city || "",
         state: donor?.state || "",
         lng: coordinates[0],
@@ -83,19 +89,21 @@ async function approveRequest(req, res) {
       });
     }
 
-    return res.json({
-      message: donationAfterAllocation.status === "active"
-        ? `Request approved. ${donationAfterAllocation.quantity} portions still available.`
-        : "Request approved. Donation fully claimed.",
-      request,
+    return res.status(200).json({
+      message: "Request approved.",
+      request: {
+        _id: request._id,
+        status: request.status,
+        deliveryStatus: request.deliveryStatus,
+      },
       donation: {
-        _id: donationAfterAllocation._id,
-        quantity: donationAfterAllocation.quantity,
-        status: donationAfterAllocation.status,
+        _id: allocatedDonation._id,
+        quantity: allocatedDonation.quantity,
+        status: allocatedDonation.status,
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message || "Failed to approve request." });
+    return res.status(500).json({ message: error?.message || "Failed to approve request." });
   }
 }
 
@@ -106,13 +114,9 @@ async function declineRequest(req, res) {
     }
 
     const { requestId } = req.params;
-    const request = await Request.findById(requestId);
-    if (!request) return res.status(404).json({ message: "Request not found." });
-    if (String(request.donorId) !== String(req.user.id)) {
-      return res.status(403).json({ message: "Not allowed." });
-    }
-    if (normalizeStatus(request.status) !== "pending") {
-      return res.status(400).json({ message: "Only pending request can be declined." });
+    const { request, error: requestError } = await getDonorOwnedPendingRequest(requestId, req.user.id);
+    if (requestError) {
+      return res.status(requestError.code).json({ message: requestError.message });
     }
 
     request.status = "declined";
@@ -124,9 +128,15 @@ async function declineRequest(req, res) {
       status: "declined",
     });
 
-    return res.json({ message: "Request declined.", request });
+    return res.status(200).json({
+      message: "Request rejected.",
+      request: {
+        _id: request._id,
+        status: request.status,
+      },
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message || "Failed to decline request." });
+    return res.status(500).json({ message: error?.message || "Failed to reject request." });
   }
 }
 
