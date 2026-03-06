@@ -2,7 +2,8 @@ const CONFIGURED_API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "").
 const DEFAULT_PROD_API_BASE_URL = "https://sharebite-fullstack.onrender.com";
 const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:5000";
 const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
-const DEFAULT_API_TIMEOUT_MS = 15000;
+// 0 disables request timeouts (requests can wait indefinitely).
+const DEFAULT_API_TIMEOUT_MS = 0;
 
 const isBrowser = typeof window !== "undefined";
 const isLocalPage =
@@ -28,6 +29,9 @@ export const API_BASE_URL = resolveApiBaseUrl();
 export const buildApiUrl = (path) => `${API_BASE_URL}${path}`;
 
 const fetchWithTimeout = async (url, options, timeoutMs) => {
+  if (!timeoutMs || timeoutMs <= 0) {
+    return fetch(url, options);
+  }
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
