@@ -245,9 +245,18 @@ const DonateFood = () => {
       }
       const now = new Date();
       const [hours = "00", minutes = "00"] = formData.bestBefore.split(":");
+      const parsedHours = Number(hours);
+      const parsedMinutes = Number(minutes);
+      if (!Number.isFinite(parsedHours) || !Number.isFinite(parsedMinutes)) {
+        throw new Error("Please select a valid best before time.");
+      }
       const expiryTime = new Date(now);
-      expiryTime.setHours(Number(hours), Number(minutes), 0, 0);
+      expiryTime.setHours(parsedHours, parsedMinutes, 0, 0);
 
+      if (expiryTime.getTime() <= now.getTime()) {
+        // If the selected time has already passed today, assume the user means tomorrow.
+        expiryTime.setDate(expiryTime.getDate() + 1);
+      }
       if (expiryTime.getTime() <= now.getTime()) {
         throw new Error("Best before time must be later than current time.");
       }
