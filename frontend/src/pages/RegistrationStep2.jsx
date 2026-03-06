@@ -483,7 +483,7 @@ const RegistrationStep2 = () => {
                         className="absolute inset-0 h-full w-full"
                         loading="lazy"
                         referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://maps.google.com/maps?q=${coords.latitude},${coords.longitude}&z=15&output=embed`}
+                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${coords.longitude - 0.01}%2C${coords.latitude - 0.01}%2C${coords.longitude + 0.01}%2C${coords.latitude + 0.01}&layer=mapnik&marker=${coords.latitude}%2C${coords.longitude}`}
                       />
                     ) : (
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_40%,#cfe1d5_0,#c2d6c9_45%,#bdd0c4_100%)]" />
