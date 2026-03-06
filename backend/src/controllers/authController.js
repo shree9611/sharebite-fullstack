@@ -101,6 +101,11 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Guard against legacy users without a stored password hash.
+    if (!user.password || typeof user.password !== "string") {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ message: "Invalid credentials" });
     if (!process.env.JWT_SECRET) {
@@ -109,7 +114,9 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET);
     return res.json({ token });
-  } catch {
+  } catch (err) {
+    console.error("Login failed:", err.message);
     return res.status(500).json({ message: "Login failed" });
   }
 };
+
