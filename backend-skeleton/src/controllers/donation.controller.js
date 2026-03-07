@@ -75,6 +75,12 @@ async function createDonation(req, res) {
       });
     }
 
+    const bodyImageCandidate = String(req.body?.image || req.body?.imageUrl || "").trim();
+    const bodyImage =
+      bodyImageCandidate && bodyImageCandidate.startsWith("data:")
+        ? (SAFE_DATA_IMAGE_RE.test(bodyImageCandidate) ? bodyImageCandidate : "")
+        : "";
+
     const donation = await Donation.create({
       donorId: req.user.id,
       foodName,
@@ -83,7 +89,7 @@ async function createDonation(req, res) {
       location: Number.isFinite(lat) && Number.isFinite(lng)
         ? { type: "Point", coordinates: [lng, lat] }
         : { type: "Point", coordinates: [0, 0] },
-      image: buildImageValue(req.file),
+      image: buildImageValue(req.file) || bodyImage,
       expiryTime: new Date(expiryTime),
       status: "active",
     });

@@ -14,6 +14,8 @@ const notificationRoutes = require("./routes/notification.routes");
 const userRoutes = require("./routes/user.routes");
 
 const app = express();
+// Avoid conditional GETs (ETag/If-None-Match -> 304) for dynamic APIs.
+app.set("etag", false);
 
 const normalizeOrigin = (origin) => String(origin || "").trim().replace(/\/+$/, "");
 
@@ -66,11 +68,41 @@ app.use((req, res, next) => {
   const requestId = crypto.randomUUID();
   req.requestId = requestId;
   res.setHeader("x-request-id", requestId);
+  const buildId =
+    process.env.RENDER_GIT_COMMIT ||
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    process.env.GIT_COMMIT ||
+    "";
+  if (buildId) {
+    res.setHeader("x-app-build", String(buildId).slice(0, 12));
+  }
   res.on("finish", () => {
     const elapsedMs = Date.now() - startedAt;
     // eslint-disable-next-line no-console
     console.info(`[${requestId}] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${elapsedMs}ms)`);
   });
+  next();
+});
+
+// Dynamic API responses should never be cached by browsers/CDNs.
+app.use("/api", (req, res, next) => {
+  // Some clients/proxies still send validation headers; ignore them for dynamic APIs.
+  delete req.headers["if-none-match"];
+  delete req.headers["if-modified-since"];
+  delete req.headers["if-match"];
+  delete req.headers["if-unmodified-since"];
+
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.setHeader("Surrogate-Control", "no-store");
+  // Prevent any shared cache from serving authenticated content across users.
+  if (typeof res.vary === "function") {
+    res.vary("Origin");
+    res.vary("Authorization");
+  } else {
+    res.setHeader("Vary", "Origin, Authorization");
+  }
   next();
 });
 
@@ -95,7 +127,9 @@ app.use("/api", (req, res, next) => {
   next();
 });
 
-app.use(express.json());
+// Allow JSON payloads large enough for base64 image fallback (multipart is still preferred).
+app.use(express.json({ limit: "12mb" }));
+app.use(express.urlencoded({ extended: true, limit: "12mb" }));
 const uploadsDir = path.resolve(__dirname, "..", "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
 app.use("/uploads", express.static(uploadsDir));

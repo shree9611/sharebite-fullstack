@@ -252,6 +252,21 @@ const DonateFood = () => {
         throw new Error("Best before time must be later than current time.");
       }
 
+      const photoDataUrl =
+        typeof photoPreviewUrl === "string" && photoPreviewUrl.startsWith("data:image/")
+          ? photoPreviewUrl
+          : "";
+
+      const jsonPayload = {
+        foodName: formData.title,
+        quantity: Number(formData.quantity),
+        location: formData.pickupLocation,
+        expiryTime: expiryTime.toISOString(),
+        latitude: formData.pickupLatitude,
+        longitude: formData.pickupLongitude,
+        ...(photoDataUrl ? { image: photoDataUrl, imageUrl: photoDataUrl } : {}),
+      };
+
       const payload = new FormData();
       payload.append("foodName", formData.title);
       payload.append("quantity", String(formData.quantity));
@@ -271,6 +286,7 @@ const DonateFood = () => {
           Authorization: `Bearer ${token}`,
         },
         body: payload,
+        allowRelativeFallback: true,
       });
 
       // Fallback for backends still expecting JSON payload.
@@ -282,24 +298,61 @@ const DonateFood = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            foodName: formData.title,
-            quantity: Number(formData.quantity),
-            location: formData.pickupLocation,
-            expiryTime: expiryTime.toISOString(),
-            latitude: formData.pickupLatitude,
-            longitude: formData.pickupLongitude,
-          }),
+          body: JSON.stringify(jsonPayload),
+          allowRelativeFallback: true,
         });
       }
 
-      const data = await response.json().catch(() => ({}));
+      // Fallback for backends that accept JSON + base64 image instead of multipart uploads.
+      if (
+        !response.ok &&
+        photoFile &&
+        photoDataUrl &&
+        (response.status === 400 ||
+          response.status === 413 ||
+          response.status === 415 ||
+          response.status === 422)
+      ) {
+        response = await apiFetchWithFallback("/api/donations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(jsonPayload),
+          allowRelativeFallback: true,
+        });
+      }
+
+      const responseText = await response.text().catch(() => "");
+      let data = {};
+      try {
+        const parsed = responseText ? JSON.parse(responseText) : {};
+        data = parsed && typeof parsed === "object" ? parsed : {};
+      } catch {
+        data = {};
+      }
 
       if (!response.ok) {
+        // eslint-disable-next-line no-console
+        console.error("Donation submit failed", {
+          status: response.status,
+          requestId: response.headers?.get?.("x-request-id") || "",
+          message: data?.message || "",
+          responseText,
+        });
         if (response.status === 400 && photoFile) {
-          throw new Error(data?.message || "Image upload failed. Please try another image.");
+          throw new Error(
+            data?.message ||
+              (responseText ? responseText : "") ||
+              "Image upload failed. Please try another image."
+          );
         }
-        throw new Error(data?.message || "Failed to submit donation.");
+        throw new Error(
+          data?.message ||
+            (responseText ? responseText : "") ||
+            `Failed to submit donation (HTTP ${response.status}).`
+        );
       }
 
       setSubmitSuccess(data?.message || "Donation submitted successfully.");
