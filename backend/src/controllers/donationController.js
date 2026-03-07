@@ -3,6 +3,29 @@ const ImageAsset = require("../models/ImageAsset");
 const { donationWithCompatFields } = require("../utils/responseTransformers");
 const mongoose = require("mongoose");
 
+const parseExpiryTime = (rawValue) => {
+  const value = String(rawValue || "").trim();
+  if (!value) return null;
+
+  // Support "HH:MM" (time-only) inputs by using today's date.
+  const timeOnlyMatch = value.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+  if (timeOnlyMatch) {
+    const hours = Number(timeOnlyMatch[1]);
+    const minutes = Number(timeOnlyMatch[2]);
+    const date = new Date();
+    date.setSeconds(0, 0);
+    date.setHours(hours, minutes, 0, 0);
+    // If time has already passed today, roll to tomorrow.
+    if (date.getTime() <= Date.now()) {
+      date.setDate(date.getDate() + 1);
+    }
+    return date;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const ensureDbReady = (res) => {
   if (mongoose.connection.readyState !== 1) {
     res.status(503).json({ message: "Database unavailable. Please try again shortly." });
@@ -23,12 +46,18 @@ exports.createDonation = async (req, res) => {
 
     let image = body.image || body.imageUrl || body.foodImage || body.picture || "";
 
-    const foodName = String(body.foodName || body.title || "").trim();
+    const foodTitle = String(body.foodTitle || body.foodName || body.title || "").trim();
+    const foodName = foodTitle;
     const quantityRaw = body.quantity ?? body.qty ?? "";
     const quantity = typeof quantityRaw === "number" ? quantityRaw : Number(String(quantityRaw).trim());
-    const location = String(body.location || body.pickupLocation || "").trim();
+    const pickupLocation = String(body.pickupLocation || body.location || "").trim();
+    const location = pickupLocation;
     const expiryTimeRaw = body.expiryTime || body.bestBefore || body.expiry || "";
-    const expiryTime = expiryTimeRaw ? new Date(String(expiryTimeRaw)) : null;
+    const bestBefore = String(body.bestBefore || "").trim();
+    const expiryTime = parseExpiryTime(expiryTimeRaw);
+
+    const dietaryType = String(body.dietaryType || body.dietary || "").trim();
+    const bakedType = String(body.bakedType || body.baked || "").trim();
 
     if (!foodName || !Number.isFinite(quantity) || quantity <= 0 || !location) {
       return res.status(400).json({ message: "foodName, quantity (> 0), and location are required" });
@@ -61,10 +90,15 @@ exports.createDonation = async (req, res) => {
     const donation = await Donation.create({
       donor: req.user.id,
       foodName,
+      foodTitle,
       quantity,
       location,
+      pickupLocation,
       expiryTime,
+      bestBefore,
       image,
+      dietaryType,
+      bakedType,
     });
     return res.status(201).json(donationWithCompatFields(req, donation));
   } catch (error) {
@@ -73,7 +107,11 @@ exports.createDonation = async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
     // Include request id so you can correlate with Render logs without leaking stack traces to users.
-    return res.status(500).json({ message: "Failed to submit donation", requestId: req.requestId || "" });
+    return res.status(500).json({
+      message: "Failed to submit donation",
+      requestId: req.requestId || "",
+      error: process.env.NODE_ENV === "production" ? undefined : (error?.message || String(error)),
+    });
   }
 };
 

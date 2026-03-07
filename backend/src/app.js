@@ -44,7 +44,7 @@ app.use("/api", (req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "12mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // Backward compatibility for old /uploads/* data.
