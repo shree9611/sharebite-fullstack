@@ -3,6 +3,8 @@ const ImageAsset = require("../models/ImageAsset");
 const { donationWithCompatFields } = require("../utils/responseTransformers");
 const mongoose = require("mongoose");
 
+const DONATION_DEBUG = String(process.env.DEBUG_DONATIONS || "").trim() === "1";
+
 const parseExpiryTime = (rawValue) => {
   const value = String(rawValue || "").trim();
   if (!value) return null;
@@ -37,11 +39,21 @@ const ensureDbReady = (res) => {
 exports.createDonation = async (req, res) => {
   if (!ensureDbReady(res)) return;
   try {
+    if (DONATION_DEBUG) {
+      // eslint-disable-next-line no-console
+      console.log(`[${req.requestId || "n/a"}] createDonation body keys=`, Object.keys(req.body || {}));
+      // eslint-disable-next-line no-console
+      console.log(`[${req.requestId || "n/a"}] createDonation files=`, Array.isArray(req.files) ? req.files.length : 0);
+      // eslint-disable-next-line no-console
+      console.log(`[${req.requestId || "n/a"}] createDonation user=`, req.user || null);
+    }
+
     if (!req.user?.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const body = req.body || {};
+    // upload.any() populates req.files; keep req.file support for compatibility.
     const uploadedFile = req.file || (Array.isArray(req.files) ? req.files[0] : null);
 
     let image = body.image || body.imageUrl || body.foodImage || body.picture || "";
@@ -59,8 +71,10 @@ exports.createDonation = async (req, res) => {
     const dietaryType = String(body.dietaryType || body.dietary || "").trim();
     const bakedType = String(body.bakedType || body.baked || "").trim();
 
-    if (!foodName || !Number.isFinite(quantity) || quantity <= 0 || !location) {
-      return res.status(400).json({ message: "foodName, quantity (> 0), and location are required" });
+    if (!foodName || !Number.isFinite(quantity) || quantity <= 0 || !location || !expiryTimeRaw) {
+      return res.status(400).json({
+        message: "Missing required fields: foodTitle, quantity, pickupLocation, bestBefore",
+      });
     }
     if (!(expiryTime instanceof Date) || Number.isNaN(expiryTime.getTime())) {
       return res.status(400).json({ message: "expiryTime must be a valid date" });
