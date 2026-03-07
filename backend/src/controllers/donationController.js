@@ -60,11 +60,12 @@ exports.createDonation = async (req, res) => {
     });
     return res.status(201).json(donationWithCompatFields(req, donation));
   } catch (error) {
-    console.error("Donation create failed:", error?.message || error);
+    console.error(`[${req.requestId || "n/a"}] Donation create failed:`, error?.stack || error?.message || error);
     if (error?.name === "ValidationError" || error?.name === "CastError") {
       return res.status(400).json({ message: error.message });
     }
-    return res.status(500).json({ message: "Failed to submit donation" });
+    // Include request id so you can correlate with Render logs without leaking stack traces to users.
+    return res.status(500).json({ message: "Failed to submit donation", requestId: req.requestId || "" });
   }
 };
 
@@ -73,6 +74,32 @@ exports.getDonations = async (req, res) => {
     const data = await Donation.find().populate("donor", "name email locationName address city state coordinates");
     return res.json(data.map((item) => donationWithCompatFields(req, item)));
   } catch {
+    return res.status(500).json({ message: "Failed to fetch donations" });
+  }
+};
+
+exports.getMyDonations = async (req, res) => {
+  if (!ensureDbReady(res)) return;
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const limitRaw = Array.isArray(req.query?.limit) ? req.query.limit[0] : req.query?.limit;
+    const requestedLimit = Number(limitRaw);
+    const limit =
+      Number.isFinite(requestedLimit) && requestedLimit > 0
+        ? Math.min(Math.floor(requestedLimit), 100)
+        : 40;
+
+    const rows = await Donation.find({ donor: req.user.id })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return res.json(rows.map((item) => donationWithCompatFields(req, item)));
+  } catch (error) {
+    console.error(`[${req.requestId || "n/a"}] Donation list mine failed:`, error?.message || error);
     return res.status(500).json({ message: "Failed to fetch donations" });
   }
 };
