@@ -1,5 +1,5 @@
 const CONFIGURED_API_BASE_URL = String(import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/+$/, "");
-const DEFAULT_PROD_API_BASE_URL = "https://sharebite-fullstack.onrender.com";
+const DEFAULT_PROD_API_BASE_URL = "https://sharebite-backend-r0pa.onrender.com";
 const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:5000";
 const SAFE_DATA_IMAGE_RE = /^data:image\/[a-zA-Z0-9.+-]+;base64,/i;
 const DEFAULT_API_TIMEOUT_MS = 15000;
