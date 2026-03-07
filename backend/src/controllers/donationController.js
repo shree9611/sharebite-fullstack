@@ -97,7 +97,19 @@ exports.createDonation = async (req, res) => {
           `[${req.requestId || "n/a"}] Donation image save failed:`,
           imageError?.stack || imageError?.message || imageError
         );
-        // Continue without a stored image; donation creation should still succeed.
+        // Fallback: store base64 directly on the donation when ImageAsset fails.
+        // uploadMiddleware limits files to 5MB, keeping this under Mongo's 16MB doc limit.
+        if (!image && uploadedFile?.mimetype?.startsWith("image/")) {
+          try {
+            const base64 = uploadedFile.buffer.toString("base64");
+            image = `data:${uploadedFile.mimetype};base64,${base64}`;
+          } catch (encodeError) {
+            console.error(
+              `[${req.requestId || "n/a"}] Donation image base64 encode failed:`,
+              encodeError?.message || encodeError
+            );
+          }
+        }
       }
     }
 
