@@ -41,13 +41,21 @@ exports.createDonation = async (req, res) => {
     }
 
     if (uploadedFile?.buffer?.length) {
-      const savedImage = await ImageAsset.create({
-        filename: uploadedFile.originalname || "",
-        contentType: uploadedFile.mimetype || "application/octet-stream",
-        size: uploadedFile.size || uploadedFile.buffer.length,
-        data: uploadedFile.buffer,
-      });
-      image = `/api/images/${savedImage._id}`;
+      try {
+        const savedImage = await ImageAsset.create({
+          filename: uploadedFile.originalname || "",
+          contentType: uploadedFile.mimetype || "application/octet-stream",
+          size: uploadedFile.size || uploadedFile.buffer.length,
+          data: uploadedFile.buffer,
+        });
+        image = `/api/images/${savedImage._id}`;
+      } catch (imageError) {
+        console.error(
+          `[${req.requestId || "n/a"}] Donation image save failed:`,
+          imageError?.stack || imageError?.message || imageError
+        );
+        // Continue without a stored image; donation creation should still succeed.
+      }
     }
 
     const donation = await Donation.create({
