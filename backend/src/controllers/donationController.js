@@ -132,10 +132,12 @@ exports.createDonation = async (req, res) => {
     if (error?.name === "ValidationError" || error?.name === "CastError") {
       return res.status(400).json({ message: error.message });
     }
-    // Include request id so you can correlate with Render logs without leaking stack traces to users.
+    // Include request id so you can correlate with Render logs. Include error type/code for faster debugging.
     return res.status(500).json({
       message: "Failed to submit donation",
       requestId: req.requestId || "",
+      errorName: error?.name || "",
+      errorCode: error?.code || "",
       error: process.env.NODE_ENV === "production" ? undefined : (error?.message || String(error)),
     });
   }
