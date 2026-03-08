@@ -119,10 +119,18 @@ const UserDashboard = () => {
       for (const row of list) {
         const key = String(row?._id || "");
         if (!key || seen.has(key)) continue;
+<<<<<<< HEAD
         const normalizedStatus = String(row?.status || "").toLowerCase();
         const isActiveLike = normalizedStatus === "active" || normalizedStatus === "available";
         const isVisible = isActiveLike && Number(row?.quantity || 0) > 0;
         if (!isVisible) continue;
+=======
+const status = String(row?.status || "").toLowerCase();
+
+const isVisible =
+  (status === "active" || status === "available") &&
+  Number(row?.quantity || 0) > 0;        if (!isVisible) continue;
+>>>>>>> d1f0085 (Fix receiver dashboard donation visibility)
         seen.add(key);
         uniqueActive.push(row);
       }
@@ -395,7 +403,12 @@ const UserDashboard = () => {
                   const isAvailable =
                     (normalizedStatus === "active" || normalizedStatus === "available") &&
                     Number(item?.quantity || 0) > 0;
-                  return (
+                  return 
+const status = String(item?.status || "").toLowerCase();
+
+const isAvailable =
+  (status === "active" || status === "available") &&
+  Number(item?.quantity || 0) > 0;                  return 
                   <div key={item._id} className="bg-white rounded-xl overflow-hidden border border-[#e6eee9] flex flex-col shadow-sm">
                     <div className="relative h-32 w-full bg-[#f3f6f4] flex items-center justify-center">
                       {resolveDonationImage(item) ? (
@@ -530,4 +543,4 @@ const UserDashboard = () => {
 };
 
 export default UserDashboard;
-
+    still error
