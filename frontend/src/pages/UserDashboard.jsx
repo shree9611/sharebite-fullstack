@@ -119,7 +119,16 @@ const UserDashboard = () => {
       for (const row of list) {
         const key = String(row?._id || "");
         if (!key || seen.has(key)) continue;
-        const isVisible = String(row?.status || "").toLowerCase() === "active" && Number(row?.quantity || 0) > 0;
+        const status = String(row?.status || "").toLowerCase();
+        const isListed = status === "active" || status === "available";
+        const rawQuantity = row?.quantity;
+        const quantityValue = Number(rawQuantity);
+        const hasQuantity =
+          rawQuantity !== undefined &&
+          rawQuantity !== null &&
+          rawQuantity !== "" &&
+          Number.isFinite(quantityValue);
+        const isVisible = isListed && (!hasQuantity || quantityValue > 0);
         if (!isVisible) continue;
         seen.add(key);
         uniqueActive.push(row);
@@ -389,7 +398,9 @@ const UserDashboard = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {visibleDonations.map((item) => {
-                  const isAvailable = item?.status === "active" && Number(item?.quantity || 0) > 0;
+                  const status = String(item?.status || "").toLowerCase();
+                  const isAvailable =
+                    (status === "active" || status === "available") && Number(item?.quantity || 0) > 0;
                   return (
                   <div key={item._id} className="bg-white rounded-xl overflow-hidden border border-[#e6eee9] flex flex-col shadow-sm">
                     <div className="relative h-32 w-full bg-[#f3f6f4] flex items-center justify-center">
