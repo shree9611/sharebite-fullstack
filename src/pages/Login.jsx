@@ -126,7 +126,7 @@ const Login = () => {
     }
   };
 
-  const handleResetSubmit = (event) => {
+  const handleResetSubmit = async (event) => {
     event.preventDefault();
     const isValid = resetPassword.trim().length >= 6;
     const isMatch = resetPassword === resetConfirm;
@@ -140,9 +140,39 @@ const Login = () => {
       setResetSuccess(false);
       return;
     }
-    setPassword(resetPassword);
-    setResetError("");
-    setResetSuccess(true);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(buildApiUrl("/api/auth/reset-password"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          newPassword: resetPassword,
+          password: resetPassword,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if ([404, 405].includes(response.status)) {
+          throw new Error("Password reset is not supported by this server. Please register again or contact support.");
+        }
+        throw new Error(data?.message || "Failed to update password.");
+      }
+      setPassword(resetPassword);
+      setResetError("");
+      setResetSuccess(true);
+    } catch (error) {
+      if (error instanceof TypeError) {
+        setResetError("Unable to reach server. Please check your connection and try again.");
+      } else {
+        setResetError(error.message || "Failed to update password.");
+      }
+      setResetSuccess(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -342,9 +372,10 @@ const Login = () => {
                 <div className="flex items-center gap-3">
                   <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="flex-1 py-3 rounded-full bg-green-600 text-white font-semibold shadow hover:brightness-110 transition"
                   >
-                    {t("Update Password")}
+                    {isSubmitting ? "Updating..." : t("Update Password")}
                   </button>
                   <button
                     type="button"

@@ -1,8 +1,11 @@
 const router = require("express").Router();
 const asyncHandler = require("../middleware/asyncHandler");
-const { register, login } = require("../controllers/authController");
+const upload = require("../middleware/uploadMiddleware");
+const { register, login, resetPassword } = require("../controllers/authController");
 
-router.post("/register", asyncHandler(register));
+// Frontend sends multipart/form-data (FormData) for registration to support avatars.
+router.post("/register", upload.any(), asyncHandler(register));
 router.post("/login", asyncHandler(login));
+router.post("/reset-password", asyncHandler(resetPassword));
 
 module.exports = router;

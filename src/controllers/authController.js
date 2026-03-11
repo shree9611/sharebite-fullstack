@@ -113,3 +113,31 @@ exports.login = async (req, res) => {
     return res.status(500).json({ message: "Login failed" });
   }
 };
+
+exports.resetPassword = async (req, res) => {
+  if (!ensureDbReady(res)) return;
+  try {
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const newPassword = String(req.body.newPassword || req.body.password || "");
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ message: "email and newPassword are required" });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    await user.save();
+
+    return res.json({ message: "Password updated" });
+  } catch (err) {
+    return res.status(500).json({ message: err?.message || "Password reset failed" });
+  }
+};

@@ -77,6 +77,29 @@ export const apiFetchWithFallback = async (path, options = {}) => {
     ...fetchOptions
   } = options;
   const primaryUrl = buildApiUrl(path);
+  const shouldTryRelativeFirst =
+    allowRelativeFallback &&
+    typeof path === "string" &&
+    path.startsWith("/") &&
+    !/^https?:\/\//i.test(path);
+
+  if (shouldTryRelativeFirst) {
+    try {
+      const relativeResponse = await fetchWithTimeout(path, fetchOptions, timeoutMs);
+      // If the current origin doesn’t serve /api/* (common in Vite dev), fall back to the configured base URL.
+      if ([404, 405].includes(relativeResponse.status)) {
+        return await fetchWithTimeout(primaryUrl, fetchOptions, timeoutMs);
+      }
+      const contentType = String(relativeResponse.headers?.get?.("content-type") || "").toLowerCase();
+      // Some static hosts rewrite unknown paths to index.html (200 text/html). Avoid treating that as an API response.
+      if (path.startsWith("/api/") && contentType.includes("text/html")) {
+        return await fetchWithTimeout(primaryUrl, fetchOptions, timeoutMs);
+      }
+      return relativeResponse;
+    } catch {
+      return fetchWithTimeout(primaryUrl, fetchOptions, timeoutMs);
+    }
+  }
 
   try {
     return await fetchWithTimeout(primaryUrl, fetchOptions, timeoutMs);
