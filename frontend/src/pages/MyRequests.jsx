@@ -82,7 +82,10 @@ const MyRequests = () => {
     try {
       const response = await apiFetchWithFallback("/api/requests", {
         headers: { Authorization: `Bearer ${token}` },
-        credentials: "include",
+        // Cross-site (Vercel -> Render) requests should not use cookies.
+        // Sending `credentials: "include"` can cause CORS failures unless the backend enables allow-credentials.
+        cache: "no-store",
+        allowRelativeFallback: true,
       });
       const data = await response.json().catch(() => []);
       if (!response.ok) {
