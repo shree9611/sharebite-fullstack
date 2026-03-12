@@ -35,8 +35,31 @@ const donationWithCompatFields = (req, donation) => {
   };
 };
 
+const normalizeUserRoleLabel = (role) => {
+  const normalized = String(role || "").toLowerCase();
+  if (normalized === "donor") return "Donor";
+  if (normalized === "receiver") return "Receiver";
+  if (normalized === "volunteer") return "Volunteer";
+  if (normalized === "admin") return "Admin";
+  return "";
+};
+
+const userWithCompatFields = (req, user) => {
+  const record = user?.toObject ? user.toObject() : { ...(user || {}) };
+  const profileImageUrl = toAbsoluteImageUrl(req, record.profileImage);
+  return {
+    ...record,
+    fullName: record.fullName || record.name || "",
+    phoneNumber: record.phoneNumber || record.phone || "",
+    accountType: record.accountType || normalizeUserRoleLabel(record.role),
+    profileImage: profileImageUrl,
+    profileImageUrl,
+  };
+};
+
 module.exports = {
   toAbsoluteImageUrl,
   pickUserLocation,
   donationWithCompatFields,
+  userWithCompatFields,
 };

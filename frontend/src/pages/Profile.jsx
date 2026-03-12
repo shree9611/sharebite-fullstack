@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetchWithFallback, getAuthHeaders, resolveAssetUrl } from "../lib/api.js";
-import { clearSession } from "../lib/auth.js";
+import { clearSession, normalizeRole } from "../lib/auth.js";
 import { clearCurrentProfile, setCurrentProfile } from "../lib/profile.js";
 
 const initialForm = {
@@ -30,6 +30,19 @@ const readOnlyInputClass =
   "h-12 w-full rounded-xl border border-[#dfe7dd] bg-[#f6f8f5] px-4 text-sm text-[#4f5a4d]";
 const editableInputClass =
   "h-12 w-full rounded-xl border border-[#d7e2d6] bg-white px-4 text-sm text-[#1e2a1f] outline-none transition focus:border-[#7bcf9f] focus:ring-2 focus:ring-[#dff4e7]";
+
+const normalizeProfilePayload = (data) => {
+  const record = data && typeof data === "object" ? data : {};
+  const roleLabel = normalizeRole(record.accountType || record.role) || record.accountType || "";
+  return {
+    ...record,
+    fullName: record.fullName || record.name || "",
+    phoneNumber: record.phoneNumber || record.phone || "",
+    accountType: record.accountType || roleLabel,
+    profileImageUrl: record.profileImageUrl || record.profileImage || "",
+    profileImage: record.profileImage || record.profileImageUrl || "",
+  };
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -93,16 +106,17 @@ const Profile = () => {
   };
 
   const syncNavbarProfile = (profileData) => {
+    const normalized = normalizeProfilePayload(profileData);
     setCurrentProfile({
-      name: profileData?.fullName || "",
-      email: profileData?.email || "",
-      phone: profileData?.phoneNumber || "",
-      role: profileData?.accountType || "",
-      profileImage: profileData?.profileImage || "",
-      profileImageUrl: profileData?.profileImageUrl || "",
-      city: profileData?.city || "",
-      state: profileData?.state || "",
-      address: profileData?.address || "",
+      name: normalized?.fullName || "",
+      email: normalized?.email || "",
+      phone: normalized?.phoneNumber || "",
+      role: normalized?.accountType || "",
+      profileImage: normalized?.profileImage || "",
+      profileImageUrl: normalized?.profileImageUrl || "",
+      city: normalized?.city || "",
+      state: normalized?.state || "",
+      address: normalized?.address || "",
     });
   };
 
@@ -131,8 +145,9 @@ const Profile = () => {
         }
         throw new Error(data?.message || "Failed to load profile.");
       }
-      setForm((prev) => ({ ...prev, ...data }));
-      syncNavbarProfile(data);
+      const normalized = normalizeProfilePayload(data);
+      setForm((prev) => ({ ...prev, ...normalized }));
+      syncNavbarProfile(normalized);
       setHasImageLoadError(false);
     } catch (loadError) {
       if (loadError instanceof TypeError) {
@@ -217,7 +232,7 @@ const Profile = () => {
 
       if (!response.ok) throw new Error(data?.message || "Failed to update profile.");
 
-      const mergedProfile = { ...form, ...data };
+      const mergedProfile = normalizeProfilePayload({ ...form, ...data });
       setForm(mergedProfile);
       syncNavbarProfile(mergedProfile);
       setPhotoFile(null);
