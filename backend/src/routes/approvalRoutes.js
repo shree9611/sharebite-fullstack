@@ -7,5 +7,8 @@ const { approveRequest, declineRequest } = require("../controllers/approvalContr
 // Admin approves request
 router.put("/:id", auth, asyncHandler(approveRequest));
 router.put("/:id/decline", auth, asyncHandler(declineRequest));
+// Frontend uses PATCH in some flows; accept it as an alias.
+router.patch("/:id", auth, asyncHandler(approveRequest));
+router.patch("/:id/decline", auth, asyncHandler(declineRequest));
 
 module.exports = router;
