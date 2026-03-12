@@ -193,6 +193,7 @@ const RegistrationStep2 = () => {
       payload.append("email", emailValue.trim());
       payload.append("password", accountData.password);
       payload.append("role", normalizedRole);
+      payload.append("phone", String(accountData.phone || "").trim());
       payload.append("locationName", [streetAddress.trim(), city.trim()].filter(Boolean).join(", "));
       payload.append("address", streetAddress.trim());
       payload.append("city", city.trim());

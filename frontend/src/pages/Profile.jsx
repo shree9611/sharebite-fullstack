@@ -36,6 +36,7 @@ const normalizeProfilePayload = (data) => {
   const roleLabel = normalizeRole(record.accountType || record.role) || record.accountType || "";
   return {
     ...record,
+    userId: record.userId || record._id || "",
     fullName: record.fullName || record.name || "",
     phoneNumber: record.phoneNumber || record.phone || "",
     accountType: record.accountType || roleLabel,
