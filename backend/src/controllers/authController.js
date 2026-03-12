@@ -34,6 +34,10 @@ exports.register = async (req, res) => {
     } = req.body || {};
 
     const normalizedRole = String(role || "").trim().toLowerCase();
+    const adminCreateKeyHeader = String(req.headers["x-admin-create-key"] || "").trim();
+    const adminCreateKeyBody = String(req.body?.adminCreateKey || req.body?.adminKey || "").trim();
+    const providedAdminCreateKey = adminCreateKeyHeader || adminCreateKeyBody;
+    const configuredAdminCreateKey = String(process.env.ADMIN_CREATE_KEY || "").trim();
     const latValue = latitude ?? lat ?? coords?.latitude ?? coords?.lat;
     const lngValue = longitude ?? lng ?? coords?.longitude ?? coords?.lng;
     const parsedLat = latValue === undefined || latValue === null || latValue === "" ? null : Number(latValue);
@@ -44,6 +48,14 @@ exports.register = async (req, res) => {
     }
     if (!["donor", "receiver", "volunteer", "admin"].includes(normalizedRole)) {
       return res.status(400).json({ message: "role must be donor, receiver, volunteer, or admin" });
+    }
+    if (normalizedRole === "admin") {
+      if (!configuredAdminCreateKey) {
+        return res.status(403).json({ message: "Admin registration is disabled" });
+      }
+      if (!providedAdminCreateKey || providedAdminCreateKey !== configuredAdminCreateKey) {
+        return res.status(403).json({ message: "Not allowed to register admin" });
+      }
     }
     if (password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });

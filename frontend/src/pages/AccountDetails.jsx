@@ -75,7 +75,7 @@ const AccountDetails = () => {
     const roleMap = {
       Donor: "donor",
       Receiver: "receiver",
-      Volunteer: "admin",
+      Volunteer: "volunteer",
     };
 
     const dataUrlToFile = (dataUrl, fallbackName = "profile-image") => {
