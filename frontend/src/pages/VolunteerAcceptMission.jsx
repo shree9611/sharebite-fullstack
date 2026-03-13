@@ -134,21 +134,19 @@ const VolunteerAcceptMission = () => {
         normalizedPickups.map((row) => String(row?.requestId || row?.request?._id || "")).filter(Boolean)
       );
 
-      // Include approved delivery requests that don't yet have a pickup scheduled.
+      // Include approved requests that don't yet have a pickup scheduled.
       const normalizedRequests = requestRows
         .map((row) => normalizeMission({ request: row }))
         .filter((row) => {
           const status = String(row?.status || "").toLowerCase();
-          const logistics = String(row?.logistics || "").toLowerCase();
           if (status !== "approved") return false;
-          if (logistics !== "delivery") return false;
           if (pickupRequestIds.has(String(row?.requestId || ""))) return false;
           return true;
         });
 
       const combined = [...normalizedRequests, ...normalizedPickups].filter((row) => {
         const status = String(row?.status || "").toLowerCase();
-        return status !== "declined";
+        return status !== "declined" && status !== "completed";
       });
 
       setMissions(combined);
