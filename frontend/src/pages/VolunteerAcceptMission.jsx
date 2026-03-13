@@ -59,6 +59,7 @@ const normalizeMission = (row) => {
     _id: String(requestId || pickupId || ""),
     pickupId: String(pickupId || ""),
     requestId: String(requestId || ""),
+    status: row?.status || request?.status || "",
     donation,
     donor,
     receiver,
