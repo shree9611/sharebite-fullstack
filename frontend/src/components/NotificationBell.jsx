@@ -21,9 +21,19 @@ const NotificationBell = () => {
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load notifications.");
       }
-      const nextItems = Array.isArray(data?.items) ? data.items : [];
+
+      const rawItems = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : [];
+      const nextItems = rawItems.map((item) => {
+        const isRead = Boolean(item?.isRead ?? item?.read);
+        return { ...item, isRead };
+      });
+      const nextUnreadCount =
+        typeof data?.unreadCount === "number"
+          ? data.unreadCount
+          : nextItems.reduce((count, item) => count + (item?.isRead ? 0 : 1), 0);
+
       setItems(nextItems);
-      setUnreadCount(Number(data?.unreadCount || 0));
+      setUnreadCount(nextUnreadCount);
     } catch (loadError) {
       setError(loadError.message || "Unable to load notifications.");
     } finally {
@@ -57,7 +67,9 @@ const NotificationBell = () => {
         headers: { ...getAuthHeaders() },
       });
       if (!response.ok) return;
-      setItems((prev) => prev.map((item) => (item?._id === id ? { ...item, isRead: true } : item)));
+      setItems((prev) =>
+        prev.map((item) => (item?._id === id ? { ...item, isRead: true, read: true } : item))
+      );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch {
       // no-op
@@ -71,7 +83,7 @@ const NotificationBell = () => {
         headers: { ...getAuthHeaders() },
       });
       if (!response.ok) return;
-      setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
+      setItems((prev) => prev.map((item) => ({ ...item, isRead: true, read: true })));
       setUnreadCount(0);
     } catch {
       // no-op
