@@ -39,6 +39,7 @@ const resolveProfileImage = (profile) => {
 const normalizeDeliveryStatus = (value) => {
   const status = String(value || "").toLowerCase();
   if (status === "completed") return "delivered";
+  if (status === "scheduled") return "accepted";
   return status || "unassigned";
 };
 
@@ -203,8 +204,20 @@ const VolunteerAcceptMission = () => {
       if (!response.ok) {
         throw new Error(data?.message || "Failed to accept mission.");
       }
-      setSuccessMessage("Mission accepted. Pickup scheduled.");
-      loadMissions();
+      setMissions((prev) =>
+        prev.map((mission) =>
+          mission?.requestId === requestId || mission?._id === requestId
+            ? {
+                ...mission,
+                pickupId: String(data?._id || mission?.pickupId || ""),
+                status: mission?.status || "scheduled",
+                deliveryStatus: "accepted",
+                volunteer: mission?.volunteer || { name: "You" },
+              }
+            : mission
+        )
+      );
+      setSuccessMessage("Mission accepted. Message sent to donor & receiver.");
     } catch (acceptError) {
       setActionError(acceptError.message || "Unable to accept mission.");
     } finally {
@@ -243,7 +256,7 @@ const VolunteerAcceptMission = () => {
         throw new Error(data?.message || "Failed to confirm delivery.");
       }
       setSuccessMessage(
-        "Delivery confirmed. Donor and receiver were notified and status is now Delivered."
+        "Delivered successfully. Message sent to donor & receiver."
       );
       loadMissions();
     } catch (confirmError) {

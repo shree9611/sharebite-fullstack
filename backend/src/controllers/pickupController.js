@@ -14,7 +14,7 @@ exports.createPickup = async (req, res) => {
     path: "donation",
     select: "foodName donor",
     populate: { path: "donor", select: "name" },
-  });
+  }).populate({ path: "receiver", select: "name" });
   if (!request) {
     return res.status(404).json({ message: "Request not found" });
   }
@@ -34,6 +34,20 @@ exports.createPickup = async (req, res) => {
         pickupId: pickup._id,
         requestId: request._id,
         donationId: request.donation._id,
+      },
+    });
+  }
+
+  if (request?.receiver?._id) {
+    await Notification.create({
+      user: request.receiver._id,
+      title: "Volunteer assigned",
+      message: `A volunteer accepted your request for ${request.donation?.foodName || "your food"}.`,
+      type: "volunteer_assigned",
+      metadata: {
+        pickupId: pickup._id,
+        requestId: request._id,
+        donationId: request.donation?._id,
       },
     });
   }
@@ -91,6 +105,21 @@ exports.completePickup = async (req, res) => {
           pickupId: pickup._id,
           requestId: request._id,
           donationId: request.donation._id,
+          confirmedBy: req.user.id,
+        },
+      });
+    }
+
+    if (request.receiver?._id) {
+      await Notification.create({
+        user: request.receiver._id,
+        title: "Delivery confirmed",
+        message: `Volunteer confirmed delivery for ${request.donation?.foodName || "your request"}.`,
+        type: "delivery_confirmed_receiver",
+        metadata: {
+          pickupId: pickup._id,
+          requestId: request._id,
+          donationId: request.donation?._id,
           confirmedBy: req.user.id,
         },
       });
