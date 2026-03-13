@@ -1,4 +1,5 @@
 const Request = require("../models/Request");
+const Notification = require("../models/Notification");
 const { donationWithCompatFields, pickUserLocation } = require("../utils/responseTransformers");
 
 const buildApprovalResponse = (req, requestDoc) => {
@@ -46,6 +47,23 @@ const updateRequestStatus = async (req, res, nextStatus) => {
 
   requestDoc.status = nextStatus;
   await requestDoc.save();
+
+  if (requestDoc?.receiver?._id) {
+    const donationName = requestDoc?.donation?.foodName || "your request";
+    await Notification.create({
+      user: requestDoc.receiver._id,
+      title: nextStatus === "approved" ? "Request approved" : "Request declined",
+      message:
+        nextStatus === "approved"
+          ? `Your request for ${donationName} was approved.`
+          : `Your request for ${donationName} was declined.`,
+      type: nextStatus === "approved" ? "request_approved" : "request_declined",
+      metadata: {
+        requestId: requestDoc._id,
+        donationId: requestDoc?.donation?._id,
+      },
+    });
+  }
 
   const refreshed = await Request.findById(requestDoc._id)
     .populate({

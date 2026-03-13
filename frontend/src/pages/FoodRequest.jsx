@@ -20,7 +20,12 @@ const FoodRequest = () => {
     [profile?.city, profile?.pincode].filter(Boolean).join(", ");
 
   const [peopleCount, setPeopleCount] = useState("");
-  const [foodPreference, setFoodPreference] = useState("any");
+  const normalizedDonorDietary = String(donation?.dietaryType || "").toLowerCase();
+  const donorDietaryPreference =
+    normalizedDonorDietary === "veg" || normalizedDonorDietary === "non-veg"
+      ? normalizedDonorDietary
+      : "";
+  const [foodPreference, setFoodPreference] = useState(donorDietaryPreference || "any");
   const [logistics, setLogistics] = useState("pickup");
   const [address, setAddress] = useState("");
   const [locationStatus, setLocationStatus] = useState("");
@@ -80,6 +85,9 @@ const FoodRequest = () => {
   };
 
   useEffect(() => {
+    if (donorDietaryPreference) {
+      setFoodPreference(donorDietaryPreference);
+    }
     if (logistics === "delivery" && !address.trim() && !receiverLocation) {
       detectAndFillLocation("delivery");
       return;
@@ -89,7 +97,7 @@ const FoodRequest = () => {
       setLocationStatus("Delivery address auto-filled from your profile location.");
       return;
     }
-  }, [logistics, address, receiverLocation]);
+  }, [donorDietaryPreference, logistics, address, receiverLocation]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -205,36 +213,42 @@ const FoodRequest = () => {
             </div>
 
             <div className="space-y-3">
-              <label className="block text-sm font-semibold text-slate-700">Preferred Food Type</label>
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setFoodPreference("veg")}
-                  className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                    foodPreference === "veg" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
-                  }`}
-                >
-                  Veg
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFoodPreference("non-veg")}
-                  className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                    foodPreference === "non-veg" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
-                  }`}
-                >
-                  Non-Veg
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFoodPreference("any")}
-                  className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                    foodPreference === "any" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
-                  }`}
-                >
-                  Any
-                </button>
-              </div>
+              <label className="block text-sm font-semibold text-slate-700">Food Type</label>
+              {donorDietaryPreference ? (
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                  {donorDietaryPreference === "veg" ? "Veg" : "Non-Veg"} (set by donor)
+                </div>
+              ) : (
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setFoodPreference("veg")}
+                    className={`px-4 py-2 rounded-full border text-sm font-semibold ${
+                      foodPreference === "veg" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    Veg
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFoodPreference("non-veg")}
+                    className={`px-4 py-2 rounded-full border text-sm font-semibold ${
+                      foodPreference === "non-veg" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    Non-Veg
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFoodPreference("any")}
+                    className={`px-4 py-2 rounded-full border text-sm font-semibold ${
+                      foodPreference === "any" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    Any
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">

@@ -114,31 +114,44 @@ const VolunteerAcceptMission = () => {
     setError("");
     setActionError("");
     try {
-      const pickupResponse = await apiFetchWithFallback("/api/pickups", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      let rows = [];
-      if (pickupResponse.ok) {
-        const data = await pickupResponse.json().catch(() => []);
-        rows = Array.isArray(data) ? data : [];
-      } else {
-        const requestResponse = await apiFetchWithFallback("/api/requests", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const [pickupResponse, requestResponse] = await Promise.all([
+        apiFetchWithFallback("/api/pickups", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        apiFetchWithFallback("/api/requests", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      const pickupsData = pickupResponse.ok ? await pickupResponse.json().catch(() => []) : [];
+      const requestsData = requestResponse.ok ? await requestResponse.json().catch(() => []) : [];
+
+      const pickupRows = Array.isArray(pickupsData) ? pickupsData : [];
+      const requestRows = Array.isArray(requestsData) ? requestsData : [];
+
+      const normalizedPickups = pickupRows.map(normalizeMission);
+      const pickupRequestIds = new Set(
+        normalizedPickups.map((row) => String(row?.requestId || row?.request?._id || "")).filter(Boolean)
+      );
+
+      // Include approved delivery requests that don't yet have a pickup scheduled.
+      const normalizedRequests = requestRows
+        .map((row) => normalizeMission({ request: row }))
+        .filter((row) => {
+          const status = String(row?.status || "").toLowerCase();
+          const logistics = String(row?.logistics || "").toLowerCase();
+          if (status !== "approved") return false;
+          if (logistics !== "delivery") return false;
+          if (pickupRequestIds.has(String(row?.requestId || ""))) return false;
+          return true;
         });
-        const data = await requestResponse.json().catch(() => []);
-        if (!requestResponse.ok) {
-          throw new Error(data?.message || "Failed to load missions.");
-        }
-        rows = Array.isArray(data) ? data : [];
-      }
-      const normalizedRows = rows
-        .map(normalizeMission)
-        .filter((row) => row?.logistics === "delivery" && row?.status !== "declined");
-      setMissions(normalizedRows);
+
+      const combined = [...normalizedRequests, ...normalizedPickups].filter((row) => {
+        const status = String(row?.status || "").toLowerCase();
+        return status !== "declined";
+      });
+
+      setMissions(combined);
     } catch (loadError) {
       if (loadError instanceof TypeError) {
         setError("Unable to reach server. Please check your connection and try again.");
@@ -179,24 +192,20 @@ const VolunteerAcceptMission = () => {
     setSuccessMessage("");
 
     try {
-      const response = await apiFetchWithFallback(`/api/requests/${requestId}/accept-mission`, {
-        method: "PATCH",
+      const response = await apiFetchWithFallback("/api/pickups", {
+        method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ requestId }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data?.message || "Failed to accept mission.");
       }
-      setMissions((prev) =>
-        prev.map((mission) =>
-          mission?.requestId === requestId || mission?._id === requestId
-            ? { ...mission, deliveryStatus: "accepted", volunteer: mission?.volunteer || { name: "You" } }
-            : mission
-        )
-      );
-      setSuccessMessage("Mission accepted. You can now proceed with delivery.");
+      setSuccessMessage("Mission accepted. Pickup scheduled.");
+      loadMissions();
     } catch (acceptError) {
       setActionError(acceptError.message || "Unable to accept mission.");
     } finally {
@@ -220,49 +229,24 @@ const VolunteerAcceptMission = () => {
     setActionError("");
     setSuccessMessage("");
     try {
-      let response;
-      if (pickupId) {
-        response = await apiFetchWithFallback(`/api/pickups/${pickupId}/complete`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      } else {
-        response = await apiFetchWithFallback(`/api/requests/${requestId}/complete-delivery`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      if (!pickupId) {
+        throw new Error("Please accept the mission first.");
       }
-      if (response.status === 404 && requestId) {
-        response = await apiFetchWithFallback(`/api/requests/${requestId}/complete-delivery`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      }
+
+      const response = await apiFetchWithFallback(`/api/pickups/${pickupId}/complete`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data?.message || "Failed to confirm delivery.");
       }
-      setMissions((prev) =>
-        prev.map((item) =>
-          item?.pickupId === pickupId || item?.requestId === requestId || item?._id === requestId
-            ? {
-                ...item,
-                status: "completed",
-                deliveryStatus: "delivered",
-                donation: { ...(item?.donation || {}), status: "delivered" },
-              }
-            : item
-        )
-      );
       setSuccessMessage(
         "Delivery confirmed. Donor and receiver were notified and status is now Delivered."
       );
+      loadMissions();
     } catch (confirmError) {
       setActionError(confirmError.message || "Unable to confirm delivery.");
     } finally {

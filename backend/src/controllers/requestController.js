@@ -1,6 +1,7 @@
 const Request = require("../models/Request");
 const Donation = require("../models/Donation");
 const User = require("../models/User");
+const Notification = require("../models/Notification");
 const { donationWithCompatFields, pickUserLocation } = require("../utils/responseTransformers");
 
 const formatRequestResponse = (req, requestDoc) => {
@@ -32,7 +33,7 @@ exports.createRequest = async (req, res) => {
     return res.status(400).json({ message: "donationId is required" });
   }
 
-  const donation = await Donation.findById(req.body.donationId).select("_id status");
+  const donation = await Donation.findById(req.body.donationId).select("_id status donor foodName");
   if (!donation) {
     return res.status(404).json({ message: "Donation not found" });
   }
@@ -59,6 +60,20 @@ exports.createRequest = async (req, res) => {
       populate: { path: "donor", select: "name email locationName address city state coordinates" },
     })
     .populate("receiver", "name email locationName address city state coordinates");
+
+  if (donation?.donor) {
+    await Notification.create({
+      user: donation.donor,
+      title: "New food request",
+      message: `A receiver requested ${donation.foodName || "your donation"}.`,
+      type: "request_created",
+      metadata: {
+        requestId: createdRequest._id,
+        donationId: donation._id,
+        receiverId: req.user.id,
+      },
+    });
+  }
 
   return res.status(201).json(formatRequestResponse(req, created));
 };

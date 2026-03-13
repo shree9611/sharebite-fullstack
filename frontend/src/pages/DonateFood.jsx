@@ -447,13 +447,6 @@ const DonateFood = () => {
                         >
                           {t("Cancel")}
                         </button>
-                        <button
-                          className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
-                          onClick={handleLogout}
-                          type="button"
-                        >
-                          {t("Logout")}
-                        </button>
                       </div>
                     </div>
                   </div>

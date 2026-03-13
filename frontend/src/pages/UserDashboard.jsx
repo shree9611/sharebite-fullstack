@@ -451,6 +451,8 @@ const UserDashboard = () => {
                             foodName: item.foodName,
                             quantity: item.quantity,
                             location: item.location,
+                            dietaryType: item.dietaryType || "",
+                            bakedType: item.bakedType || "",
                             image: item.image,
                             imageUrl: item.imageUrl,
                           }}
