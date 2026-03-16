@@ -33,7 +33,14 @@ const stringifyLocation = (value) => {
 };
 
 const resolveProfileImage = (profile) => {
-  return resolveAssetUrl(profile?.profileImageUrl || profile?.profileImage || "");
+  return resolveAssetUrl(
+    profile?.profileImageUrl ||
+      profile?.profileImage ||
+      profile?.avatarUrl ||
+      profile?.avatar ||
+      profile?.profileImageDataUrl ||
+      ""
+  );
 };
 
 const normalizeDeliveryStatus = (value) => {

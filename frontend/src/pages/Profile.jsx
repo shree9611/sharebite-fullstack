@@ -34,14 +34,20 @@ const editableInputClass =
 const normalizeProfilePayload = (data) => {
   const record = data && typeof data === "object" ? data : {};
   const roleLabel = normalizeRole(record.accountType || record.role) || record.accountType || "";
+  const resolvedAvatar =
+    record.profileImageUrl ||
+    record.profileImage ||
+    record.avatarUrl ||
+    record.avatar ||
+    "";
   return {
     ...record,
     userId: record.userId || record._id || "",
     fullName: record.fullName || record.name || "",
     phoneNumber: record.phoneNumber || record.phone || "",
     accountType: record.accountType || roleLabel,
-    profileImageUrl: record.profileImageUrl || record.profileImage || "",
-    profileImage: record.profileImage || record.profileImageUrl || "",
+    profileImageUrl: resolvedAvatar,
+    profileImage: resolvedAvatar,
   };
 };
 

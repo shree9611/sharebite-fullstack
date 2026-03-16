@@ -52,10 +52,11 @@ const fetchWithTimeout = async (url, options, timeoutMs) => {
 export const resolveAssetUrl = (assetPath) => {
   const rawValue = String(assetPath || "").trim();
   if (!rawValue) return "";
-  if (/^https?:\/\//i.test(rawValue)) return rawValue;
-  if (rawValue.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(rawValue) ? rawValue : "";
-  if (rawValue.startsWith("//")) return `https:${rawValue}`;
-  const normalizedPath = rawValue.startsWith("/") ? rawValue : `/${rawValue.replace(/^\/+/, "")}`;
+  const cleanedValue = rawValue.replace(/\\/g, "/");
+  if (/^https?:\/\//i.test(cleanedValue)) return cleanedValue;
+  if (cleanedValue.startsWith("data:")) return SAFE_DATA_IMAGE_RE.test(cleanedValue) ? cleanedValue : "";
+  if (cleanedValue.startsWith("//")) return `https:${cleanedValue}`;
+  const normalizedPath = cleanedValue.startsWith("/") ? cleanedValue : `/${cleanedValue.replace(/^\/+/, "")}`;
   return `${API_BASE_URL}${normalizedPath}`;
 };
 

@@ -15,7 +15,14 @@ const statusClasses = {
 };
 
 const resolveProfileImage = (profile) => {
-  return resolveAssetUrl(profile?.profileImageUrl || profile?.profileImage || "");
+  return resolveAssetUrl(
+    profile?.profileImageUrl ||
+      profile?.profileImage ||
+      profile?.avatarUrl ||
+      profile?.avatar ||
+      profile?.profileImageDataUrl ||
+      ""
+  );
 };
 const resolveDonationImage = (reqItem) => {
   return resolveAssetUrl(reqItem?.donation?.imageUrl || reqItem?.donation?.image || "");

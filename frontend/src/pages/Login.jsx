@@ -92,7 +92,7 @@ const Login = () => {
               phone: profileData?.phoneNumber || currentProfile?.phone || "",
               role: profileData?.accountType || resolvedRole,
               profileImage: profileData?.profileImage || "",
-              profileImageUrl: profileData?.profileImageUrl || "",
+              profileImageUrl: profileData?.profileImageUrl || profileData?.avatarUrl || profileData?.avatar || "",
               city: profileData?.city || "",
               state: profileData?.state || "",
               address: profileData?.address || "",

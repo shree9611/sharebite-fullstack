@@ -7,7 +7,14 @@ import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
 
 const resolveProfileImage = (profile) => {
-  return resolveAssetUrl(profile?.profileImageUrl || profile?.profileImage || "");
+  return resolveAssetUrl(
+    profile?.profileImageUrl ||
+      profile?.profileImage ||
+      profile?.avatarUrl ||
+      profile?.avatar ||
+      profile?.profileImageDataUrl ||
+      ""
+  );
 };
 
 const CommunityFeedback = () => {
