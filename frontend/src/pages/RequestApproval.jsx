@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import NotificationBell from "../components/NotificationBell.jsx";
-import { clearCurrentProfile } from "../lib/profile.js";
-import { clearSession } from "../lib/auth.js";
 import { resolveAssetUrl } from "../lib/api.js";
 import {
   approveRequestById,
@@ -91,12 +89,6 @@ const RequestApproval = () => {
     }
   };
 
-  const handleLogout = () => {
-    clearSession();
-    clearCurrentProfile();
-    navigate("/login");
-  };
-
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-[#e7efe9] bg-white px-4 py-4 sm:px-6">
@@ -110,16 +102,11 @@ const RequestApproval = () => {
             <button
               type="button"
               onClick={() => navigate("/profile")}
-              className="rounded-lg border border-[#dce7df] px-3 py-1 text-sm font-semibold text-[#50645b]"
+              aria-label="Profile"
+              title="Profile"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6eee9] bg-white text-[#7a9087]"
             >
-              Profile
-            </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-[#f3d5d5] px-3 py-1 text-sm font-semibold text-[#b42318]"
-            >
-              Logout
+              <span className="material-symbols-outlined text-[18px]">account_circle</span>
             </button>
           </div>
         </div>
