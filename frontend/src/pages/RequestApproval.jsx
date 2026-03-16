@@ -112,24 +112,24 @@ const RequestApproval = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 min-w-0">
-        <aside className="w-64 shrink-0 border-r border-[#e7efe9] bg-white px-4 py-6 sm:px-6">
-          <nav className="space-y-2 text-base font-bold text-[#5a6f65]">
+      <div className="flex flex-1 min-w-0 flex-col sm:flex-row">
+        <aside className="w-full shrink-0 border-b border-[#e7efe9] bg-white px-4 py-4 sm:w-64 sm:border-b-0 sm:border-r sm:px-6 sm:py-6">
+          <nav className="flex gap-2 overflow-x-auto text-sm font-bold text-[#5a6f65] sm:block sm:space-y-2 sm:text-base">
             <Link
               to="/donor/donate"
-              className={`block rounded-lg px-3 py-2 ${isActive("/donor/donate") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
+              className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 sm:block ${isActive("/donor/donate") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
             >
               Donate Food
             </Link>
             <Link
               to="/donor/approvals"
-              className={`block rounded-lg px-3 py-2 ${isActive("/donor/approvals") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
+              className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 sm:block ${isActive("/donor/approvals") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
             >
               Request Approval
             </Link>
             <Link
               to="/donor/feedback"
-              className={`block rounded-lg px-3 py-2 ${isActive("/donor/feedback") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
+              className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 sm:block ${isActive("/donor/feedback") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
             >
               Community Feedback
             </Link>
