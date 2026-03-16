@@ -2,9 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
-import { clearSession } from "../lib/auth.js";
-import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
-import NotificationBell from "../components/NotificationBell.jsx";
+import Navbar from "../components/Navbar.jsx";
 
 const NEARBY_RADIUS_KM = 10;
 
@@ -53,17 +51,6 @@ const resolveDonationImage = (item) => {
   return resolveAssetUrl(item?.imageUrl || item?.image || "");
 };
 
-const resolveProfileImage = (profile) => {
-  return resolveAssetUrl(
-    profile?.profileImageUrl ||
-      profile?.profileImage ||
-      profile?.avatarUrl ||
-      profile?.avatar ||
-      profile?.profileImageDataUrl ||
-      ""
-  );
-};
-
 const resolvePastStatus = (item) => {
   const expiry = item?.expiryTime ? new Date(item.expiryTime).getTime() : null;
   if (expiry && expiry <= Date.now()) return "Expired";
@@ -85,8 +72,6 @@ const UserDashboard = () => {
   const [isLocating, setIsLocating] = useState(false);
   const [locateError, setLocateError] = useState("");
   const [userCoords, setUserCoords] = useState(null);
-  const [showProfile, setShowProfile] = useState(false);
-  const [profile, setProfile] = useState(() => getCurrentProfile());
   const [donations, setDonations] = useState([]);
   const [pastDonations, setPastDonations] = useState([]);
   const [showPastList, setShowPastList] = useState(false);
@@ -98,16 +83,6 @@ const UserDashboard = () => {
   const isAvailable = location.pathname === "/dashboard";
   const isMyRequests = location.pathname === "/my-requests";
   const isFeedback = location.pathname === "/receiver/feedback";
-
-  const handleLogout = () => {
-    clearSession();
-    clearCurrentProfile();
-    navigate("/login");
-  };
-
-  useEffect(() => {
-    setProfile(getCurrentProfile());
-  }, []);
 
   const loadDonations = useCallback(async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
@@ -266,73 +241,12 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="bg-[#fffdf7] text-[#111814] min-h-screen">
+    <div className="bg-white text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
-        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-solid border-[#f3ecdc] bg-[#fffdf7] px-4 sm:px-6 md:px-10 py-5 shadow-sm">
-          <div className="flex items-center gap-4 text-[#111814]">
-            <div className="flex items-center gap-2">
-              <div className="size-6 text-[#12c76a]">
-                <span className="material-symbols-outlined text-3xl">volunteer_activism</span>
-              </div>
-              <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">{t("ShareBite")}</h2>
-            </div>
-          </div>
-          <div className="flex flex-1 justify-end relative items-center gap-2">
-            <NotificationBell />
-            <button
-              className="flex cursor-pointer items-center justify-center rounded-full h-9 w-9 bg-[#f0f4f2] text-[#111814]"
-              onClick={() => navigate("/profile")}
-              type="button"
-            >
-              {resolveProfileImage(profile) ? (
-                <img src={resolveProfileImage(profile)} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
-              ) : (
-                <span className="material-symbols-outlined">account_circle</span>
-              )}
-            </button>
-            {showProfile && (
-              <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden">
-                <div className="h-16 bg-slate-50" />
-                <div className="-mt-8 flex flex-col items-center px-4 pb-4">
-                  <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
-                    {resolveProfileImage(profile) ? (
-                      <img src={resolveProfileImage(profile)} alt="Profile" className="h-full w-full rounded-full object-cover" />
-                    ) : (
-                      <span className="material-symbols-outlined text-3xl">account_circle</span>
-                    )}
-                  </div>
-                  <p className="mt-2 font-bold text-[#111814]">{profile?.name || t("User Name")}</p>
-                  <p className="text-xs text-[#7a9087]">{profile?.email || t("User Email")}</p>
-                </div>
-                <div className="px-4 pb-4 text-xs text-[#7a9087]">
-                  <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
-                    <span>{t("Phone")}</span>
-                    <span className="font-semibold text-[#111814]">{profile?.phone || "N/A"}</span>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      className="flex-1 rounded-xl bg-[#f3f6f4] px-3 py-2 font-semibold text-[#111814]"
-                      type="button"
-                      onClick={() => setShowProfile(false)}
-                    >
-                      {t("Cancel")}
-                    </button>
-                    <button
-                      className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
-                      onClick={handleLogout}
-                      type="button"
-                    >
-                      {t("Logout")}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </header>
+        <Navbar showNotifications showProfile />
 
         <div className="flex flex-1 flex-col lg:flex-row">
-          <aside className="w-full lg:w-60 border-b lg:border-r border-[#f3ecdc] bg-[#fffdf7] p-4 flex flex-col gap-6 shadow-sm">
+          <aside className="w-full lg:w-60 border-b lg:border-r border-[#e7efe9] bg-white p-4 flex flex-col gap-6 shadow-sm">
             <div className="flex flex-col gap-2">
               <nav className="flex flex-col gap-1">
                 <Link

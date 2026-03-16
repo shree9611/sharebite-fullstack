@@ -1,41 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
-import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
-import { clearSession } from "../lib/auth.js";
-import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
-import NotificationBell from "../components/NotificationBell.jsx";
-
-const resolveProfileImage = (profile) => {
-  return resolveAssetUrl(
-    profile?.profileImageUrl ||
-      profile?.profileImage ||
-      profile?.avatarUrl ||
-      profile?.avatar ||
-      profile?.profileImageDataUrl ||
-      ""
-  );
-};
+import Navbar from "../components/Navbar.jsx";
+import { buildApiUrl } from "../lib/api.js";
 
 const CommunityFeedback = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showProfile, setShowProfile] = useState(false);
-  const [profile, setProfile] = useState(() => getCurrentProfile());
   const [feedbackItems, setFeedbackItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const isActive = (path) => location.pathname === path;
   const feedback = location.state?.feedback;
-  const handleLogout = () => {
-    clearSession();
-    clearCurrentProfile();
-    navigate("/login");
-  };
-  useEffect(() => {
-    setProfile(getCurrentProfile());
-  }, []);
 
   useEffect(() => {
     const loadFeedback = async () => {
@@ -83,81 +60,9 @@ const CommunityFeedback = () => {
     ));
   };
   return (
-    <div className="bg-white min-h-screen">
-      <div className="flex flex-col min-h-screen">
-        <main className="flex-1">
-          <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
-            <div className="flex items-center justify-between gap-2 font-bold text-lg relative">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-green-500">
-                  volunteer_activism
-                </span>
-                {t("ShareBite")}
-              </div>
-              <div className="relative flex items-center gap-2">
-                <NotificationBell />
-                <button
-                  className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
-                  onClick={() => navigate("/profile")}
-                  type="button"
-                >
-                  {resolveProfileImage(profile) ? (
-                    <img src={resolveProfileImage(profile)} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
-                  ) : (
-                    <span className="material-symbols-outlined text-[18px]">
-                      account_circle
-                    </span>
-                  )}
-                </button>
-                {showProfile && (
-                  <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
-                    <div className="h-16 bg-slate-50" />
-                    <div className="-mt-8 flex flex-col items-center px-4 pb-4">
-                      <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
-                        {resolveProfileImage(profile) ? (
-                          <img src={resolveProfileImage(profile)} alt="Profile" className="h-full w-full rounded-full object-cover" />
-                        ) : (
-                          <span className="material-symbols-outlined text-3xl">
-                            account_circle
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-2 font-bold text-[#111814]">
-                        {profile?.name || t("User Name")}
-                      </p>
-                      <p className="text-xs text-[#7a9087]">
-                        {profile?.email || t("User Email")}
-                      </p>
-                    </div>
-                    <div className="px-4 pb-4 text-xs text-[#7a9087]">
-                      <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
-                        <span>{t("Phone")}</span>
-                        <span className="font-semibold text-[#111814]">
-                          {profile?.phone || "N/A"}
-                        </span>
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        <button
-                          className="flex-1 rounded-xl bg-[#f3f6f4] px-3 py-2 font-semibold text-[#111814]"
-                          type="button"
-                          onClick={() => setShowProfile(false)}
-                        >
-                          {t("Cancel")}
-                        </button>
-                        <button
-                          className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
-                          onClick={handleLogout}
-                          type="button"
-                        >
-                          {t("Logout")}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </header>
+    <div className="flex min-h-screen flex-col bg-white">
+      <Navbar showNotifications showProfile />
+      <main className="flex-1">
           <div className="flex flex-col sm:flex-row">
             <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e6eee9] w-full sm:w-64 shrink-0">
               <nav className="flex flex-col gap-2 text-lg font-extrabold text-[#7a9087]">
@@ -303,8 +208,7 @@ const CommunityFeedback = () => {
               </div>
             </div>
           </div>
-        </main>
-      </div>
+      </main>
     </div>
   );
 };

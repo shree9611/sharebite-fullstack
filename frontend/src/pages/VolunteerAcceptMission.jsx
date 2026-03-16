@@ -2,9 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
-import { clearSession } from "../lib/auth.js";
-import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
-import NotificationBell from "../components/NotificationBell.jsx";
+import Navbar from "../components/Navbar.jsx";
 
 const stringifyLocation = (value) => {
   if (!value) return "";
@@ -30,17 +28,6 @@ const stringifyLocation = (value) => {
     }
   }
   return "";
-};
-
-const resolveProfileImage = (profile) => {
-  return resolveAssetUrl(
-    profile?.profileImageUrl ||
-      profile?.profileImage ||
-      profile?.avatarUrl ||
-      profile?.avatar ||
-      profile?.profileImageDataUrl ||
-      ""
-  );
 };
 
 const normalizeDeliveryStatus = (value) => {
@@ -89,7 +76,6 @@ const normalizeMission = (row) => {
 
 const VolunteerAcceptMission = () => {
   const navigate = useNavigate();
-  const [showProfile, setShowProfile] = useState(false);
   const [showLocationFor, setShowLocationFor] = useState("");
   const [missions, setMissions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,18 +84,7 @@ const VolunteerAcceptMission = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [activeRequestId, setActiveRequestId] = useState("");
   const [activePickupId, setActivePickupId] = useState("");
-  const [profile, setProfile] = useState(() => getCurrentProfile());
   const { t } = useLanguage();
-
-  const handleLogout = () => {
-    clearSession();
-    clearCurrentProfile();
-    navigate("/login");
-  };
-
-  useEffect(() => {
-    setProfile(getCurrentProfile());
-  }, []);
 
   const loadMissions = useCallback(async () => {
     const token = localStorage.getItem("sharebite.token");
@@ -274,67 +249,8 @@ const VolunteerAcceptMission = () => {
   };
 
   return (
-    <div className="bg-[#fffdf7] min-h-screen text-[#111814]">
-      <header className="border-b border-[#efe8d8] bg-[#fffdf7] px-4 sm:px-6 md:px-10 py-5">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 font-bold text-lg relative">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-green-500">volunteer_activism</span>
-            {t("ShareBite")}
-          </div>
-          <div className="relative flex items-center gap-2">
-            <NotificationBell />
-            <button
-              className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
-              onClick={() => navigate("/profile")}
-              type="button"
-            >
-              {resolveProfileImage(profile) ? (
-                <img src={resolveProfileImage(profile)} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
-              ) : (
-                <span className="material-symbols-outlined text-[18px]">account_circle</span>
-              )}
-            </button>
-            {showProfile && (
-              <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
-                <div className="h-16 bg-slate-50" />
-                <div className="-mt-8 flex flex-col items-center px-4 pb-4">
-                  <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
-                    {resolveProfileImage(profile) ? (
-                      <img src={resolveProfileImage(profile)} alt="Profile" className="h-full w-full rounded-full object-cover" />
-                    ) : (
-                      <span className="material-symbols-outlined text-3xl">account_circle</span>
-                    )}
-                  </div>
-                  <p className="mt-2 font-bold text-[#111814]">{profile?.name || "Volunteer"}</p>
-                  <p className="text-xs text-[#7a9087]">{profile?.email || "Email not available"}</p>
-                </div>
-                <div className="px-4 pb-4 text-xs text-[#7a9087]">
-                  <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
-                    <span>{t("Phone")}</span>
-                    <span className="font-semibold text-[#111814]">{profile?.phone || "N/A"}</span>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <Link
-                      className="flex-1 rounded-xl bg-[#f3f6f4] px-3 py-2 font-semibold text-[#111814] text-center"
-                      to="/profile"
-                      onClick={() => setShowProfile(false)}
-                    >
-                      Profile
-                    </Link>
-                    <button
-                      className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
-                      onClick={handleLogout}
-                      type="button"
-                    >
-                      {t("Logout")}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="bg-white min-h-screen text-[#111814] flex flex-col">
+      <Navbar showNotifications showProfile />
       <div className="max-w-6xl mx-auto py-8 sm:py-10 px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-2xl border border-[#e6eee9] p-5 sm:p-6 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

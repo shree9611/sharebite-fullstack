@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import NotificationBell from "../components/NotificationBell.jsx";
+import Navbar from "../components/Navbar.jsx";
 import { resolveAssetUrl } from "../lib/api.js";
 import {
   approveRequestById,
@@ -91,26 +91,7 @@ const RequestApproval = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <header className="border-b border-[#e7efe9] bg-white px-4 py-5 sm:px-6 md:px-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-lg font-bold text-[#1b1f23]">
-            <span className="material-symbols-outlined text-green-600">volunteer_activism</span>
-            ShareBite
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <button
-              type="button"
-              onClick={() => navigate("/profile")}
-              aria-label="Profile"
-              title="Profile"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6eee9] bg-white text-[#7a9087]"
-            >
-              <span className="material-symbols-outlined text-[18px]">account_circle</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar showNotifications showProfile />
 
       <div className="flex flex-1 min-w-0 flex-col sm:flex-row">
         <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e7efe9] w-full sm:w-64 shrink-0">

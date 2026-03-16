@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetchWithFallback, getAuthHeaders, resolveAssetUrl } from "../lib/api.js";
 import { getCurrentProfile } from "../lib/profile.js";
+import Navbar from "../components/Navbar.jsx";
 
 const FoodRequest = () => {
   const location = useLocation();
@@ -27,11 +28,23 @@ const FoodRequest = () => {
       : "";
   const [foodPreference, setFoodPreference] = useState(donorDietaryPreference || "any");
   const [logistics, setLogistics] = useState("pickup");
+  const [pickupTimeWindow, setPickupTimeWindow] = useState("asap");
   const [address, setAddress] = useState("");
   const [locationStatus, setLocationStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const donor = donation?.donor || {};
+  const pickupAddressText = [
+    donation?.pickupLocation || donation?.location,
+    donor?.address,
+    [donor?.city, donor?.state].filter(Boolean).join(", "),
+  ]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" • ");
+  const donorEmail = String(donor?.email || "").trim();
 
   const detectAndFillLocation = (target = "pickup") => {
     if (!navigator.geolocation) {
@@ -141,6 +154,7 @@ const FoodRequest = () => {
           requestedLocation: receiverLocation || "",
           logistics,
           deliveryAddress: logistics === "delivery" ? address.trim() : "",
+          pickupTimeWindow: logistics === "pickup" ? pickupTimeWindow : "",
         }),
       });
 
@@ -166,17 +180,15 @@ const FoodRequest = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#fffdf7]">
-      <div className="max-w-2xl w-full py-8 sm:py-12">
-        <div className="text-center mb-8">
-          <div className="flex justify-center items-center gap-2 mb-2">
-            <span className="material-symbols-outlined text-[#10b981] text-4xl">volunteer_activism</span>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">ShareBite</h1>
+    <div className="min-h-screen flex flex-col bg-white">
+      <Navbar showNotifications showProfile />
+      <main className="flex flex-1 items-center justify-center p-4 sm:p-6">
+        <div className="max-w-2xl w-full py-8 sm:py-12">
+          <div className="text-center mb-8">
+            <p className="text-slate-500 font-medium">Food Request Form</p>
           </div>
-          <p className="text-slate-500 font-medium">Food Request Form</p>
-        </div>
 
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-6 sm:p-8 md:p-12">
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-6 sm:p-8 md:p-12">
           <form className="space-y-8" onSubmit={handleSubmit}>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
               {selectedFoodImage ? (
@@ -212,45 +224,6 @@ const FoodRequest = () => {
               ) : null}
             </div>
 
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-slate-700">Food Type</label>
-              {donorDietaryPreference ? (
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-                  {donorDietaryPreference === "veg" ? "Veg" : "Non-Veg"} (set by donor)
-                </div>
-              ) : (
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => setFoodPreference("veg")}
-                    className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                      foodPreference === "veg" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
-                    }`}
-                  >
-                    Veg
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFoodPreference("non-veg")}
-                    className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                      foodPreference === "non-veg" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
-                    }`}
-                  >
-                    Non-Veg
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFoodPreference("any")}
-                    className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                      foodPreference === "any" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
-                    }`}
-                  >
-                    Any
-                  </button>
-                </div>
-              )}
-            </div>
-
             <div className="space-y-4">
               <label className="block text-sm font-semibold text-slate-700">Logistics Preference</label>
               <div className="flex gap-3">
@@ -283,6 +256,50 @@ const FoodRequest = () => {
                   Request Delivery
                 </button>
               </div>
+
+              {logistics === "pickup" ? (
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700">Pickup details</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {pickupAddressText || "Pickup address will be shared by the donor after approval."}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-500">
+                      Please coordinate and carry a bag/container if needed.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-slate-700" htmlFor="pickup-time">
+                      Preferred pickup time
+                    </label>
+                    <select
+                      id="pickup-time"
+                      value={pickupTimeWindow}
+                      onChange={(event) => setPickupTimeWindow(event.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#10b981] focus:ring-[#10b981]"
+                    >
+                      <option value="asap">As soon as possible</option>
+                      <option value="within_1h">Within 1 hour</option>
+                      <option value="today_morning">Today morning</option>
+                      <option value="today_afternoon">Today afternoon</option>
+                      <option value="today_evening">Today evening</option>
+                      <option value="tomorrow">Tomorrow</option>
+                    </select>
+                  </div>
+
+                  {donorEmail ? (
+                    <a
+                      href={`mailto:${encodeURIComponent(donorEmail)}?subject=${encodeURIComponent(
+                        "ShareBite pickup request"
+                      )}`}
+                      className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      Contact donor
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
 
               {logistics === "delivery" && (
                 <div className="space-y-2">
@@ -319,6 +336,7 @@ const FoodRequest = () => {
           </form>
         </div>
       </div>
+      </main>
     </div>
   );
 };

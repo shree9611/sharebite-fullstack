@@ -12,6 +12,7 @@ const requestSchema = new mongoose.Schema({
   requestedLocation: { type: String, default: "" },
   logistics: { type: String, enum: ["pickup", "delivery"], default: "pickup" },
   deliveryAddress: { type: String, default: "" },
+  pickupTimeWindow: { type: String, default: "" },
   status: {
     type: String,
     enum: ["pending", "approved", "declined", "completed"],

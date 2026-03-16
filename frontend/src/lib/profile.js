@@ -1,4 +1,10 @@
 const CURRENT_PROFILE_KEY = "sharebite.currentProfile";
+const PROFILE_EVENT = "sharebite.profileUpdated";
+
+const emitProfileUpdated = () => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(PROFILE_EVENT));
+};
 
 const sanitizeProfile = (profile) => {
   if (!profile || typeof profile !== "object") return null;
@@ -13,6 +19,7 @@ export const upsertProfile = (profile) => {
   const merged = sanitizeProfile({ ...current, ...profile });
   if (!merged?.email) return null;
   localStorage.setItem(CURRENT_PROFILE_KEY, JSON.stringify(merged));
+  emitProfileUpdated();
   return merged;
 };
 
@@ -28,6 +35,7 @@ export const setCurrentProfile = (profile) => {
   const sanitized = sanitizeProfile(profile);
   if (!sanitized) return;
   localStorage.setItem(CURRENT_PROFILE_KEY, JSON.stringify(sanitized));
+  emitProfileUpdated();
 };
 
 export const getCurrentProfile = () => {
@@ -41,4 +49,5 @@ export const getCurrentProfile = () => {
 
 export const clearCurrentProfile = () => {
   localStorage.removeItem(CURRENT_PROFILE_KEY);
+  emitProfileUpdated();
 };

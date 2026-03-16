@@ -4,6 +4,7 @@ import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { buildApiUrl } from "../lib/api.js";
 import { decodeJwtPayload, getRoleHomePath, normalizeRole } from "../lib/auth.js";
 import { setCurrentProfile } from "../lib/profile.js";
+import Navbar from "../components/Navbar.jsx";
 
 const Login = () => {
   const { t } = useLanguage();
@@ -146,22 +147,15 @@ const Login = () => {
   };
   return (
     <div className="min-h-screen bg-white flex flex-col">
-
-      {/* NAVBAR */}
-      <header className="bg-white border-b px-4 sm:px-6 md:px-10 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2 font-bold text-lg">
-          <span className="material-symbols-outlined text-green-500">
-            volunteer_activism
-          </span>
-          {t("ShareBite")}
-        </div>
-
-        <Link to="/account-details">
-          <button className="px-6 h-10 rounded-full bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200 transition">
-            {t("Sign Up")}
-          </button>
-        </Link>
-      </header>
+      <Navbar
+        right={
+          <Link to="/account-details">
+            <button className="h-9 rounded-full bg-slate-100 px-5 text-sm font-bold text-slate-700 hover:bg-slate-200 transition">
+              {t("Sign Up")}
+            </button>
+          </Link>
+        }
+      />
 
       {/* MAIN */}
       <main className="flex flex-1 flex-col lg:flex-row">

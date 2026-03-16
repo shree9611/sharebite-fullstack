@@ -33,7 +33,9 @@ exports.createRequest = async (req, res) => {
     return res.status(400).json({ message: "donationId is required" });
   }
 
-  const donation = await Donation.findById(req.body.donationId).select("_id status donor foodName");
+  const donation = await Donation.findById(req.body.donationId).select(
+    "_id status donor foodName quantity quantityRemaining"
+  );
   if (!donation) {
     return res.status(404).json({ message: "Donation not found" });
   }
@@ -41,16 +43,24 @@ exports.createRequest = async (req, res) => {
     return res.status(400).json({ message: "Donation is not available for request" });
   }
 
+  const requestedCount = Number(req.body.peopleCount) || 1;
+  const remaining =
+    Number.isFinite(Number(donation.quantityRemaining)) ? Number(donation.quantityRemaining) : Number(donation.quantity);
+  if (Number.isFinite(remaining) && remaining > 0 && requestedCount > remaining) {
+    return res.status(400).json({ message: `Only ${remaining} portion(s) are still available.` });
+  }
+
   const receiver = await User.findById(req.user.id).select("locationName address city state");
 
   const createdRequest = await Request.create({
     donation: req.body.donationId,
     receiver: req.user.id,
-    peopleCount: Number(req.body.peopleCount) || 1,
+    peopleCount: requestedCount,
     foodPreference: req.body.foodPreference || "any",
     requestedLocation: req.body.requestedLocation || pickUserLocation(receiver),
     logistics: req.body.logistics || "pickup",
     deliveryAddress: req.body.deliveryAddress || req.body.requestedLocation || pickUserLocation(receiver),
+    pickupTimeWindow: req.body.pickupTimeWindow || "",
     status: "pending",
   });
 

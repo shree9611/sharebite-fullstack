@@ -2,9 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
-import { clearSession } from "../lib/auth.js";
-import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
-import NotificationBell from "../components/NotificationBell.jsx";
+import Navbar from "../components/Navbar.jsx";
 
 const REQUESTS_CACHE_KEY = "sharebite.receiver.requests";
 
@@ -14,16 +12,6 @@ const statusClasses = {
   declined: "bg-red-50 text-red-600 border-red-100",
 };
 
-const resolveProfileImage = (profile) => {
-  return resolveAssetUrl(
-    profile?.profileImageUrl ||
-      profile?.profileImage ||
-      profile?.avatarUrl ||
-      profile?.avatar ||
-      profile?.profileImageDataUrl ||
-      ""
-  );
-};
 const resolveDonationImage = (reqItem) => {
   return resolveAssetUrl(reqItem?.donation?.imageUrl || reqItem?.donation?.image || "");
 };
@@ -39,8 +27,6 @@ const MyRequests = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [showProfile, setShowProfile] = useState(false);
-  const [profile, setProfile] = useState(() => getCurrentProfile());
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -55,14 +41,7 @@ const MyRequests = () => {
   const isMyRequests = location.pathname === "/my-requests";
   const isFeedback = location.pathname === "/receiver/feedback";
 
-  const handleLogout = () => {
-    clearSession();
-    clearCurrentProfile();
-    navigate("/login");
-  };
-
   useEffect(() => {
-    setProfile(getCurrentProfile());
     try {
       const cached = JSON.parse(localStorage.getItem(REQUESTS_CACHE_KEY) || "[]");
       if (Array.isArray(cached) && cached.length > 0) {
@@ -222,73 +201,12 @@ const MyRequests = () => {
   }, [activeRequests.length, pastRequests.length]);
 
   return (
-    <div className="bg-[#fffdf7] text-[#111814] min-h-screen">
+    <div className="bg-white text-[#111814] min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
-        <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[#efe8d8] bg-[#fffdf7] px-4 sm:px-6 md:px-10 py-5">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="text-[#12c76a] flex items-center">
-                <span className="material-symbols-outlined text-2xl font-semibold">volunteer_activism</span>
-              </div>
-              <h2 className="text-lg font-bold leading-tight tracking-tight">{t("ShareBite")}</h2>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 relative">
-            <NotificationBell />
-            <button
-              className="flex items-center justify-center rounded-full h-10 w-10 bg-[#f0f4f2] text-[#111814]"
-              onClick={() => navigate("/profile")}
-              type="button"
-            >
-              {resolveProfileImage(profile) ? (
-                <img src={resolveProfileImage(profile)} alt="Profile" className="h-10 w-10 rounded-full object-cover" />
-              ) : (
-                <span className="material-symbols-outlined text-[22px]">account_circle</span>
-              )}
-            </button>
-            {showProfile && (
-              <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden">
-                <div className="h-16 bg-slate-50" />
-                <div className="-mt-8 flex flex-col items-center px-4 pb-4">
-                  <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
-                    {resolveProfileImage(profile) ? (
-                      <img src={resolveProfileImage(profile)} alt="Profile" className="h-full w-full rounded-full object-cover" />
-                    ) : (
-                      <span className="material-symbols-outlined text-3xl">account_circle</span>
-                    )}
-                  </div>
-                  <p className="mt-2 font-bold text-[#111814]">{profile?.name || t("User Name")}</p>
-                  <p className="text-xs text-[#7a9087]">{profile?.email || t("User Email")}</p>
-                </div>
-                <div className="px-4 pb-4 text-xs text-[#7a9087]">
-                  <div className="flex items-center justify-between py-2 border-t border-[#eef4f1]">
-                    <span>{t("Phone")}</span>
-                    <span className="font-semibold text-[#111814]">{profile?.phone || "N/A"}</span>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      className="flex-1 rounded-xl bg-[#f3f6f4] px-3 py-2 font-semibold text-[#111814]"
-                      type="button"
-                      onClick={() => setShowProfile(false)}
-                    >
-                      {t("Cancel")}
-                    </button>
-                    <button
-                      className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
-                      onClick={handleLogout}
-                      type="button"
-                    >
-                      {t("Logout")}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </header>
+        <Navbar showNotifications showProfile />
 
         <div className="flex flex-1 flex-col lg:flex-row">
-          <aside className="w-full lg:w-64 border-b lg:border-r border-[#efe8d8] bg-[#fffdf7] p-4 flex flex-col gap-6 lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)]">
+          <aside className="w-full lg:w-64 border-b lg:border-r border-[#e7efe9] bg-white p-4 flex flex-col gap-6 lg:sticky lg:top-16 lg:h-[calc(100vh-64px)]">
             <nav className="flex flex-col gap-1">
               <Link
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
@@ -320,7 +238,7 @@ const MyRequests = () => {
             </nav>
           </aside>
 
-          <main className="flex-1 bg-[#fffdf7]">
+          <main className="flex-1 bg-white">
             <div className="p-4 sm:p-6 lg:p-12 max-w-6xl mx-auto">
               <div className="flex flex-col mb-10 gap-2">
                 <h1 className="text-[#111814] text-2xl sm:text-3xl font-bold tracking-tight">{t("My Requests Title")}</h1>
