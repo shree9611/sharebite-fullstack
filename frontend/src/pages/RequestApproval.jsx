@@ -204,9 +204,6 @@ const RequestApproval = () => {
                           {item?.receiver?.email || "No email"}
                         </p>
                         <p className="mt-2 text-sm text-[#33443b]">
-                          Food: {item?.donation?.foodName || "-"}
-                        </p>
-                        <p className="text-sm text-[#33443b]">
                           People Count: {item?.peopleCount || 0}
                         </p>
                       </div>
