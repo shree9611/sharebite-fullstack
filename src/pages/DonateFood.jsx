@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { apiFetchWithFallback, buildApiUrl, resolveAssetUrl } from "../lib/api.js";
-import { clearSession } from "../lib/auth.js";
-import { clearCurrentProfile, getCurrentProfile } from "../lib/profile.js";
+import { getCurrentProfile } from "../lib/profile.js";
 import NotificationBell from "../components/NotificationBell.jsx";
 
 const resolveDonationImage = (item) => {
@@ -71,11 +70,6 @@ const DonateFood = () => {
   const hasGpsLocation =
     formData.pickupLatitude !== null && formData.pickupLongitude !== null;
   const isActive = (path) => location.pathname === path;
-  const handleLogout = () => {
-    clearSession();
-    clearCurrentProfile();
-    navigate("/login");
-  };
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -485,18 +479,11 @@ const DonateFood = () => {
                       </div>
                       <div className="mt-3 flex gap-2">
                         <button
-                          className="flex-1 rounded-xl bg-[#f3f6f4] px-3 py-2 font-semibold text-[#111814]"
+                          className="w-full rounded-xl bg-[#f3f6f4] px-3 py-2 font-semibold text-[#111814]"
                           type="button"
                           onClick={() => setShowProfile(false)}
                         >
                           {t("Cancel")}
-                        </button>
-                        <button
-                          className="flex-1 rounded-xl px-3 py-2 font-semibold text-red-500 hover:bg-red-50"
-                          onClick={handleLogout}
-                          type="button"
-                        >
-                          {t("Logout")}
                         </button>
                       </div>
                     </div>

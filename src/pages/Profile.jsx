@@ -316,6 +316,17 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-[#f4f5f2] px-4 py-8 sm:px-6 md:py-10 lg:px-10">
       <div className="mx-auto max-w-5xl rounded-3xl border border-[#dde7dc] bg-white p-5 shadow-[0_20px_50px_-30px_rgba(24,66,33,0.35)] sm:p-8">
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e6eee4] bg-white text-[#4d5b4e] transition hover:bg-[#f6f8f5]"
+            aria-label="Logout"
+            title="Logout"
+          >
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+          </button>
+        </div>
         <div className="flex flex-col items-center text-center">
           <button
             type="button"
@@ -513,13 +524,6 @@ const Profile = () => {
                 className="w-fit text-left font-semibold text-[#2f78bd] hover:underline"
               >
                 Change Password
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="w-fit text-left font-semibold text-[#4d5b4e] hover:underline"
-              >
-                Logout
               </button>
             </div>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
