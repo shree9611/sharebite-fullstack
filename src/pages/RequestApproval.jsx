@@ -113,8 +113,8 @@ const RequestApproval = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-[#e7efe9] bg-white px-4 py-4 sm:px-6">
+    <div className="flex min-h-screen flex-col bg-white">
+      <header className="border-b border-[#e7efe9] bg-white px-6 py-4">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-2 text-lg font-bold text-[#1b1f23]">
             <span className="material-symbols-outlined text-green-600">volunteer_activism</span>
@@ -142,31 +142,32 @@ const RequestApproval = () => {
         </div>
       </header>
 
-      <main className="flex w-full flex-col gap-6 px-4 py-6 sm:px-6 md:px-10 lg:flex-row">
-        <aside className="w-full border-b border-[#e7efe9] pb-4 lg:w-64 lg:shrink-0 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
-          <nav className="flex gap-2 overflow-x-auto text-sm font-bold text-[#5a6f65] lg:block lg:space-y-2 lg:text-base">
+      <div className="flex flex-1">
+        <aside className="w-64 shrink-0 border-r border-[#e7efe9] bg-white p-4">
+          <nav className="space-y-2 text-sm font-bold text-[#5a6f65]">
             <Link
               to="/donor/donate"
-              className={`block whitespace-nowrap rounded-lg px-3 py-2 ${isActive("/donor/donate") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
+              className={`block rounded-lg px-3 py-2 ${isActive("/donor/donate") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
             >
               Donate Food
             </Link>
             <Link
               to="/donor/approvals"
-              className={`block whitespace-nowrap rounded-lg px-3 py-2 ${isActive("/donor/approvals") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
+              className={`block rounded-lg px-3 py-2 ${isActive("/donor/approvals") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
             >
               Request Approval
             </Link>
             <Link
               to="/donor/feedback"
-              className={`block whitespace-nowrap rounded-lg px-3 py-2 ${isActive("/donor/feedback") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
+              className={`block rounded-lg px-3 py-2 ${isActive("/donor/feedback") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
             >
               Community Feedback
             </Link>
           </nav>
         </aside>
 
-        <section className="min-w-0 flex-1">
+        <main className="min-w-0 flex-1 p-6">
+          <section className="min-w-0">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-extrabold text-[#1c2520] sm:text-3xl">Incoming Requests</h1>
@@ -273,8 +274,9 @@ const RequestApproval = () => {
               );
             })}
           </div>
-        </section>
-      </main>
+          </section>
+        </main>
+      </div>
     </div>
   );
 };
