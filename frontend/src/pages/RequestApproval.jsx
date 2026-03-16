@@ -90,9 +90,9 @@ const RequestApproval = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="flex min-h-screen flex-col bg-white">
       <header className="border-b border-[#e7efe9] bg-white px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-lg font-bold text-[#1b1f23]">
             <span className="material-symbols-outlined text-green-600">volunteer_activism</span>
             ShareBite
@@ -112,8 +112,8 @@ const RequestApproval = () => {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-6xl gap-6 px-4 py-6 sm:px-6">
-        <aside className="w-64 shrink-0 border-r border-[#e7efe9] pr-4">
+      <div className="flex flex-1 min-w-0">
+        <aside className="w-64 shrink-0 border-r border-[#e7efe9] bg-white px-4 py-6 sm:px-6">
           <nav className="space-y-2 text-base font-bold text-[#5a6f65]">
             <Link
               to="/donor/donate"
@@ -136,7 +136,7 @@ const RequestApproval = () => {
           </nav>
         </aside>
 
-        <section className="min-w-0 flex-1">
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6">
           <div className="mb-5 flex items-center justify-between">
             <h1 className="text-3xl font-extrabold text-[#1c2520]">Incoming Requests</h1>
             <button
@@ -226,8 +226,8 @@ const RequestApproval = () => {
               );
             })}
           </div>
-        </section>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
