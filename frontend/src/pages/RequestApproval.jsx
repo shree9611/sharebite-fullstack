@@ -91,7 +91,7 @@ const RequestApproval = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <header className="border-b border-[#e7efe9] bg-white px-4 py-4 sm:px-6">
+      <header className="border-b border-[#e7efe9] bg-white px-4 py-5 sm:px-6 md:px-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-lg font-bold text-[#1b1f23]">
             <span className="material-symbols-outlined text-green-600">volunteer_activism</span>
@@ -113,24 +113,33 @@ const RequestApproval = () => {
       </header>
 
       <div className="flex flex-1 min-w-0 flex-col sm:flex-row">
-        <aside className="w-full shrink-0 border-b border-[#e7efe9] bg-white px-4 py-4 sm:w-64 sm:border-b-0 sm:border-r sm:px-6 sm:py-6">
-          <nav className="flex gap-2 overflow-x-auto text-sm font-bold text-[#5a6f65] sm:block sm:space-y-2 sm:text-base">
+        <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e7efe9] w-full sm:w-64 shrink-0">
+          <nav className="flex flex-col gap-2 text-lg font-extrabold text-[#7a9087]">
             <Link
+              className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/donate") ? "bg-green-50 text-green-600" : ""}`}
               to="/donor/donate"
-              className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 sm:block ${isActive("/donor/donate") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
             >
+              <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/donate") ? "text-green-600" : ""}`}>
+                add_circle
+              </span>
               Donate Food
             </Link>
             <Link
+              className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/approvals") ? "bg-green-50 text-green-600" : ""}`}
               to="/donor/approvals"
-              className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 sm:block ${isActive("/donor/approvals") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
             >
+              <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/approvals") ? "text-green-600" : ""}`}>
+                verified
+              </span>
               Request Approval
             </Link>
             <Link
+              className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/feedback") ? "bg-green-50 text-green-600" : ""}`}
               to="/donor/feedback"
-              className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 sm:block ${isActive("/donor/feedback") ? "bg-[#eaf7ef] text-[#147a40]" : "hover:bg-[#f7fbf8]"}`}
             >
+              <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/feedback") ? "text-green-600" : ""}`}>
+                forum
+              </span>
               Community Feedback
             </Link>
           </nav>
