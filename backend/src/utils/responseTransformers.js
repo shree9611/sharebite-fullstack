@@ -4,14 +4,26 @@ const getApiBaseUrl = (req) => {
   if (process.env.PUBLIC_BACKEND_URL) {
     return process.env.PUBLIC_BACKEND_URL.replace(/\/$/, "");
   }
-  return `${req.protocol}://${req.get("host")}`;
+
+  const protocolHeader = String(req?.headers?.["x-forwarded-proto"] || "")
+    .split(",")[0]
+    .trim();
+  const protocol = String(req?.protocol || protocolHeader || "https").trim() || "https";
+
+  const host =
+    (typeof req?.get === "function" ? String(req.get("host") || "") : "") ||
+    String(req?.headers?.host || "");
+
+  if (!host) return "";
+  return `${protocol}://${host}`;
 };
 
 const toAbsoluteImageUrl = (req, imagePath) => {
   if (!imagePath) return "";
   if (isAbsoluteUrl(imagePath)) return imagePath;
   const normalized = String(imagePath).startsWith("/") ? imagePath : `/${imagePath}`;
-  return `${getApiBaseUrl(req)}${normalized}`;
+  const base = getApiBaseUrl(req);
+  return base ? `${base}${normalized}` : normalized;
 };
 
 const pickUserLocation = (user) => {
