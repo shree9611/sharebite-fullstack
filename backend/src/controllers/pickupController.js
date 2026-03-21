@@ -120,7 +120,20 @@ exports.completePickup = async (req, res) => {
     await request.save();
 
     if (request.donation?._id) {
-      await Donation.findByIdAndUpdate(request.donation._id, { status: "delivered" });
+      const donation = await Donation.findById(request.donation._id);
+      if (donation) {
+        const total = Number(donation.quantity);
+        const hasRemaining = Number.isFinite(Number(donation.quantityRemaining));
+        const currentRemaining = hasRemaining
+          ? Number(donation.quantityRemaining)
+          : (Number.isFinite(total) ? total : 0);
+        const requested = Math.max(1, Number(request.peopleCount) || 1);
+        const nextRemaining = Math.max(0, currentRemaining - requested);
+
+        donation.quantityRemaining = nextRemaining;
+        donation.status = nextRemaining <= 0 ? "delivered" : "available";
+        await donation.save();
+      }
     }
 
     if (request.donation?.donor?._id) {
@@ -162,6 +175,13 @@ exports.getPickups = async (req, res) => {
 
   if (req.user?.role === "volunteer") {
     query.$or = [{ volunteer: req.user.id }, { volunteer: null }];
+    if (!req.query?.status) {
+      query.status = "scheduled";
+    }
+  }
+
+  if (req.query?.status && ["scheduled", "completed"].includes(String(req.query.status))) {
+    query.status = String(req.query.status);
   }
 
   const pickups = await Pickup.find(query)

@@ -157,8 +157,29 @@ exports.createDonation = async (req, res) => {
 
 exports.getDonations = async (req, res) => {
   try {
-    const data = await Donation.find().populate("donor", "name email locationName address city state coordinates");
-    return res.json(data.map((item) => donationWithCompatFields(req, item)));
+    const data = await Donation.find({
+      $and: [
+        { status: { $in: ["available", "active"] } },
+        {
+          $or: [
+            { quantityRemaining: { $gt: 0 } },
+            { quantityRemaining: { $exists: false } },
+            { quantityRemaining: null },
+          ],
+        },
+      ],
+    }).populate("donor", "name email locationName address city state coordinates");
+
+    return res.json(
+      data.map((item) => {
+        const record = donationWithCompatFields(req, item);
+        const remaining = Number(record?.quantityRemaining);
+        if (Number.isFinite(remaining)) {
+          return { ...record, quantity: remaining };
+        }
+        return record;
+      })
+    );
   } catch {
     return res.status(500).json({ message: "Failed to fetch donations" });
   }
