@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiFetchWithFallback, getAuthHeaders, resolveAssetUrl } from "../lib/api.js";
 import { clearSession, normalizeRole } from "../lib/auth.js";
 import { clearCurrentProfile, setCurrentProfile } from "../lib/profile.js";
+import Navbar from "../components/Navbar.jsx";
 
 const initialForm = {
   fullName: "",
@@ -327,17 +328,22 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f4f5f2] px-4 py-10 sm:px-6 lg:px-10">
-        <div className="mx-auto max-w-5xl rounded-3xl border border-[#dde7dc] bg-white p-6 text-sm text-[#6f7368] shadow-sm">
-          Loading profile...
+      <div className="min-h-screen bg-[#f4f5f2]">
+        <Navbar showNotifications showProfile />
+        <div className="px-4 py-10 sm:px-6 lg:px-10">
+          <div className="mx-auto max-w-5xl rounded-3xl border border-[#dde7dc] bg-white p-6 text-sm text-[#6f7368] shadow-sm">
+            Loading profile...
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f5f2] px-4 py-8 sm:px-6 md:py-10 lg:px-10">
-      <div className="mx-auto max-w-5xl rounded-3xl border border-[#dde7dc] bg-white p-5 shadow-[0_20px_50px_-30px_rgba(24,66,33,0.35)] sm:p-8">
+    <div className="min-h-screen bg-[#f4f5f2]">
+      <Navbar showNotifications showProfile />
+      <div className="px-4 py-8 sm:px-6 md:py-10 lg:px-10">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-[#dde7dc] bg-white p-5 shadow-[0_20px_50px_-30px_rgba(24,66,33,0.35)] sm:p-8">
         <div className="flex flex-col items-center text-center">
           <button
             type="button"
@@ -652,6 +658,8 @@ const Profile = () => {
           </div>
         </div>
       ) : null}
+        </div>
+      </div>
     </div>
   );
 };
