@@ -74,6 +74,18 @@ const normalizeMission = (row) => {
   };
 };
 
+const resolveDonationName = (donation) => {
+  const name = String(
+    donation?.foodName ||
+      donation?.foodTitle ||
+      donation?.title ||
+      donation?.name ||
+      donation?.food ||
+      ""
+  ).trim();
+  return name || "Food";
+};
+
 const VolunteerAcceptMission = () => {
   const navigate = useNavigate();
   const [showLocationFor, setShowLocationFor] = useState("");
@@ -308,6 +320,7 @@ const VolunteerAcceptMission = () => {
         <div className="flex flex-col gap-4">
           {missions.map((mission) => {
             const missionId = String(mission?.requestId || mission?._id || mission?.pickupId || "");
+            const donationName = resolveDonationName(mission?.donation);
             const donorLocation =
               stringifyLocation(mission?.donorLocation) ||
               stringifyLocation(mission?.donation?.location) ||
@@ -332,7 +345,7 @@ const VolunteerAcceptMission = () => {
                       Mission ID: {missionId || "N/A"}
                     </p>
                     <h3 className="text-lg font-extrabold text-[#111814] mt-1">
-                      Delivery: {mission?.donation?.foodName || "Food"}
+                      Delivery: {donationName}
                     </h3>
                     <p className="text-xs text-[#8aa19a] mt-2">
                       Assigned for receiver: {mission?.receiver?.name || "Receiver"}
