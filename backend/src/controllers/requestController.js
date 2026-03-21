@@ -1,7 +1,7 @@
 const Request = require("../models/Request");
 const Donation = require("../models/Donation");
 const User = require("../models/User");
-const Notification = require("../models/Notification");
+const { notifyUser } = require("../utils/notifier");
 const { donationWithCompatFields, pickUserLocation } = require("../utils/responseTransformers");
 
 const formatRequestResponse = (req, requestDoc) => {
@@ -72,8 +72,8 @@ exports.createRequest = async (req, res) => {
     .populate("receiver", "name email locationName address city state coordinates");
 
   if (donation?.donor) {
-    await Notification.create({
-      user: donation.donor,
+    await notifyUser({
+      userId: donation.donor,
       title: "New food request",
       message: `A receiver requested ${donation.foodName || "your donation"}.`,
       type: "request_created",

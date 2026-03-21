@@ -1,7 +1,7 @@
 const Pickup = require("../models/Pickup");
 const Request = require("../models/Request");
 const Donation = require("../models/Donation");
-const Notification = require("../models/Notification");
+const { notifyUser } = require("../utils/notifier");
 const { donationWithCompatFields, pickUserLocation } = require("../utils/responseTransformers");
 
 exports.createPickup = async (req, res) => {
@@ -25,8 +25,8 @@ exports.createPickup = async (req, res) => {
   });
 
   if (request?.donation?.donor) {
-    await Notification.create({
-      user: request.donation.donor._id,
+    await notifyUser({
+      userId: request.donation.donor._id,
       title: "Pickup scheduled",
       message: `Pickup scheduled for ${request.donation.foodName || "your donation"}.`,
       type: "pickup_scheduled",
@@ -39,8 +39,8 @@ exports.createPickup = async (req, res) => {
   }
 
   if (request?.receiver?._id) {
-    await Notification.create({
-      user: request.receiver._id,
+    await notifyUser({
+      userId: request.receiver._id,
       title: "Volunteer assigned",
       message: `A volunteer accepted your request for ${request.donation?.foodName || "your food"}.`,
       type: "volunteer_assigned",
@@ -96,8 +96,8 @@ exports.completePickup = async (req, res) => {
     }
 
     if (request.donation?.donor?._id) {
-      await Notification.create({
-        user: request.donation.donor._id,
+      await notifyUser({
+        userId: request.donation.donor._id,
         title: "Donation delivered",
         message: `Volunteer confirmed delivery for ${request.donation.foodName || "your donation"}.`,
         type: "delivery_confirmed",
@@ -111,8 +111,8 @@ exports.completePickup = async (req, res) => {
     }
 
     if (request.receiver?._id) {
-      await Notification.create({
-        user: request.receiver._id,
+      await notifyUser({
+        userId: request.receiver._id,
         title: "Delivery confirmed",
         message: `Volunteer confirmed delivery for ${request.donation?.foodName || "your request"}.`,
         type: "delivery_confirmed_receiver",

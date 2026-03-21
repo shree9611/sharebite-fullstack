@@ -1,5 +1,5 @@
 const Request = require("../models/Request");
-const Notification = require("../models/Notification");
+const { notifyUser } = require("../utils/notifier");
 const { donationWithCompatFields, pickUserLocation } = require("../utils/responseTransformers");
 
 const buildApprovalResponse = (req, requestDoc) => {
@@ -50,8 +50,8 @@ const updateRequestStatus = async (req, res, nextStatus) => {
 
   if (requestDoc?.receiver?._id) {
     const donationName = requestDoc?.donation?.foodName || "your request";
-    await Notification.create({
-      user: requestDoc.receiver._id,
+    await notifyUser({
+      userId: requestDoc.receiver._id,
       title: nextStatus === "approved" ? "Request approved" : "Request declined",
       message:
         nextStatus === "approved"
@@ -62,6 +62,7 @@ const updateRequestStatus = async (req, res, nextStatus) => {
         requestId: requestDoc._id,
         donationId: requestDoc?.donation?._id,
       },
+      userEmail: requestDoc?.receiver?.email,
     });
   }
 
