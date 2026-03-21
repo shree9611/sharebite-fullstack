@@ -20,13 +20,13 @@ const donationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-donationSchema.pre("validate", function syncRemainingQuantity(next) {
+donationSchema.pre("validate", function syncRemainingQuantity() {
   const total = Number(this.quantity);
   const remainingRaw = this.quantityRemaining;
   const hasRemaining = Number.isFinite(Number(remainingRaw));
   if (!hasRemaining) {
     this.quantityRemaining = Number.isFinite(total) ? total : null;
-    return next();
+    return;
   }
   const remaining = Number(remainingRaw);
   if (Number.isFinite(total)) {
@@ -34,7 +34,7 @@ donationSchema.pre("validate", function syncRemainingQuantity(next) {
   } else {
     this.quantityRemaining = Math.max(0, remaining);
   }
-  return next();
+  return;
 });
 
 module.exports = mongoose.model("Donation", donationSchema);
