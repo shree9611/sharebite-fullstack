@@ -69,8 +69,7 @@ const Login = () => {
 
         localStorage.setItem("sharebite.token", data.token);
         const payload = decodeJwtPayload(data.token);
-        const resolvedRole =
-          normalizeRole(payload?.role) || normalizeRole(role) || "Receiver";
+        const resolvedRole = normalizeRole(payload?.role) || normalizeRole(role) || "Receiver";
         localStorage.setItem("sharebite.role", resolvedRole);
         let currentProfile = {
           name: "User",
@@ -86,12 +85,17 @@ const Login = () => {
           });
           const profileData = await profileResponse.json().catch(() => ({}));
           if (profileResponse.ok) {
+            const profileRole =
+              normalizeRole(profileData?.accountType) ||
+              normalizeRole(profileData?.role) ||
+              resolvedRole;
+            localStorage.setItem("sharebite.role", profileRole);
             currentProfile = {
               ...currentProfile,
               name: profileData?.fullName || currentProfile?.name || "User",
               email: profileData?.email || email.trim(),
               phone: profileData?.phoneNumber || currentProfile?.phone || "",
-              role: profileData?.accountType || resolvedRole,
+              role: profileRole,
               profileImage: profileData?.profileImage || "",
               profileImageUrl: profileData?.profileImageUrl || profileData?.avatarUrl || profileData?.avatar || "",
               city: profileData?.city || "",
@@ -114,7 +118,9 @@ const Login = () => {
           localStorage.removeItem("sharebite.password");
         }
 
-        navigate(getRoleHomePath(resolvedRole), { state: { role: resolvedRole } });
+        const finalRole = normalizeRole(currentProfile?.role) || resolvedRole;
+        localStorage.setItem("sharebite.role", finalRole);
+        navigate(getRoleHomePath(finalRole), { state: { role: finalRole } });
       } catch (error) {
         if (error instanceof TypeError) {
           setLoginError("Unable to reach server. Please check your connection and try again.");

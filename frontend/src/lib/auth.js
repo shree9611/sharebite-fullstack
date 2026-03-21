@@ -1,5 +1,6 @@
 const ROLE_MAP = {
   donor: "Donor",
+  donar: "Donor",
   receiver: "Receiver",
   volunteer: "Volunteer",
   admin: "Volunteer",
@@ -7,8 +8,14 @@ const ROLE_MAP = {
 
 export const normalizeRole = (role) => {
   if (!role || typeof role !== "string") return null;
-  const normalized = ROLE_MAP[role.toLowerCase()];
-  return normalized || null;
+  const key = role.trim().toLowerCase();
+  if (!key) return null;
+  const mapped = ROLE_MAP[key];
+  if (mapped) return mapped;
+  if (key === "donor") return "Donor";
+  if (key === "receiver") return "Receiver";
+  if (key === "volunteer") return "Volunteer";
+  return null;
 };
 
 export const decodeJwtPayload = (token) => {
@@ -17,7 +24,9 @@ export const decodeJwtPayload = (token) => {
   if (parts.length < 2) return null;
 
   try {
-    const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    let payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padLength = (4 - (payload.length % 4)) % 4;
+    if (padLength) payload += "=".repeat(padLength);
     const decoded = atob(payload);
     return JSON.parse(decoded);
   } catch {

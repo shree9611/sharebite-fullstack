@@ -164,10 +164,6 @@ const DonateFood = () => {
     );
   };
 
-  useEffect(() => {
-    setProfile(getCurrentProfile());
-  }, []);
-
   const loadManagementData = useCallback(async (showLoading = true) => {
     const token = localStorage.getItem("sharebite.token");
     if (!token) return;
