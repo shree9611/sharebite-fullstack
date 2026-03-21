@@ -1,5 +1,6 @@
 const Donation = require("../models/Donation");
 const ImageAsset = require("../models/ImageAsset");
+const { notifyUser } = require("../utils/notifier");
 const { donationWithCompatFields } = require("../utils/responseTransformers");
 const mongoose = require("mongoose");
 
@@ -126,6 +127,17 @@ exports.createDonation = async (req, res) => {
       dietaryType,
       bakedType,
     });
+
+    await notifyUser({
+      userId: req.user.id,
+      title: "Donation submitted",
+      message: `Your donation for ${foodName || "food"} was submitted successfully.`,
+      type: "donation_created",
+      metadata: {
+        donationId: donation?._id,
+      },
+    });
+
     return res.status(201).json(donationWithCompatFields(req, donation));
   } catch (error) {
     console.error(`[${req.requestId || "n/a"}] Donation create failed:`, error?.stack || error?.message || error);

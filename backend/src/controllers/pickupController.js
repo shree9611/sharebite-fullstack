@@ -24,6 +24,20 @@ exports.createPickup = async (req, res) => {
     volunteer: req.user?.role === "volunteer" ? req.user.id : null,
   });
 
+  if (pickup?.volunteer) {
+    await notifyUser({
+      userId: pickup.volunteer,
+      title: "Mission accepted",
+      message: `You accepted the pickup for ${request.donation?.foodName || "a donation"}.`,
+      type: "mission_accepted",
+      metadata: {
+        pickupId: pickup._id,
+        requestId: request._id,
+        donationId: request.donation?._id,
+      },
+    });
+  }
+
   if (request?.donation?.donor) {
     await notifyUser({
       userId: request.donation.donor._id,
@@ -85,6 +99,20 @@ exports.completePickup = async (req, res) => {
     pickup.volunteer = req.user.id;
   }
   await pickup.save();
+
+  if (pickup?.volunteer) {
+    await notifyUser({
+      userId: pickup.volunteer,
+      title: "Pickup completed",
+      message: `Delivery marked completed for ${pickup.request?.donation?.foodName || "a donation"}.`,
+      type: "pickup_completed",
+      metadata: {
+        pickupId: pickup._id,
+        requestId: pickup.request?._id,
+        donationId: pickup.request?.donation?._id,
+      },
+    });
+  }
 
   const request = pickup.request;
   if (request) {

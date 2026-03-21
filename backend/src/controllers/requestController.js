@@ -85,6 +85,17 @@ exports.createRequest = async (req, res) => {
     });
   }
 
+  await notifyUser({
+    userId: req.user.id,
+    title: "Request submitted",
+    message: `Your request for ${donation.foodName || "food"} was submitted successfully.`,
+    type: "request_submitted",
+    metadata: {
+      requestId: createdRequest._id,
+      donationId: donation._id,
+    },
+  });
+
   return res.status(201).json(formatRequestResponse(req, created));
 };
 

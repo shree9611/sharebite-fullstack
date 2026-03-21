@@ -5,7 +5,12 @@ const parseBoolean = (value) => {
   return normalized === "1" || normalized === "true" || normalized === "yes";
 };
 
-const isEmailEnabled = () => parseBoolean(process.env.EMAIL_NOTIFICATIONS);
+const isEmailEnabled = () => {
+  const flag = String(process.env.EMAIL_NOTIFICATIONS || "").trim();
+  if (flag) return parseBoolean(flag);
+  // Default to enabled when SMTP is configured, even if the flag is omitted.
+  return Boolean(getSmtpConfig());
+};
 
 const getSmtpConfig = () => {
   const host = String(process.env.SMTP_HOST || "").trim();
@@ -74,4 +79,3 @@ module.exports = {
   isEmailEnabled,
   sendEmail,
 };
-
