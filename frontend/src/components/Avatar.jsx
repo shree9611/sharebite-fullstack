@@ -9,16 +9,21 @@ const Avatar = ({ src, alt = "Avatar", size = 36, className = "" }) => {
   const finalSrc = !hasError && resolvedSrc ? resolvedSrc : fallbackSrc;
 
   return (
-    <img
-      src={finalSrc}
-      alt={alt}
-      width={size}
-      height={size}
-      className={`rounded-full object-cover ${className}`.trim()}
-      onError={() => setHasError(true)}
-      loading="lazy"
-      decoding="async"
-    />
+    <span
+      className={`inline-flex shrink-0 overflow-hidden rounded-full ${className}`.trim()}
+      style={{ width: size, height: size }}
+    >
+      <img
+        src={finalSrc}
+        alt={alt}
+        width={size}
+        height={size}
+        className="h-full w-full object-cover"
+        onError={() => setHasError(true)}
+        loading="lazy"
+        decoding="async"
+      />
+    </span>
   );
 };
 

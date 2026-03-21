@@ -61,7 +61,7 @@ const Navbar = ({
               onClick={onProfileClick || (() => navigate("/profile"))}
               aria-label="Profile"
               title="Profile"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6eee9] bg-white"
+              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[#e6eee9] bg-white"
             >
               <Avatar src={avatarSrc} alt="Profile" size={36} />
             </button>
