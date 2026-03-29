@@ -251,9 +251,10 @@ const DonateFood = () => {
           ? photoPreviewUrl
           : "";
 
+      const hasQuantity = String(formData.quantity ?? "").trim() !== "";
       const jsonPayload = {
         foodName: formData.title,
-        quantity: Number(formData.quantity),
+        ...(hasQuantity ? { quantity: Number(formData.quantity) } : {}),
         location: formData.pickupLocation,
         expiryTime: expiryTime.toISOString(),
         latitude: formData.pickupLatitude,
@@ -263,7 +264,9 @@ const DonateFood = () => {
 
       const payload = new FormData();
       payload.append("foodName", formData.title);
-      payload.append("quantity", String(formData.quantity));
+      if (hasQuantity) {
+        payload.append("quantity", String(formData.quantity));
+      }
       payload.append("location", formData.pickupLocation);
       payload.append("expiryTime", expiryTime.toISOString());
       if (Number.isFinite(formData.pickupLatitude)) {

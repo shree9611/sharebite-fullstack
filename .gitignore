@@ -14,6 +14,7 @@ dist-ssr
 *.local
 uploads/
 backend-skeleton/uploads/
+.npm-cache/
 
 # App data / caches
 .npm-cache/

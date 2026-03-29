@@ -69,9 +69,16 @@ exports.createDonation = async (req, res) => {
       image = `/api/images/${savedImage._id}`;
     }
 
-    const quantity = body.quantity === undefined ? undefined : Number(body.quantity);
-    if (quantity !== undefined && !Number.isFinite(quantity)) {
-      return res.status(400).json({ message: "quantity must be a number" });
+    const quantityProvided = body.quantity !== undefined && body.quantity !== null && body.quantity !== "";
+    let quantity;
+    if (quantityProvided) {
+      quantity = Number(body.quantity);
+      if (!Number.isFinite(quantity)) {
+        return res.status(400).json({ message: "quantity must be a number" });
+      }
+      if (quantity <= 0) {
+        return res.status(400).json({ message: "quantity must be greater than 0" });
+      }
     }
 
     const expiryTime = body.expiryTime ? new Date(body.expiryTime) : undefined;
@@ -88,11 +95,14 @@ exports.createDonation = async (req, res) => {
     const donationPayload = {
       donor: req.user.id,
       foodName: body.foodName,
-      quantity,
       location: body.location,
       expiryTime,
       image,
     };
+
+    if (quantityProvided) {
+      donationPayload.quantity = quantity;
+    }
 
     if (parsedCoordinates) {
       donationPayload.coordinates = parsedCoordinates;

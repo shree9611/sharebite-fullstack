@@ -26,6 +26,9 @@ const pickUserLocation = (user) => {
 
 const donationWithCompatFields = (req, donation) => {
   const record = donation.toObject ? donation.toObject() : { ...donation };
+  if (record.quantity === 0) {
+    record.quantity = null;
+  }
   const imageUrl = toAbsoluteImageUrl(req, record.image);
   return {
     ...record,
