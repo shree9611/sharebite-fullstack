@@ -23,7 +23,11 @@ const donationSchema = new mongoose.Schema(
 donationSchema.pre("validate", function syncRemainingQuantity() {
   const total = Number(this.quantity);
   const remainingRaw = this.quantityRemaining;
-  const hasRemaining = Number.isFinite(Number(remainingRaw));
+  const hasRemaining =
+    remainingRaw !== undefined &&
+    remainingRaw !== null &&
+    remainingRaw !== "" &&
+    Number.isFinite(Number(remainingRaw));
   if (!hasRemaining) {
     this.quantityRemaining = Number.isFinite(total) ? total : null;
     return;

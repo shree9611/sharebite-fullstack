@@ -119,6 +119,7 @@ exports.createDonation = async (req, res) => {
       foodName,
       foodTitle,
       quantity,
+      quantityRemaining: quantity,
       location,
       pickupLocation,
       expiryTime,
