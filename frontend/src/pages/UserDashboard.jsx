@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
@@ -88,6 +88,28 @@ const resolvePastStatus = (item) => {
   return "Unavailable";
 };
 
+const computeUnavailabilityReason = (item) => {
+  const expiryMs = item?.expiryTime ? new Date(item.expiryTime).getTime() : null;
+  if (expiryMs && expiryMs <= Date.now()) return "Expired";
+  const qty = Number(item?.quantity ?? item?.quantityRemaining ?? 0);
+  if (Number.isFinite(qty) && qty <= 0) return "Fully Claimed";
+  const status = String(item?.status || "").trim().toLowerCase();
+  if (status === "delivered") return "Delivered";
+  if (status && status !== "available" && status !== "active") {
+    return status[0].toUpperCase() + status.slice(1);
+  }
+  return "No longer available";
+};
+
+const isDonationCurrentlyAvailable = (item) => {
+  const status = String(item?.status || "").trim().toLowerCase();
+  if (!(status === "available" || status === "active")) return false;
+  const expiryMs = item?.expiryTime ? new Date(item.expiryTime).getTime() : null;
+  if (expiryMs && expiryMs <= Date.now()) return false;
+  const qty = Number(item?.quantity ?? item?.quantityRemaining ?? 0);
+  return Number.isFinite(qty) && qty > 0;
+};
+
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -99,6 +121,8 @@ const UserDashboard = () => {
   const [locateError, setLocateError] = useState("");
   const [userCoords, setUserCoords] = useState(null);
   const [donations, setDonations] = useState([]);
+  const donationsRef = useRef([]);
+  const [recentlyUnavailable, setRecentlyUnavailable] = useState([]);
   const [pastDonations, setPastDonations] = useState([]);
   const [showPastList, setShowPastList] = useState(false);
   const [isPastLoading, setIsPastLoading] = useState(false);
@@ -140,6 +164,35 @@ const UserDashboard = () => {
           quantity: row?.quantity ?? row?.quantityRemaining ?? row?.availableQuantity ?? row?.qty,
         });
       }
+
+      // Keep recently-unavailable donations visible to avoid confusing "random disappear" UX.
+      const prev = Array.isArray(donationsRef.current) ? donationsRef.current : [];
+      const prevIds = new Set(prev.map((item) => String(item?._id || "")).filter(Boolean));
+      const nextIds = new Set(uniqueActive.map((item) => String(item?._id || "")).filter(Boolean));
+      const removed = prev.filter((item) => {
+        const id = String(item?._id || "");
+        return id && prevIds.has(id) && !nextIds.has(id);
+      });
+
+      if (removed.length) {
+        setRecentlyUnavailable((existing) => {
+          const existingIds = new Set((existing || []).map((item) => String(item?._id || "")));
+          const normalizedRemoved = removed
+            .filter((item) => {
+              const id = String(item?._id || "");
+              return id && !existingIds.has(id);
+            })
+            .map((item) => ({
+              ...item,
+              _unavailableAt: Date.now(),
+              _unavailableReason: computeUnavailabilityReason(item),
+            }));
+
+          const next = [...normalizedRemoved, ...(existing || [])];
+          return next.slice(0, 9);
+        });
+      }
+
       setDonations(uniqueActive);
     } catch (error) {
       const message =
@@ -155,6 +208,10 @@ const UserDashboard = () => {
   useEffect(() => {
     loadDonations();
   }, [loadDonations]);
+
+  useEffect(() => {
+    donationsRef.current = donations;
+  }, [donations]);
 
   const loadPastDonations = useCallback(async () => {
     if (pastLoaded || isPastLoading) return;
@@ -187,9 +244,10 @@ const UserDashboard = () => {
   }, [loadDonations]);
 
   const visibleDonations = useMemo(() => {
-    if (!showNearby || !userCoords) return donations;
+    const availableOnly = (donations || []).filter(isDonationCurrentlyAvailable);
+    if (!showNearby || !userCoords) return availableOnly;
 
-    const mapped = donations
+    const mapped = availableOnly
       .map((item) => {
       const coords = extractCoords(item);
       if (!coords) {
@@ -426,6 +484,57 @@ const UserDashboard = () => {
                   </div>
                 )})}
               </div>
+
+              {recentlyUnavailable.length ? (
+                <div className="mt-10">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h3 className="text-sm font-bold text-[#111814]">Recently unavailable</h3>
+                    <button
+                      type="button"
+                      onClick={() => setRecentlyUnavailable([])}
+                      className="text-[11px] font-semibold text-[#2e5b48] hover:underline"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {recentlyUnavailable.map((item) => (
+                      <div
+                        key={`unavail-${item?._id}`}
+                        className="bg-white rounded-xl overflow-hidden border border-amber-200 flex flex-col shadow-sm"
+                      >
+                        <div className="relative h-24 w-full bg-amber-50 flex items-center justify-center">
+                          {resolveDonationImage(item) ? (
+                            <img
+                              src={resolveDonationImage(item)}
+                              alt={item?.foodName || "Food"}
+                              className="h-full w-full object-cover opacity-60"
+                            />
+                          ) : (
+                            <span className="material-symbols-outlined text-amber-700 text-4xl">info</span>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h4 className="font-bold text-[#111814]">{item?.foodName || "Food Item"}</h4>
+                          <p className="mt-1 text-xs text-amber-800">
+                            This donation is no longer available ({item?._unavailableReason || "Unavailable"}).
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowPastList(true);
+                              loadPastDonations();
+                            }}
+                            className="mt-3 w-full rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-900 hover:bg-amber-100"
+                          >
+                            View in Past Food List
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="mt-8">
                 <button

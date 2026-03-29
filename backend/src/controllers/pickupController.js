@@ -70,6 +70,16 @@ exports.createPickup = async (req, res) => {
 };
 
 exports.completePickup = async (req, res) => {
+  // Explicit audit log: pickup completion must only happen via a verified user action.
+  // eslint-disable-next-line no-console
+  console.log("Pickup completion triggered:", {
+    userId: req.user?.id,
+    role: req.user?.role,
+    pickupId: req.params.id,
+    timestamp: new Date().toISOString(),
+    requestId: req.requestId || "",
+  });
+
   const pickup = await Pickup.findById(req.params.id).populate({
     path: "request",
     populate: {
@@ -90,6 +100,14 @@ exports.completePickup = async (req, res) => {
   const actorRole = req.user?.role;
   const canComplete = actorRole === "volunteer" || actorRole === "admin";
   if (!canComplete) {
+    // eslint-disable-next-line no-console
+    console.log("Pickup completion rejected (unauthorized role):", {
+      userId: req.user?.id,
+      role: actorRole,
+      pickupId: req.params.id,
+      timestamp: new Date().toISOString(),
+      requestId: req.requestId || "",
+    });
     return res.status(403).json({ message: "Only volunteer or admin can confirm delivery" });
   }
 
