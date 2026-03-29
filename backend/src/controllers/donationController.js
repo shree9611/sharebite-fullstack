@@ -157,14 +157,25 @@ exports.createDonation = async (req, res) => {
 
 exports.getDonations = async (req, res) => {
   try {
+    const now = new Date();
     const data = await Donation.find({
       $and: [
         { status: { $regex: /^(available|active)$/i } },
+        { expiryTime: { $gt: now } },
         {
           $or: [
             { quantityRemaining: { $gt: 0 } },
-            { quantityRemaining: { $exists: false } },
-            { quantityRemaining: null },
+            {
+              $and: [
+                {
+                  $or: [
+                    { quantityRemaining: { $exists: false } },
+                    { quantityRemaining: null },
+                  ],
+                },
+                { quantity: { $gt: 0 } },
+              ],
+            },
           ],
         },
       ],
@@ -182,6 +193,37 @@ exports.getDonations = async (req, res) => {
     );
   } catch {
     return res.status(500).json({ message: "Failed to fetch donations" });
+  }
+};
+
+exports.getDonationHistory = async (req, res) => {
+  try {
+    const now = new Date();
+    const rows = await Donation.find({
+      $or: [
+        { status: { $not: { $regex: /^(available|active)$/i } } },
+        { expiryTime: { $lte: now } },
+        { quantityRemaining: { $lte: 0 } },
+        {
+          $and: [
+            {
+              $or: [
+                { quantityRemaining: { $exists: false } },
+                { quantityRemaining: null },
+              ],
+            },
+            { quantity: { $lte: 0 } },
+          ],
+        },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .populate("donor", "name email locationName address city state coordinates");
+
+    return res.json(rows.map((item) => donationWithCompatFields(req, item)));
+  } catch {
+    return res.status(500).json({ message: "Failed to fetch donation history" });
   }
 };
 

@@ -131,8 +131,7 @@ const UserDashboard = () => {
 
         const status = normalizeDonationStatus(row);
         const isListed = status === "active" || status === "available";
-        const quantityValue = resolveDonationQuantity(row);
-        const isVisible = isListed && (quantityValue === null || quantityValue > 0);
+        const isVisible = isListed;
         if (!isVisible) continue;
         seen.add(key);
         uniqueActive.push({
@@ -346,8 +345,18 @@ const UserDashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {visibleDonations.map((item) => {
                   const status = String(item?.status || "").toLowerCase();
+                  const expiryMs = item?.expiryTime ? new Date(item.expiryTime).getTime() : null;
+                  const isExpired = Boolean(expiryMs && expiryMs <= Date.now());
                   const isAvailable =
-                    (status === "active" || status === "available") && Number(item?.quantity || 0) > 0;
+                    !isExpired &&
+                    (status === "active" || status === "available") &&
+                    Number(item?.quantity || 0) > 0;
+                  const badgeText = isExpired ? "Expired" : isAvailable ? "Available" : "Unavailable";
+                  const badgeClass = isExpired
+                    ? "bg-amber-100 text-amber-800"
+                    : isAvailable
+                      ? "bg-[#12c76a] text-white"
+                      : "bg-slate-200 text-slate-700";
                   return (
                   <div key={item._id} className="bg-white rounded-xl overflow-hidden border border-[#e6eee9] flex flex-col shadow-sm">
                     <div className="relative h-32 w-full bg-[#f3f6f4] flex items-center justify-center">
@@ -360,11 +369,9 @@ const UserDashboard = () => {
                       ) : (
                         <span className="material-symbols-outlined text-[#7a9087] text-4xl">photo_camera</span>
                       )}
-                      <div className={`absolute bottom-2 right-2 text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1 ${
-                        isAvailable ? "bg-[#12c76a] text-white" : "bg-slate-200 text-slate-700"
-                      }`}>
+                      <div className={`absolute bottom-2 right-2 text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1 ${badgeClass}`}>
                         <span className="material-symbols-outlined text-[12px]">check_circle</span>
-                        {isAvailable ? "Available" : "Unavailable"}
+                        {badgeText}
                       </div>
                     </div>
                     <div className="p-4 flex flex-col gap-2">
