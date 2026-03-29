@@ -603,6 +603,7 @@ const Profile = () => {
             </button>
           </div>
         ) : null}
+        </div>
       </div>
 
       {showAvatarDialog ? (
@@ -658,8 +659,6 @@ const Profile = () => {
           </div>
         </div>
       ) : null}
-        </div>
-      </div>
     </div>
   );
 };
