@@ -12,12 +12,20 @@ const isEmailEnabled = () => {
   return Boolean(getSmtpConfig());
 };
 
+const pickEnv = (...keys) => {
+  for (const key of keys) {
+    const value = String(process.env[key] || "").trim();
+    if (value) return value;
+  }
+  return "";
+};
+
 const getSmtpConfig = () => {
-  const host = String(process.env.SMTP_HOST || "").trim();
-  const port = Number(process.env.SMTP_PORT || 0);
-  const user = String(process.env.SMTP_USER || "").trim();
-  const pass = String(process.env.SMTP_PASS || "").trim();
-  const from = String(process.env.EMAIL_FROM || "").trim();
+  const host = pickEnv("SMTP_HOST", "MAIL_HOST");
+  const port = Number(pickEnv("SMTP_PORT", "MAIL_PORT") || 0);
+  const user = pickEnv("SMTP_USER", "SMTP_USERNAME", "MAIL_USER", "MAIL_USERNAME");
+  const pass = pickEnv("SMTP_PASS", "SMTP_PASSWORD", "MAIL_PASS", "MAIL_PASSWORD");
+  const from = pickEnv("EMAIL_FROM", "SMTP_FROM", "MAIL_FROM", "FROM_EMAIL");
   const secure = parseBoolean(process.env.SMTP_SECURE);
 
   if (!host || !port || !user || !pass || !from) {

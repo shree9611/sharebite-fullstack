@@ -159,7 +159,7 @@ exports.getDonations = async (req, res) => {
   try {
     const data = await Donation.find({
       $and: [
-        { status: { $in: ["available", "active"] } },
+        { status: { $regex: /^(available|active)$/i } },
         {
           $or: [
             { quantityRemaining: { $gt: 0 } },

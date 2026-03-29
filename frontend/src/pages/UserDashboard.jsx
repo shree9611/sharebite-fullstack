@@ -6,6 +6,32 @@ import Navbar from "../components/Navbar.jsx";
 
 const NEARBY_RADIUS_KM = 10;
 
+const extractDonationList = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return [];
+  if (Array.isArray(payload.items)) return payload.items;
+  if (Array.isArray(payload.donations)) return payload.donations;
+  if (Array.isArray(payload.data)) return payload.data;
+  return [];
+};
+
+const getDonationId = (row) => {
+  const candidate = row?._id ?? row?.id ?? row?.donationId ?? row?.donation?._id;
+  return candidate ? String(candidate) : "";
+};
+
+const normalizeDonationStatus = (row) => {
+  const raw = row?.status ?? row?.availability ?? row?.state ?? "available";
+  return String(raw || "").trim().toLowerCase();
+};
+
+const resolveDonationQuantity = (row) => {
+  const raw = row?.quantityRemaining ?? row?.quantity ?? row?.availableQuantity ?? row?.qty;
+  if (raw === undefined || raw === null || raw === "") return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+};
+
 const toNumber = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -91,29 +117,29 @@ const UserDashboard = () => {
       const response = await apiFetchWithFallback("/api/donations", {
         cache: "no-store",
       });
-      const data = await response.json().catch(() => []);
+      const data = await response.json().catch(() => ([]));
       if (!response.ok) {
         throw new Error(data?.message || "Failed to load donations.");
       }
-      const list = Array.isArray(data) ? data : [];
+
+      const list = extractDonationList(data);
       const uniqueActive = [];
       const seen = new Set();
       for (const row of list) {
-        const key = String(row?._id || "");
+        const key = getDonationId(row);
         if (!key || seen.has(key)) continue;
-        const status = String(row?.status || "").toLowerCase();
+
+        const status = normalizeDonationStatus(row);
         const isListed = status === "active" || status === "available";
-        const rawQuantity = row?.quantity;
-        const quantityValue = Number(rawQuantity);
-        const hasQuantity =
-          rawQuantity !== undefined &&
-          rawQuantity !== null &&
-          rawQuantity !== "" &&
-          Number.isFinite(quantityValue);
-        const isVisible = isListed && (!hasQuantity || quantityValue > 0);
+        const quantityValue = resolveDonationQuantity(row);
+        const isVisible = isListed && (quantityValue === null || quantityValue > 0);
         if (!isVisible) continue;
         seen.add(key);
-        uniqueActive.push(row);
+        uniqueActive.push({
+          ...row,
+          _id: row?._id ?? row?.id ?? row?.donationId ?? key,
+          quantity: row?.quantity ?? row?.quantityRemaining ?? row?.availableQuantity ?? row?.qty,
+        });
       }
       setDonations(uniqueActive);
     } catch (error) {

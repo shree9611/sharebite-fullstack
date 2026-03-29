@@ -39,7 +39,8 @@ exports.createRequest = async (req, res) => {
   if (!donation) {
     return res.status(404).json({ message: "Donation not found" });
   }
-  if (donation.status && donation.status !== "available") {
+  const donationStatus = String(donation.status || "").trim().toLowerCase();
+  if (donationStatus && donationStatus !== "available" && donationStatus !== "active") {
     return res.status(400).json({ message: "Donation is not available for request" });
   }
 
