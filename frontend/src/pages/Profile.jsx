@@ -19,10 +19,12 @@ const initialForm = {
   organizationName: "",
   foodTypeUsuallyDonated: "",
   totalDonationsCount: 0,
+  totalPortionsDonated: 0,
   donorRating: 0,
   receiverOrganizationName: "",
   peopleServed: 0,
   totalFoodReceived: 0,
+  totalRequestsCount: 0,
   receiverRating: 0,
   role: "",
 };
@@ -49,6 +51,13 @@ const normalizeProfilePayload = (data) => {
     accountType: record.accountType || roleLabel,
     profileImageUrl: resolvedAvatar,
     profileImage: resolvedAvatar,
+    totalDonationsCount: Number(record.totalDonationsCount || record.totalDonations || 0),
+    totalPortionsDonated: Number(record.totalPortionsDonated || 0),
+    donorRating: Number(record.donorRating || 0),
+    totalRequestsCount: Number(record.totalRequestsCount || 0),
+    peopleServed: Number(record.peopleServed || 0),
+    totalFoodReceived: Number(record.totalFoodReceived || 0),
+    receiverRating: Number(record.receiverRating || 0),
   };
 };
 
@@ -516,13 +525,43 @@ const Profile = () => {
                   <p className="text-xs font-semibold text-[#5d6d5d]">Total Donations</p>
                   <p className="mt-1 text-3xl font-black text-[#1f8a49]">{Number(form.totalDonationsCount || 0)}</p>
                 </div>
+                <div className="rounded-2xl border border-[#d6eadc] bg-[#f2fbf5] p-4">
+                  <p className="text-xs font-semibold text-[#5d6d5d]">Total Portions Donated</p>
+                  <p className="mt-1 text-3xl font-black text-[#1f8a49]">{Number(form.totalPortionsDonated || 0)}</p>
+                </div>
                 <div className="rounded-2xl border border-[#dce6f7] bg-[#f4f8ff] p-4">
-                  <p className="text-xs font-semibold text-[#5d6d5d]">Partner Rating</p>
+                  <p className="text-xs font-semibold text-[#5d6d5d]">Average Rating</p>
                   <p className="mt-1 flex items-center gap-1 text-2xl font-black text-[#1d4ed8]">
                     <span className="material-symbols-outlined text-[20px]">star</span>
-                    {Number(form.donorRating || 0)}
+                    {Number(form.donorRating || 0)} / 5
                   </p>
                 </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {isReceiver ? (
+          <section className="mt-8 border-t border-[#e6eee4] pt-6">
+            <h2 className="flex items-center gap-2 text-base font-bold text-[#243324]">
+              <span className="material-symbols-outlined text-[18px] text-[#2f9f6a]">bar_chart</span>
+              Receiver Impact
+            </h2>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-2xl border border-[#d6eadc] bg-[#f2fbf5] p-4">
+                <p className="text-xs font-semibold text-[#5d6d5d]">Total Requests</p>
+                <p className="mt-1 text-3xl font-black text-[#1f8a49]">{Number(form.totalRequestsCount || 0)}</p>
+              </div>
+              <div className="rounded-2xl border border-[#d6eadc] bg-[#f2fbf5] p-4">
+                <p className="text-xs font-semibold text-[#5d6d5d]">Total Food Received</p>
+                <p className="mt-1 text-3xl font-black text-[#1f8a49]">{Number(form.totalFoodReceived || 0)}</p>
+              </div>
+              <div className="rounded-2xl border border-[#dce6f7] bg-[#f4f8ff] p-4">
+                <p className="text-xs font-semibold text-[#5d6d5d]">Average Rating</p>
+                <p className="mt-1 flex items-center gap-1 text-2xl font-black text-[#1d4ed8]">
+                  <span className="material-symbols-outlined text-[20px]">star</span>
+                  {Number(form.receiverRating || 0)} / 5
+                </p>
               </div>
             </div>
           </section>

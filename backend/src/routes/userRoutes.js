@@ -6,6 +6,7 @@ const upload = require("../middleware/uploadMiddleware");
 const User = require("../models/User");
 const Donation = require("../models/Donation");
 const Request = require("../models/Request");
+const Feedback = require("../models/Feedback");
 const ImageAsset = require("../models/ImageAsset");
 const bcrypt = require("bcryptjs");
 const { userWithCompatFields } = require("../utils/responseTransformers");
@@ -15,7 +16,61 @@ router.get("/profile", auth, asyncHandler(async (req, res) => {
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
-  return res.json(userWithCompatFields(req, user));
+
+  const base = userWithCompatFields(req, user);
+  const role = String(user.role || "").toLowerCase();
+
+  if (role === "donor") {
+    const [totalDonationsCount, portionsAgg, ratingAgg] = await Promise.all([
+      Donation.countDocuments({ donor: user._id }),
+      Donation.aggregate([
+        { $match: { donor: user._id } },
+        { $group: { _id: null, totalPortionsDonated: { $sum: "$quantity" } } },
+      ]),
+      Feedback.aggregate([
+        { $match: { donor: user._id, rating: { $gte: 1 } } },
+        { $group: { _id: null, avgRating: { $avg: "$rating" } } },
+      ]),
+    ]);
+
+    const totalPortionsDonated = Number(portionsAgg?.[0]?.totalPortionsDonated || 0);
+    const donorRating = Number(ratingAgg?.[0]?.avgRating || 0);
+
+    return res.json({
+      ...base,
+      totalDonationsCount,
+      totalPortionsDonated,
+      donorRating: Number.isFinite(donorRating) ? Number(donorRating.toFixed(1)) : 0,
+    });
+  }
+
+  if (role === "receiver") {
+    const [totalRequestsCount, completedAgg, ratingAgg] = await Promise.all([
+      Request.countDocuments({ receiver: user._id }),
+      Request.aggregate([
+        { $match: { receiver: user._id, status: "completed" } },
+        { $group: { _id: null, peopleServed: { $sum: "$peopleCount" }, completedCount: { $sum: 1 } } },
+      ]),
+      Feedback.aggregate([
+        { $match: { receiver: user._id, rating: { $gte: 1 } } },
+        { $group: { _id: null, avgRating: { $avg: "$rating" } } },
+      ]),
+    ]);
+
+    const peopleServed = Number(completedAgg?.[0]?.peopleServed || 0);
+    const totalFoodReceived = Number(completedAgg?.[0]?.completedCount || 0);
+    const receiverRating = Number(ratingAgg?.[0]?.avgRating || 0);
+
+    return res.json({
+      ...base,
+      totalRequestsCount,
+      peopleServed,
+      totalFoodReceived,
+      receiverRating: Number.isFinite(receiverRating) ? Number(receiverRating.toFixed(1)) : 0,
+    });
+  }
+
+  return res.json(base);
 }));
 
 router.patch("/profile", auth, upload.any(), asyncHandler(async (req, res) => {
