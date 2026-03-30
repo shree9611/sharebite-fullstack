@@ -3,6 +3,7 @@ const Donation = require("../models/Donation");
 const User = require("../models/User");
 const { notifyUser } = require("../utils/notifier");
 const { donationWithCompatFields, pickUserLocation } = require("../utils/responseTransformers");
+const { buildDashboardUrl, sendAppEmail } = require("../services/emailService");
 
 const formatRequestResponse = (req, requestDoc) => {
   const request = requestDoc?.toObject ? requestDoc.toObject() : { ...requestDoc };
@@ -73,6 +74,7 @@ exports.createRequest = async (req, res) => {
     .populate("receiver", "name email locationName address city state coordinates");
 
   if (donation?.donor) {
+    const donorUser = await User.findById(donation.donor).select("email name").lean();
     await notifyUser({
       userId: donation.donor,
       title: "New food request",
@@ -83,7 +85,29 @@ exports.createRequest = async (req, res) => {
         donationId: donation._id,
         receiverId: req.user.id,
       },
+      skipEmail: true,
     });
+
+    try {
+      if (donorUser?.email) {
+        await sendAppEmail({
+          to: donorUser.email,
+          subject: "New Request for Your Donation",
+          title: "New Request for Your Donation",
+          subtitle: "A receiver has requested food from your donation.",
+          rows: [
+            { label: "Food", value: donation.foodName || "Food" },
+            { label: "Requested portions", value: String(requestedCount) },
+            { label: "Request status", value: "Pending approval" },
+          ],
+          ctaText: "Open Donor Dashboard",
+          ctaUrl: buildDashboardUrl("/donor/donate"),
+        });
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[email] request submitted -> donor failed:", error?.message || error);
+    }
   }
 
   await notifyUser({
@@ -95,6 +119,7 @@ exports.createRequest = async (req, res) => {
       requestId: createdRequest._id,
       donationId: donation._id,
     },
+    skipEmail: true,
   });
 
   return res.status(201).json(formatRequestResponse(req, created));

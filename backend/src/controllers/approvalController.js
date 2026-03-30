@@ -1,6 +1,7 @@
 const Request = require("../models/Request");
 const { notifyUser } = require("../utils/notifier");
 const { donationWithCompatFields, pickUserLocation } = require("../utils/responseTransformers");
+const { buildDashboardUrl, sendAppEmail } = require("../services/emailService");
 
 const buildApprovalResponse = (req, requestDoc) => {
   const request = requestDoc?.toObject ? requestDoc.toObject() : { ...requestDoc };
@@ -63,7 +64,28 @@ const updateRequestStatus = async (req, res, nextStatus) => {
         donationId: requestDoc?.donation?._id,
       },
       userEmail: requestDoc?.receiver?.email,
+      skipEmail: true,
     });
+
+    if (nextStatus === "approved") {
+      try {
+        const receiverEmail = String(requestDoc?.receiver?.email || "").trim();
+        if (receiverEmail) {
+          await sendAppEmail({
+            to: receiverEmail,
+            subject: "Your Request is Accepted",
+            title: "Your Request is Accepted",
+            subtitle: `Your request for ${donationName} was accepted. A volunteer may be assigned for pickup/delivery.`,
+            rows: [{ label: "Status", value: "Approved" }],
+            ctaText: "Open Receiver Dashboard",
+            ctaUrl: buildDashboardUrl("/dashboard"),
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[email] request approved -> receiver failed:", error?.message || error);
+      }
+    }
   }
 
   const refreshed = await Request.findById(requestDoc._id)

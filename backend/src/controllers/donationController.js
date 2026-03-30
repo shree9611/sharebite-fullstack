@@ -1,7 +1,9 @@
 const Donation = require("../models/Donation");
 const ImageAsset = require("../models/ImageAsset");
+const User = require("../models/User");
 const { notifyUser } = require("../utils/notifier");
 const { donationWithCompatFields } = require("../utils/responseTransformers");
+const { sendAppEmail } = require("../services/emailService");
 const mongoose = require("mongoose");
 
 const DONATION_DEBUG = String(process.env.DEBUG_DONATIONS || "").trim() === "1";
@@ -137,7 +139,80 @@ exports.createDonation = async (req, res) => {
       metadata: {
         donationId: donation?._id,
       },
+      skipEmail: true,
     });
+
+    // Email nearby receivers (explicit user action: donation created).
+    // Never fail the API call due to email issues.
+    (async () => {
+      try {
+        const donor = await User.findById(req.user.id).select("name coordinates city state locationName").lean();
+        const donorLat = Number(donor?.coordinates?.latitude);
+        const donorLng = Number(donor?.coordinates?.longitude);
+        const hasCoords = Number.isFinite(donorLat) && Number.isFinite(donorLng);
+        if (!hasCoords) return;
+
+        const receivers = await User.find({
+          role: "receiver",
+          email: { $exists: true, $ne: "" },
+        })
+          .select("email name coordinates")
+          .lean();
+
+        const uniqueEmails = new Set();
+        const recipients = [];
+
+        const haversineKm = (fromLat, fromLng, toLat, toLng) => {
+          const earthRadiusKm = 6371;
+          const toRad = (value) => (value * Math.PI) / 180;
+          const dLat = toRad(toLat - fromLat);
+          const dLng = toRad(toLng - fromLng);
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(fromLat)) * Math.cos(toRad(toLat)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        };
+
+        for (const receiver of receivers) {
+          const email = String(receiver?.email || "").trim().toLowerCase();
+          if (!email || uniqueEmails.has(email)) continue;
+
+          if (hasCoords) {
+            const lat = Number(receiver?.coordinates?.latitude);
+            const lng = Number(receiver?.coordinates?.longitude);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+            const distanceKm = haversineKm(donorLat, donorLng, lat, lng);
+            if (distanceKm > 10) continue;
+          }
+
+          uniqueEmails.add(email);
+          recipients.push(receiver);
+          if (recipients.length >= 25) break;
+        }
+
+        if (!recipients.length) return;
+
+        const expiryText = donation?.expiryTime ? new Date(donation.expiryTime).toLocaleString() : "";
+        for (const receiver of recipients) {
+          await sendAppEmail({
+            to: receiver.email,
+            subject: "New Food Donation Available",
+            title: "New Food Donation Available",
+            subtitle: "A donor nearby has shared food that you can request now.",
+            rows: [
+              { label: "Food", value: donation.foodName || "Food" },
+              { label: "Quantity", value: String(donation.quantityRemaining ?? donation.quantity ?? "") },
+              { label: "Pickup location", value: donation.pickupLocation || donation.location || "" },
+              { label: "Expiry time", value: expiryText },
+            ],
+            ctaText: "Open Receiver Dashboard",
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[email] donation created -> receivers failed:", error?.message || error);
+      }
+    })();
 
     return res.status(201).json(donationWithCompatFields(req, donation));
   } catch (error) {

@@ -3,6 +3,7 @@ const Request = require("../models/Request");
 const Donation = require("../models/Donation");
 const { notifyUser } = require("../utils/notifier");
 const { donationWithCompatFields, pickUserLocation } = require("../utils/responseTransformers");
+const { buildDashboardUrl, sendAppEmail } = require("../services/emailService");
 
 exports.createPickup = async (req, res) => {
   const requestId = req.body?.requestId;
@@ -82,11 +83,14 @@ exports.completePickup = async (req, res) => {
 
   const pickup = await Pickup.findById(req.params.id).populate({
     path: "request",
-    populate: {
-      path: "donation",
-      select: "foodName donor",
-      populate: { path: "donor", select: "name" },
-    },
+    populate: [
+      {
+        path: "donation",
+        select: "foodName donor",
+        populate: { path: "donor", select: "name email" },
+      },
+      { path: "receiver", select: "name email" },
+    ],
   });
 
   if (!pickup) {
@@ -193,6 +197,7 @@ exports.completePickup = async (req, res) => {
           donationId: request.donation._id,
           confirmedBy: req.user.id,
         },
+        skipEmail: true,
       });
     }
 
@@ -208,7 +213,42 @@ exports.completePickup = async (req, res) => {
           donationId: request.donation?._id,
           confirmedBy: req.user.id,
         },
+        skipEmail: true,
       });
+    }
+
+    // Email both donor and receiver (explicit user action: pickup completed).
+    try {
+      const foodName = request.donation?.foodName || "Food";
+      const donorEmail = String(request.donation?.donor?.email || "").trim();
+      const receiverEmail = String(request.receiver?.email || "").trim();
+
+      if (donorEmail) {
+        await sendAppEmail({
+          to: donorEmail,
+          subject: "Pickup Completed Successfully",
+          title: "Pickup Completed Successfully",
+          subtitle: `Delivery is marked completed for ${foodName}.`,
+          rows: [{ label: "Pickup status", value: "Completed" }],
+          ctaText: "Open Donor Dashboard",
+          ctaUrl: buildDashboardUrl("/donor/donate"),
+        });
+      }
+
+      if (receiverEmail) {
+        await sendAppEmail({
+          to: receiverEmail,
+          subject: "Pickup Completed Successfully",
+          title: "Pickup Completed Successfully",
+          subtitle: `Your request for ${foodName} is marked delivered.`,
+          rows: [{ label: "Delivery status", value: "Completed" }],
+          ctaText: "Open Receiver Dashboard",
+          ctaUrl: buildDashboardUrl("/dashboard"),
+        });
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[email] pickup completed -> donor/receiver failed:", error?.message || error);
     }
   }
 

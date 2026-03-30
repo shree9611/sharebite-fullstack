@@ -23,6 +23,9 @@ const notifyUser = async ({
   emailText,
   emailHtml,
   userEmail,
+  // Default to NOT sending email from notifyUser. Controllers should explicitly send emails
+  // via backend/src/services/emailService.js for the approved user-triggered flows.
+  skipEmail = true,
 }) => {
   const notification = await Notification.create({
     user: userId,
@@ -33,6 +36,7 @@ const notifyUser = async ({
   });
 
   try {
+    if (skipEmail) return notification;
     const to = await resolveUserEmail(userId, userEmail);
     if (to) {
       const result = await sendEmail({

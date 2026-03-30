@@ -23,8 +23,8 @@ const pickEnv = (...keys) => {
 const getSmtpConfig = () => {
   const host = pickEnv("SMTP_HOST", "MAIL_HOST");
   const port = Number(pickEnv("SMTP_PORT", "MAIL_PORT") || 0);
-  const user = pickEnv("SMTP_USER", "SMTP_USERNAME", "MAIL_USER", "MAIL_USERNAME");
-  const pass = pickEnv("SMTP_PASS", "SMTP_PASSWORD", "MAIL_PASS", "MAIL_PASSWORD");
+  const user = pickEnv("SMTP_USER", "SMTP_USERNAME", "MAIL_USER", "MAIL_USERNAME", "EMAIL_USER");
+  const pass = pickEnv("SMTP_PASS", "SMTP_PASSWORD", "MAIL_PASS", "MAIL_PASSWORD", "EMAIL_PASS");
   const from = pickEnv("EMAIL_FROM", "SMTP_FROM", "MAIL_FROM", "FROM_EMAIL");
   const secure = parseBoolean(process.env.SMTP_SECURE);
 
