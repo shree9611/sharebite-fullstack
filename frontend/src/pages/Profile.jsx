@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiFetchWithFallback, getAuthHeaders, resolveAssetUrl } from "../lib/api.js";
 import { clearSession, normalizeRole } from "../lib/auth.js";
 import { clearCurrentProfile, setCurrentProfile } from "../lib/profile.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 import Navbar from "../components/Navbar.jsx";
 
 const initialForm = {
@@ -63,6 +64,7 @@ const normalizeProfilePayload = (data) => {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [form, setForm] = useState(initialForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -101,10 +103,10 @@ const Profile = () => {
     [form.foodTypeUsuallyDonated]
   );
   const verificationBadge = isDonor
-    ? "Verified Donor"
+    ? t("Verified Donor")
     : isReceiver
-      ? "Verified Receiver"
-      : "Verified Volunteer";
+      ? t("Verified Receiver")
+      : t("Verified Volunteer");
 
   const apiRequestAcrossPaths = async (paths, options = {}) => {
     let lastResponseData = {};
@@ -341,7 +343,7 @@ const Profile = () => {
         <Navbar showNotifications showProfile />
         <div className="px-4 py-10 sm:px-6 lg:px-10">
           <div className="mx-auto max-w-5xl rounded-3xl border border-[#dde7dc] bg-white p-6 text-sm text-[#6f7368] shadow-sm">
-            Loading profile...
+            {t("Loading profile...")}
           </div>
         </div>
       </div>
@@ -359,7 +361,7 @@ const Profile = () => {
             onClick={() => setShowAvatarDialog(true)}
             className="h-28 w-28 overflow-hidden rounded-full border-4 border-white bg-[#f3f7f2] shadow-md transition hover:opacity-90"
             disabled={isSaving}
-            title="Edit profile image"
+            title={t("Edit profile image")}
           >
             {profileImageSrc ? (
               <img
@@ -374,7 +376,9 @@ const Profile = () => {
               </div>
             )}
           </button>
-          <h1 className="mt-4 text-2xl font-extrabold text-[#1f2b1f]">{form.fullName || "Profile"}</h1>
+          <h1 className="mt-4 text-2xl font-extrabold text-[#1f2b1f]">
+            {form.fullName || t("Profile")}
+          </h1>
           <span className="mt-2 inline-flex items-center rounded-full bg-[#eaf7ef] px-3 py-1 text-[11px] font-bold text-[#1f8a49]">
             {verificationBadge}
           </span>
@@ -482,7 +486,7 @@ const Profile = () => {
           <section className="mt-8 border-t border-[#e6eee4] pt-6">
             <h2 className="flex items-center gap-2 text-base font-bold text-[#243324]">
               <span className="material-symbols-outlined text-[18px] text-[#2f9f6a]">bar_chart</span>
-              Organization Impact
+              {t("Organization Impact")}
             </h2>
             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
               <div className="lg:col-span-2 space-y-4">
@@ -522,15 +526,15 @@ const Profile = () => {
               </div>
               <div className="grid grid-cols-1 gap-3">
                 <div className="rounded-2xl border border-[#d6eadc] bg-[#f2fbf5] p-4">
-                  <p className="text-xs font-semibold text-[#5d6d5d]">Total Donations</p>
+                  <p className="text-xs font-semibold text-[#5d6d5d]">{t("Total Donations")}</p>
                   <p className="mt-1 text-3xl font-black text-[#1f8a49]">{Number(form.totalDonationsCount || 0)}</p>
                 </div>
                 <div className="rounded-2xl border border-[#d6eadc] bg-[#f2fbf5] p-4">
-                  <p className="text-xs font-semibold text-[#5d6d5d]">Total Portions Donated</p>
+                  <p className="text-xs font-semibold text-[#5d6d5d]">{t("Total Portions Donated")}</p>
                   <p className="mt-1 text-3xl font-black text-[#1f8a49]">{Number(form.totalPortionsDonated || 0)}</p>
                 </div>
                 <div className="rounded-2xl border border-[#dce6f7] bg-[#f4f8ff] p-4">
-                  <p className="text-xs font-semibold text-[#5d6d5d]">Average Rating</p>
+                  <p className="text-xs font-semibold text-[#5d6d5d]">{t("Average Rating")}</p>
                   <p className="mt-1 flex items-center gap-1 text-2xl font-black text-[#1d4ed8]">
                     <span className="material-symbols-outlined text-[20px]">star</span>
                     {Number(form.donorRating || 0)} / 5
@@ -545,19 +549,19 @@ const Profile = () => {
           <section className="mt-8 border-t border-[#e6eee4] pt-6">
             <h2 className="flex items-center gap-2 text-base font-bold text-[#243324]">
               <span className="material-symbols-outlined text-[18px] text-[#2f9f6a]">bar_chart</span>
-              Receiver Impact
+              {t("Receiver Impact")}
             </h2>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div className="rounded-2xl border border-[#d6eadc] bg-[#f2fbf5] p-4">
-                <p className="text-xs font-semibold text-[#5d6d5d]">Total Requests</p>
+                <p className="text-xs font-semibold text-[#5d6d5d]">{t("Total Requests")}</p>
                 <p className="mt-1 text-3xl font-black text-[#1f8a49]">{Number(form.totalRequestsCount || 0)}</p>
               </div>
               <div className="rounded-2xl border border-[#d6eadc] bg-[#f2fbf5] p-4">
-                <p className="text-xs font-semibold text-[#5d6d5d]">Total Food Received</p>
+                <p className="text-xs font-semibold text-[#5d6d5d]">{t("Total Food Received")}</p>
                 <p className="mt-1 text-3xl font-black text-[#1f8a49]">{Number(form.totalFoodReceived || 0)}</p>
               </div>
               <div className="rounded-2xl border border-[#dce6f7] bg-[#f4f8ff] p-4">
-                <p className="text-xs font-semibold text-[#5d6d5d]">Average Rating</p>
+                <p className="text-xs font-semibold text-[#5d6d5d]">{t("Average Rating")}</p>
                 <p className="mt-1 flex items-center gap-1 text-2xl font-black text-[#1d4ed8]">
                   <span className="material-symbols-outlined text-[20px]">star</span>
                   {Number(form.receiverRating || 0)} / 5
@@ -570,7 +574,7 @@ const Profile = () => {
         <section className="mt-8 border-t border-[#e6eee4] pt-6">
           <h2 className="flex items-center gap-2 text-base font-bold text-[#243324]">
             <span className="material-symbols-outlined text-[18px] text-[#2f9f6a]">security</span>
-            Security & Actions
+            {t("Security & Actions")}
           </h2>
           <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col gap-2 text-sm">
@@ -579,14 +583,14 @@ const Profile = () => {
                 onClick={() => setIsPasswordPanelOpen((prev) => !prev)}
                 className="w-fit text-left font-semibold text-[#2f78bd] hover:underline"
               >
-                Change Password
+                {t("Change Password")}
               </button>
               <button
                 type="button"
                 onClick={handleLogout}
                 className="w-fit text-left font-semibold text-[#4d5b4e] hover:underline"
               >
-                Logout
+                {t("Logout")}
               </button>
             </div>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
@@ -595,7 +599,7 @@ const Profile = () => {
                 onClick={() => setShowDeleteModal(true)}
                 className="h-11 rounded-xl border border-red-300 px-5 text-sm font-semibold text-red-600 transition hover:bg-red-600 hover:text-white"
               >
-                Delete Account
+                {t("Delete Account")}
               </button>
               <button
                 type="button"
@@ -603,7 +607,7 @@ const Profile = () => {
                 disabled={isSaving}
                 className="h-11 rounded-xl bg-[#2f9f6a] px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[#248c5a] disabled:opacity-60"
               >
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isSaving ? t("Saving...") : t("Save Changes")}
               </button>
             </div>
           </div>
@@ -611,12 +615,12 @@ const Profile = () => {
 
         {isPasswordPanelOpen ? (
           <div className="mt-6 rounded-xl border border-[#dde6f0] bg-[#f8fbff] p-4">
-            <p className="text-sm font-semibold text-[#2f4665]">Change Password</p>
+            <p className="text-sm font-semibold text-[#2f4665]">{t("Change Password")}</p>
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <input
                 type="password"
                 className={editableInputClass}
-                placeholder="Current Password"
+                placeholder={t("Current Password")}
                 value={passwordState.currentPassword}
                 onChange={(event) =>
                   setPasswordState((prev) => ({ ...prev, currentPassword: event.target.value }))
@@ -625,7 +629,7 @@ const Profile = () => {
               <input
                 type="password"
                 className={editableInputClass}
-                placeholder="New Password"
+                placeholder={t("New Password")}
                 value={passwordState.newPassword}
                 onChange={(event) =>
                   setPasswordState((prev) => ({ ...prev, newPassword: event.target.value }))
@@ -638,7 +642,7 @@ const Profile = () => {
               disabled={isChangingPassword}
               className="mt-3 rounded-xl bg-[#4d7fca] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3f6db1] disabled:opacity-60"
             >
-              {isChangingPassword ? "Updating..." : "Update Password"}
+              {isChangingPassword ? t("Updating...") : t("Update Password")}
             </button>
           </div>
         ) : null}
@@ -648,22 +652,22 @@ const Profile = () => {
       {showAvatarDialog ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
-            <h3 className="text-base font-bold text-[#1f2b1f]">Profile Image</h3>
-            <p className="mt-1 text-sm text-[#607060]">Choose what you want to do.</p>
+            <h3 className="text-base font-bold text-[#1f2b1f]">{t("Profile Image")}</h3>
+            <p className="mt-1 text-sm text-[#607060]">{t("Choose what you want to do.")}</p>
             <div className="mt-4 flex flex-col gap-3">
               <button
                 type="button"
                 onClick={handleOpenFilePicker}
                 className="h-11 rounded-xl border border-[#2f9f6a] bg-white px-4 text-sm font-semibold text-[#2f9f6a] transition hover:bg-[#eaf7ef]"
               >
-                Edit / Change Image
+                {t("Edit / Change Image")}
               </button>
               <button
                 type="button"
                 onClick={() => setShowAvatarDialog(false)}
                 className="h-11 rounded-xl bg-[#eef1f4] px-4 text-sm font-semibold text-[#374151] transition hover:bg-[#e2e8f0]"
               >
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </div>
@@ -673,9 +677,9 @@ const Profile = () => {
       {showDeleteModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-[#2f2d26]">Delete Account</h3>
+            <h3 className="text-lg font-bold text-[#2f2d26]">{t("Delete Account")}</h3>
             <p className="mt-2 text-sm text-[#6d6658]">
-              This action is permanent and cannot be undone. Do you want to continue?
+              {t("This action is permanent and cannot be undone. Do you want to continue?")}
             </p>
             <div className="mt-5 flex justify-end gap-3">
               <button
@@ -684,7 +688,7 @@ const Profile = () => {
                 disabled={isDeletingAccount}
                 className="rounded-xl border border-[#ddd2bf] px-4 py-2 text-sm font-semibold text-[#665f52] hover:bg-[#f8f3ea] disabled:opacity-60"
               >
-                Cancel
+                {t("Cancel")}
               </button>
               <button
                 type="button"
@@ -692,7 +696,7 @@ const Profile = () => {
                 disabled={isDeletingAccount}
                 className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
               >
-                {isDeletingAccount ? "Deleting..." : "Delete Account"}
+                {isDeletingAccount ? t("Deleting...") : t("Delete Account")}
               </button>
             </div>
           </div>
