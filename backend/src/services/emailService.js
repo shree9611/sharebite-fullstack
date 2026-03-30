@@ -51,6 +51,14 @@ const sendViaBrevoApi = async ({ to, subject, html, text }) => {
   });
 
   return new Promise((resolve) => {
+    const hardTimeoutMs = 15000;
+    let settled = false;
+    const settle = (result) => {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+    };
+
     const req = https.request(
       {
         method: "POST",
@@ -62,15 +70,15 @@ const sendViaBrevoApi = async ({ to, subject, html, text }) => {
           "api-key": apiKey,
           "content-length": Buffer.byteLength(payload),
         },
-        timeout: 15000,
+        timeout: hardTimeoutMs,
       },
       (res) => {
         let body = "";
         res.on("data", (chunk) => (body += chunk));
         res.on("end", () => {
           const ok = res.statusCode >= 200 && res.statusCode < 300;
-          if (ok) return resolve({ ok: true, provider: "brevo_api", status: res.statusCode });
-          return resolve({
+          if (ok) return settle({ ok: true, provider: "brevo_api", status: res.statusCode });
+          return settle({
             ok: false,
             provider: "brevo_api",
             status: res.statusCode,
@@ -80,12 +88,30 @@ const sendViaBrevoApi = async ({ to, subject, html, text }) => {
       }
     );
 
+    const timer = setTimeout(() => {
+      try {
+        req.destroy(new Error("timeout"));
+      } catch {
+        // ignore
+      }
+      settle({ ok: false, provider: "brevo_api", error: `Connection timeout after ${hardTimeoutMs}ms` });
+    }, hardTimeoutMs);
+
     req.on("timeout", () => {
-      req.destroy(new Error("timeout"));
-      resolve({ ok: false, provider: "brevo_api", error: "Connection timeout" });
+      clearTimeout(timer);
+      try {
+        req.destroy(new Error("timeout"));
+      } catch {
+        // ignore
+      }
+      settle({ ok: false, provider: "brevo_api", error: `Connection timeout after ${hardTimeoutMs}ms` });
     });
     req.on("error", (error) => {
-      resolve({ ok: false, provider: "brevo_api", error: error?.message || String(error) });
+      clearTimeout(timer);
+      settle({ ok: false, provider: "brevo_api", error: error?.message || String(error) });
+    });
+    req.on("close", () => {
+      clearTimeout(timer);
     });
 
     req.write(payload);
