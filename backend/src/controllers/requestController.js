@@ -88,8 +88,9 @@ exports.createRequest = async (req, res) => {
       skipEmail: true,
     });
 
-    try {
-      if (donorUser?.email) {
+    void (async () => {
+      try {
+        if (!donorUser?.email) return;
         await sendAppEmail({
           to: donorUser.email,
           subject: "New Request for Your Donation",
@@ -103,11 +104,11 @@ exports.createRequest = async (req, res) => {
           ctaText: "Open Donor Dashboard",
           ctaUrl: buildDashboardUrl("/donor/donate"),
         });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[email] request submitted -> donor failed:", error?.message || error);
       }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[email] request submitted -> donor failed:", error?.message || error);
-    }
+    })();
   }
 
   await notifyUser({
@@ -123,9 +124,10 @@ exports.createRequest = async (req, res) => {
   });
 
   // Email receiver confirmation (explicit user action: request submitted).
-  try {
-    const receiverEmail = String(created?.receiver?.email || "").trim();
-    if (receiverEmail) {
+  void (async () => {
+    try {
+      const receiverEmail = String(created?.receiver?.email || "").trim();
+      if (!receiverEmail) return;
       await sendAppEmail({
         to: receiverEmail,
         subject: "Request submitted",
@@ -139,11 +141,11 @@ exports.createRequest = async (req, res) => {
         ctaText: "Open Receiver Dashboard",
         ctaUrl: buildDashboardUrl("/dashboard"),
       });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("[email] request submitted -> receiver failed:", error?.message || error);
     }
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error("[email] request submitted -> receiver failed:", error?.message || error);
-  }
+  })();
 
   return res.status(201).json(formatRequestResponse(req, created));
 };

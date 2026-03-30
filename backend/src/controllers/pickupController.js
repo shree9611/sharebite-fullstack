@@ -218,38 +218,40 @@ exports.completePickup = async (req, res) => {
     }
 
     // Email both donor and receiver (explicit user action: pickup completed).
-    try {
-      const foodName = request.donation?.foodName || "Food";
-      const donorEmail = String(request.donation?.donor?.email || "").trim();
-      const receiverEmail = String(request.receiver?.email || "").trim();
+    void (async () => {
+      try {
+        const foodName = request.donation?.foodName || "Food";
+        const donorEmail = String(request.donation?.donor?.email || "").trim();
+        const receiverEmail = String(request.receiver?.email || "").trim();
 
-      if (donorEmail) {
-        await sendAppEmail({
-          to: donorEmail,
-          subject: "Pickup Completed Successfully",
-          title: "Pickup Completed Successfully",
-          subtitle: `Delivery is marked completed for ${foodName}.`,
-          rows: [{ label: "Pickup status", value: "Completed" }],
-          ctaText: "Open Donor Dashboard",
-          ctaUrl: buildDashboardUrl("/donor/donate"),
-        });
-      }
+        if (donorEmail) {
+          await sendAppEmail({
+            to: donorEmail,
+            subject: "Pickup Completed Successfully",
+            title: "Pickup Completed Successfully",
+            subtitle: `Delivery is marked completed for ${foodName}.`,
+            rows: [{ label: "Pickup status", value: "Completed" }],
+            ctaText: "Open Donor Dashboard",
+            ctaUrl: buildDashboardUrl("/donor/donate"),
+          });
+        }
 
-      if (receiverEmail) {
-        await sendAppEmail({
-          to: receiverEmail,
-          subject: "Pickup Completed Successfully",
-          title: "Pickup Completed Successfully",
-          subtitle: `Your request for ${foodName} is marked delivered.`,
-          rows: [{ label: "Delivery status", value: "Completed" }],
-          ctaText: "Open Receiver Dashboard",
-          ctaUrl: buildDashboardUrl("/dashboard"),
-        });
+        if (receiverEmail) {
+          await sendAppEmail({
+            to: receiverEmail,
+            subject: "Pickup Completed Successfully",
+            title: "Pickup Completed Successfully",
+            subtitle: `Your request for ${foodName} is marked delivered.`,
+            rows: [{ label: "Delivery status", value: "Completed" }],
+            ctaText: "Open Receiver Dashboard",
+            ctaUrl: buildDashboardUrl("/dashboard"),
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[email] pickup completed -> donor/receiver failed:", error?.message || error);
       }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[email] pickup completed -> donor/receiver failed:", error?.message || error);
-    }
+    })();
   }
 
   return res.json(pickup);

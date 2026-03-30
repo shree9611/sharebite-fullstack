@@ -25,7 +25,7 @@ router.get(
       return res.status(400).json({ message: "Provide ?to=email@example.com" });
     }
 
-    const result = await sendAppEmail({
+    const sendPromise = sendAppEmail({
       to,
       subject: "ShareBite test email",
       title: "ShareBite test email",
@@ -35,7 +35,14 @@ router.get(
         { label: "Request ID", value: req.requestId || "" },
       ],
       ctaText: "Open ShareBite",
-    });
+    }).catch((error) => ({ ok: false, error: error?.message || String(error) }));
+
+    const timeoutMs = 12000;
+    const timeoutPromise = new Promise((resolve) =>
+      setTimeout(() => resolve({ ok: false, error: `Request timed out after ${timeoutMs}ms` }), timeoutMs)
+    );
+
+    const result = await Promise.race([sendPromise, timeoutPromise]);
 
     // eslint-disable-next-line no-console
     console.log("[test-email] to=", to, "result=", result);

@@ -143,10 +143,12 @@ exports.createDonation = async (req, res) => {
     });
 
     // Email donor confirmation (explicit user action: donation created).
-    try {
-      const donorUser = await User.findById(req.user.id).select("email name").lean();
-      const donorEmail = String(donorUser?.email || "").trim();
-      if (donorEmail) {
+    void (async () => {
+      try {
+        const donorUser = await User.findById(req.user.id).select("email name").lean();
+        const donorEmail = String(donorUser?.email || "").trim();
+        if (!donorEmail) return;
+
         const expiryText = donation?.expiryTime ? new Date(donation.expiryTime).toLocaleString() : "";
         await sendAppEmail({
           to: donorEmail,
@@ -161,11 +163,11 @@ exports.createDonation = async (req, res) => {
           ],
           ctaText: "Open Donor Dashboard",
         });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[email] donation created -> donor failed:", error?.message || error);
       }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("[email] donation created -> donor failed:", error?.message || error);
-    }
+    })();
 
     // Email nearby receivers (explicit user action: donation created).
     // Never fail the API call due to email issues.

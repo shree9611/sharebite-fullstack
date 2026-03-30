@@ -68,9 +68,10 @@ const updateRequestStatus = async (req, res, nextStatus) => {
     });
 
     if (nextStatus === "approved" || nextStatus === "declined") {
-      try {
-        const receiverEmail = String(requestDoc?.receiver?.email || "").trim();
-        if (receiverEmail) {
+      void (async () => {
+        try {
+          const receiverEmail = String(requestDoc?.receiver?.email || "").trim();
+          if (!receiverEmail) return;
           await sendAppEmail({
             to: receiverEmail,
             subject: nextStatus === "approved" ? "Your Request is Accepted" : "Your Request is Declined",
@@ -83,11 +84,11 @@ const updateRequestStatus = async (req, res, nextStatus) => {
             ctaText: "Open Receiver Dashboard",
             ctaUrl: buildDashboardUrl("/dashboard"),
           });
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error("[email] request moderation -> receiver failed:", error?.message || error);
         }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error("[email] request moderation -> receiver failed:", error?.message || error);
-      }
+      })();
     }
   }
 
