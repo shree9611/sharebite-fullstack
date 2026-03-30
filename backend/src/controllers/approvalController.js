@@ -67,23 +67,26 @@ const updateRequestStatus = async (req, res, nextStatus) => {
       skipEmail: true,
     });
 
-    if (nextStatus === "approved") {
+    if (nextStatus === "approved" || nextStatus === "declined") {
       try {
         const receiverEmail = String(requestDoc?.receiver?.email || "").trim();
         if (receiverEmail) {
           await sendAppEmail({
             to: receiverEmail,
-            subject: "Your Request is Accepted",
-            title: "Your Request is Accepted",
-            subtitle: `Your request for ${donationName} was accepted. A volunteer may be assigned for pickup/delivery.`,
-            rows: [{ label: "Status", value: "Approved" }],
+            subject: nextStatus === "approved" ? "Your Request is Accepted" : "Your Request is Declined",
+            title: nextStatus === "approved" ? "Your Request is Accepted" : "Your Request is Declined",
+            subtitle:
+              nextStatus === "approved"
+                ? `Your request for ${donationName} was accepted. A volunteer may be assigned for pickup/delivery.`
+                : `Your request for ${donationName} was declined by the donor.`,
+            rows: [{ label: "Status", value: nextStatus === "approved" ? "Approved" : "Declined" }],
             ctaText: "Open Receiver Dashboard",
             ctaUrl: buildDashboardUrl("/dashboard"),
           });
         }
       } catch (error) {
         // eslint-disable-next-line no-console
-        console.error("[email] request approved -> receiver failed:", error?.message || error);
+        console.error("[email] request moderation -> receiver failed:", error?.message || error);
       }
     }
   }

@@ -122,6 +122,29 @@ exports.createRequest = async (req, res) => {
     skipEmail: true,
   });
 
+  // Email receiver confirmation (explicit user action: request submitted).
+  try {
+    const receiverEmail = String(created?.receiver?.email || "").trim();
+    if (receiverEmail) {
+      await sendAppEmail({
+        to: receiverEmail,
+        subject: "Request submitted",
+        title: "Request submitted",
+        subtitle: `Your request for ${donation.foodName || "food"} was submitted successfully.`,
+        rows: [
+          { label: "Food", value: donation.foodName || "Food" },
+          { label: "Requested portions", value: String(requestedCount) },
+          { label: "Status", value: "Pending approval" },
+        ],
+        ctaText: "Open Receiver Dashboard",
+        ctaUrl: buildDashboardUrl("/dashboard"),
+      });
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("[email] request submitted -> receiver failed:", error?.message || error);
+  }
+
   return res.status(201).json(formatRequestResponse(req, created));
 };
 
