@@ -106,8 +106,8 @@ const isDonationCurrentlyAvailable = (item) => {
   if (!(status === "available" || status === "active")) return false;
   const expiryMs = item?.expiryTime ? new Date(item.expiryTime).getTime() : null;
   if (expiryMs && expiryMs <= Date.now()) return false;
-  const qty = Number(item?.quantity ?? item?.quantityRemaining ?? 0);
-  return Number.isFinite(qty) && qty > 0;
+  const qty = resolveDonationQuantity(item);
+  return qty !== null && qty > 0;
 };
 
 const UserDashboard = () => {
@@ -161,7 +161,9 @@ const UserDashboard = () => {
         uniqueActive.push({
           ...row,
           _id: row?._id ?? row?.id ?? row?.donationId ?? key,
-          quantity: row?.quantity ?? row?.quantityRemaining ?? row?.availableQuantity ?? row?.qty,
+          quantity: row?.quantity ?? null,
+          quantityRemaining: row?.quantityRemaining ?? row?.availableQuantity ?? row?.qty ?? null,
+          remainingPortions: resolveDonationQuantity(row),
         });
       }
 
@@ -403,12 +405,14 @@ const UserDashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {visibleDonations.map((item) => {
                   const status = String(item?.status || "").toLowerCase();
+                  const remainingPortions = resolveDonationQuantity(item) ?? 0;
+                  const totalPortions = Number(item?.quantity);
                   const expiryMs = item?.expiryTime ? new Date(item.expiryTime).getTime() : null;
                   const isExpired = Boolean(expiryMs && expiryMs <= Date.now());
                   const isAvailable =
                     !isExpired &&
                     (status === "active" || status === "available") &&
-                    Number(item?.quantity || 0) > 0;
+                    remainingPortions > 0;
                   const badgeText = isExpired ? "Expired" : isAvailable ? "Available" : "Unavailable";
                   const badgeClass = isExpired
                     ? "bg-amber-100 text-amber-800"
@@ -448,7 +452,11 @@ const UserDashboard = () => {
                       <div className="flex items-center justify-between text-[11px] mt-2">
                         <span className="text-[#7a9087]">Claim Status</span>
                         <span className={`font-semibold ${isAvailable ? "text-[#12c76a]" : "text-slate-600"}`}>
-                          {isAvailable ? `${item.quantity} portions left` : `${item?.status || "claimed"}`}
+                          {isAvailable
+                            ? Number.isFinite(totalPortions) && totalPortions > 0
+                              ? `${remainingPortions} of ${totalPortions} portions left`
+                              : `${remainingPortions} portions left`
+                            : `${item?.status || "claimed"}`}
                         </span>
                       </div>
                       <div className="w-full h-1.5 bg-[#eef4f1] rounded-full">
@@ -461,7 +469,7 @@ const UserDashboard = () => {
                           state={{
                             donationId: item._id,
                             foodName: item.foodName,
-                            quantity: item.quantity,
+                            quantity: remainingPortions,
                             location: item.location,
                             dietaryType: item.dietaryType || "",
                             bakedType: item.bakedType || "",

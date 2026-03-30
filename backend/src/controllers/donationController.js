@@ -185,10 +185,6 @@ exports.getDonations = async (req, res) => {
     return res.json(
       data.map((item) => {
         const record = donationWithCompatFields(req, item);
-        const remaining = Number(record?.quantityRemaining);
-        if (Number.isFinite(remaining)) {
-          return { ...record, quantity: remaining };
-        }
         return record;
       })
     );
