@@ -73,6 +73,7 @@ app.use("/api/pickups", require("./routes/pickupRoutes"));
 app.use("/api/feedback", require("./routes/feedbackRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
+app.use("/api/test-email", require("./routes/testEmailRoutes"));
 
 app.use(notFound);
 app.use(errorHandler);
