@@ -111,11 +111,38 @@ exports.completePickup = async (req, res) => {
     return res.status(403).json({ message: "Only volunteer or admin can confirm delivery" });
   }
 
+  // Volunteers can only complete pickups that are explicitly assigned to them.
+  // This prevents any “silent” or accidental completion by other volunteer accounts.
+  const pickupVolunteerId = pickup?.volunteer ? String(pickup.volunteer) : "";
+  const actorUserId = req.user?.id ? String(req.user.id) : "";
+  if (actorRole === "volunteer") {
+    if (!pickupVolunteerId) {
+      // eslint-disable-next-line no-console
+      console.log("Pickup completion rejected (missing volunteer assignment):", {
+        userId: actorUserId,
+        role: actorRole,
+        pickupId: req.params.id,
+        timestamp: new Date().toISOString(),
+        requestId: req.requestId || "",
+      });
+      return res.status(400).json({ message: "Pickup has no assigned volunteer. Accept the mission first." });
+    }
+    if (pickupVolunteerId !== actorUserId) {
+      // eslint-disable-next-line no-console
+      console.log("Pickup completion rejected (not assigned volunteer):", {
+        userId: actorUserId,
+        role: actorRole,
+        pickupId: req.params.id,
+        assignedVolunteerId: pickupVolunteerId,
+        timestamp: new Date().toISOString(),
+        requestId: req.requestId || "",
+      });
+      return res.status(403).json({ message: "Only the assigned volunteer can confirm delivery" });
+    }
+  }
+
   pickup.status = "completed";
   pickup.completedAt = new Date();
-  if (!pickup.volunteer && actorRole === "volunteer") {
-    pickup.volunteer = req.user.id;
-  }
   await pickup.save();
 
   if (pickup?.volunteer) {
