@@ -29,7 +29,8 @@ router.get(
       return res.status(400).json({ message: "Provide ?to=email@example.com" });
     }
 
-    const shouldWait = parseBoolean(req.query?.wait);
+    const rawWait = req.query?.wait;
+    const shouldWait = rawWait === undefined ? true : parseBoolean(rawWait);
 
     const sendPromise = sendAppEmail({
       to,
@@ -51,7 +52,7 @@ router.get(
       return res.json({ ok: true, accepted: true, to, requestId: req.requestId || "" });
     }
 
-    const timeoutMs = 25000;
+    const timeoutMs = 45000;
     const timeoutPromise = new Promise((resolve) =>
       setTimeout(() => resolve({ ok: false, error: `Request timed out after ${timeoutMs}ms` }), timeoutMs)
     );
