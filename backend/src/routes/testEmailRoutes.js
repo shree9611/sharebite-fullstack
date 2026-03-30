@@ -49,7 +49,14 @@ router.get(
         // eslint-disable-next-line no-console
         console.log("[test-email] async to=", to, "result=", result, "requestId=", req.requestId || "");
       });
-      return res.json({ ok: true, accepted: true, to, requestId: req.requestId || "" });
+      return res.json({
+        ok: true,
+        accepted: true,
+        to,
+        requestId: req.requestId || "",
+        emailProvider: process.env.EMAIL_PROVIDER || (process.env.BREVO_API_KEY ? "brevo_api" : "smtp"),
+        commit: process.env.RENDER_GIT_COMMIT || process.env.VERCEL_GIT_COMMIT_SHA || process.env.GIT_COMMIT || "",
+      });
     }
 
     const timeoutMs = 45000;
@@ -62,7 +69,14 @@ router.get(
     // eslint-disable-next-line no-console
     console.log("[test-email] waited to=", to, "result=", result, "requestId=", req.requestId || "");
 
-    return res.json({ ok: true, to, requestId: req.requestId || "", result });
+    return res.json({
+      ok: true,
+      to,
+      requestId: req.requestId || "",
+      emailProvider: process.env.EMAIL_PROVIDER || (process.env.BREVO_API_KEY ? "brevo_api" : "smtp"),
+      commit: process.env.RENDER_GIT_COMMIT || process.env.VERCEL_GIT_COMMIT_SHA || process.env.GIT_COMMIT || "",
+      result,
+    });
   })
 );
 

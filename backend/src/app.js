@@ -59,6 +59,12 @@ app.get("/health", (_req, res) => {
     ok: true,
     dbConnected: mongoose.connection.readyState === 1,
     uptime: process.uptime(),
+    commit:
+      process.env.RENDER_GIT_COMMIT ||
+      process.env.VERCEL_GIT_COMMIT_SHA ||
+      process.env.GIT_COMMIT ||
+      "",
+    emailProvider: process.env.EMAIL_PROVIDER || (process.env.BREVO_API_KEY ? "brevo_api" : "smtp"),
     timestamp: new Date().toISOString(),
   });
 });
