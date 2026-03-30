@@ -374,7 +374,7 @@ const ReceiverFeedback = () => {
                       </p>
                       <label className="flex items-center gap-3 cursor-pointer">
                       <input
-                        className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-white border-none"
+                        className="h-5 w-5 rounded border border-[#cfe3da] bg-white text-green-600 accent-green-600 focus:ring-2 focus:ring-green-300"
                         type="checkbox"
                         checked={deliveryReached}
                         onChange={(event) => setDeliveryReached(event.target.checked)}
@@ -388,7 +388,7 @@ const ReceiverFeedback = () => {
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       defaultChecked
-                      className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-white border-none"
+                      className="h-5 w-5 rounded border border-[#cfe3da] bg-white text-green-600 accent-green-600 focus:ring-2 focus:ring-green-300"
                       type="checkbox"
                     />
                     <span className="text-[#111815] text-sm">
