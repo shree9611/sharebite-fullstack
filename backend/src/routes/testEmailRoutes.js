@@ -3,6 +3,10 @@ const asyncHandler = require("../middleware/asyncHandler");
 const { sendAppEmail } = require("../services/emailService");
 
 const safeString = (value) => String(value || "").trim();
+const parseBoolean = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
+};
 
 const requireTestToken = (req, res, next) => {
   const expected = safeString(process.env.TEST_EMAIL_TOKEN);
@@ -25,6 +29,8 @@ router.get(
       return res.status(400).json({ message: "Provide ?to=email@example.com" });
     }
 
+    const shouldWait = parseBoolean(req.query?.wait);
+
     const sendPromise = sendAppEmail({
       to,
       subject: "ShareBite test email",
@@ -37,7 +43,15 @@ router.get(
       ctaText: "Open ShareBite",
     }).catch((error) => ({ ok: false, error: error?.message || String(error) }));
 
-    const timeoutMs = 12000;
+    if (!shouldWait) {
+      void sendPromise.then((result) => {
+        // eslint-disable-next-line no-console
+        console.log("[test-email] async to=", to, "result=", result, "requestId=", req.requestId || "");
+      });
+      return res.json({ ok: true, accepted: true, to, requestId: req.requestId || "" });
+    }
+
+    const timeoutMs = 25000;
     const timeoutPromise = new Promise((resolve) =>
       setTimeout(() => resolve({ ok: false, error: `Request timed out after ${timeoutMs}ms` }), timeoutMs)
     );
@@ -45,9 +59,9 @@ router.get(
     const result = await Promise.race([sendPromise, timeoutPromise]);
 
     // eslint-disable-next-line no-console
-    console.log("[test-email] to=", to, "result=", result);
+    console.log("[test-email] waited to=", to, "result=", result, "requestId=", req.requestId || "");
 
-    return res.json({ ok: true, to, result });
+    return res.json({ ok: true, to, requestId: req.requestId || "", result });
   })
 );
 
