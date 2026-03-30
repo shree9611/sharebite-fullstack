@@ -19,6 +19,12 @@
 }
 
 @layer base {
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   input[type="password"]::-ms-reveal,
   input[type="password"]::-ms-clear {
     display: none;
@@ -26,6 +32,7 @@
 
   body {
     @apply overflow-x-hidden;
+    @apply text-base;
     background-color: var(--color-bg);
     color: var(--color-text-main);
   }
