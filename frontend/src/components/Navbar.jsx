@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell.jsx";
 import Avatar from "./Avatar.jsx";
-import { getCurrentProfile } from "../lib/profile.js";
+import { getCurrentProfile, upsertProfile } from "../lib/profile.js";
+import { buildApiUrl, getAuthHeaders } from "../lib/api.js";
 
 const PROFILE_EVENT = "sharebite.profileUpdated";
 
@@ -25,6 +26,7 @@ const Navbar = ({
 }) => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(() => getCurrentProfile());
+  const didHydrateProfile = useRef(false);
 
   useEffect(() => {
     const handleProfileUpdated = () => setProfile(getCurrentProfile());
@@ -40,6 +42,37 @@ const Navbar = ({
       window.removeEventListener("storage", handleStorage);
     };
   }, []);
+
+  useEffect(() => {
+    if (!showProfile) return;
+    if (didHydrateProfile.current) return;
+
+    const token = localStorage.getItem("sharebite.token");
+    if (!token) return;
+
+    const hasAvatar = Boolean(resolveProfileAvatar(profile));
+    if (hasAvatar) return;
+
+    didHydrateProfile.current = true;
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const response = await fetch(buildApiUrl("/api/users/profile"), {
+          headers: { ...getAuthHeaders() },
+          signal: controller.signal,
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) return;
+        upsertProfile(data);
+        setProfile(getCurrentProfile());
+      } catch {
+        // no-op
+      }
+    })();
+
+    return () => controller.abort();
+  }, [showProfile, profile]);
 
   const avatarSrc = useMemo(() => resolveProfileAvatar(profile), [profile]);
 
