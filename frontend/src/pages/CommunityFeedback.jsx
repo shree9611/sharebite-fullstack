@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import Navbar from "../components/Navbar.jsx";
-import { buildApiUrl } from "../lib/api.js";
+import { buildApiUrl, resolveAssetUrl } from "../lib/api.js";
 
 const CommunityFeedback = () => {
   const { t } = useLanguage();
@@ -58,6 +58,25 @@ const CommunityFeedback = () => {
         star
       </span>
     ));
+  };
+
+  const renderAvatar = (user) => {
+    const imageUrl = resolveAssetUrl(user?.profileImageUrl || user?.profileImage || "");
+    if (imageUrl) {
+      return (
+        <img
+          src={imageUrl}
+          alt={user?.name || "User"}
+          className="size-12 rounded-full object-cover border border-emerald-100 bg-white"
+          loading="lazy"
+        />
+      );
+    }
+    return (
+      <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 border border-emerald-100">
+        <span className="material-symbols-outlined">account_circle</span>
+      </div>
+    );
   };
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -184,11 +203,11 @@ const CommunityFeedback = () => {
                 <div key={item._id} className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                     <div className="flex items-center gap-4">
-                      <div className="size-12 rounded-full bg-emerald-50 flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined">reviews</span>
-                      </div>
+                      {renderAvatar(item?.receiver)}
                       <div>
-                        <h5 className="font-bold text-zinc-900">Receiver Feedback</h5>
+                        <h5 className="font-bold text-zinc-900">
+                          {item?.receiver?.name ? item.receiver.name : "Receiver Feedback"}
+                        </h5>
                         <p className="text-xs text-zinc-400">
                           {new Date(item?.createdAt || Date.now()).toLocaleString()}
                         </p>

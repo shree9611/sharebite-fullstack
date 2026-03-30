@@ -1,10 +1,16 @@
 const Feedback = require("../models/Feedback");
 const Request = require("../models/Request");
 const Donation = require("../models/Donation");
-const { donationWithCompatFields } = require("../utils/responseTransformers");
+const { donationWithCompatFields, userWithCompatFields } = require("../utils/responseTransformers");
 
 const enrichFeedbackDonation = (req, feedbackDoc) => {
   const row = feedbackDoc?.toObject ? feedbackDoc.toObject() : { ...feedbackDoc };
+  if (row.donor) {
+    row.donor = userWithCompatFields(req, row.donor);
+  }
+  if (row.receiver) {
+    row.receiver = userWithCompatFields(req, row.receiver);
+  }
   if (!row.donation) return row;
 
   return {
@@ -66,8 +72,8 @@ exports.getFeedback = async (req, res) => {
 
     const list = await Feedback.find(query)
       .populate("donation", "foodName image location")
-      .populate("donor", "name email")
-      .populate("receiver", "name email")
+      .populate("donor", "name email profileImage")
+      .populate("receiver", "name email profileImage")
       .sort({ createdAt: -1 });
 
     return res.json(list.map((item) => enrichFeedbackDonation(req, item)));
@@ -80,8 +86,8 @@ exports.getCommunityFeedback = async (req, res) => {
   try {
     const list = await Feedback.find({})
       .populate("donation", "foodName image location")
-      .populate("donor", "name")
-      .populate("receiver", "name")
+      .populate("donor", "name profileImage")
+      .populate("receiver", "name profileImage")
       .sort({ createdAt: -1 })
       .limit(100);
 

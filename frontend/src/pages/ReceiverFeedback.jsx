@@ -368,7 +368,11 @@ const ReceiverFeedback = () => {
                 </div>
                 <div className="pt-4 flex flex-col gap-6">
                   {selectedRequest?.logistics === "delivery" ? (
-                    <label className="flex items-center gap-3 cursor-pointer">
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm text-[#618979]">
+                        Please confirm food reached your location before submitting feedback.
+                      </p>
+                      <label className="flex items-center gap-3 cursor-pointer">
                       <input
                         className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-white border-none"
                         type="checkbox"
@@ -376,9 +380,10 @@ const ReceiverFeedback = () => {
                         onChange={(event) => setDeliveryReached(event.target.checked)}
                       />
                       <span className="text-[#111815] text-sm">
-                        Food has reached my delivery location. Notify donor.
+                        Food has reached my delivery location.
                       </span>
-                    </label>
+                      </label>
+                    </div>
                   ) : null}
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
