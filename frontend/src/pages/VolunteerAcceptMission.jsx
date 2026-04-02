@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext.jsx";
 import { apiFetchWithFallback, resolveAssetUrl } from "../lib/api.js";
@@ -96,9 +96,11 @@ const VolunteerAcceptMission = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [activeRequestId, setActiveRequestId] = useState("");
   const [activePickupId, setActivePickupId] = useState("");
+  const isLoadingRef = useRef(false);
   const { t } = useLanguage();
 
   const loadMissions = useCallback(async () => {
+    if (isLoadingRef.current) return;
     const token = localStorage.getItem("sharebite.token");
     if (!token) {
       setError("Please login as volunteer.");
@@ -106,24 +108,56 @@ const VolunteerAcceptMission = () => {
       return;
     }
 
+    isLoadingRef.current = true;
     setIsLoading(true);
     setError("");
     setActionError("");
     try {
-      const [pickupResponse, requestResponse] = await Promise.all([
+      const [pickupsResult, requestsResult] = await Promise.allSettled([
         apiFetchWithFallback("/api/pickups", {
           headers: { Authorization: `Bearer ${token}` },
+          timeoutMs: 15000,
         }),
         apiFetchWithFallback("/api/requests", {
           headers: { Authorization: `Bearer ${token}` },
+          timeoutMs: 15000,
         }),
       ]);
 
-      const pickupsData = pickupResponse.ok ? await pickupResponse.json().catch(() => []) : [];
-      const requestsData = requestResponse.ok ? await requestResponse.json().catch(() => []) : [];
+      const errors = [];
 
-      const pickupRows = Array.isArray(pickupsData) ? pickupsData : [];
-      const requestRows = Array.isArray(requestsData) ? requestsData : [];
+      const readResponsePayload = async (response) => {
+        const data = await response.json().catch(() => ({}));
+        return data && typeof data === "object" ? data : {};
+      };
+
+      let pickupRows = [];
+      if (pickupsResult.status === "fulfilled") {
+        const pickupResponse = pickupsResult.value;
+        if (pickupResponse.ok) {
+          const pickupsData = await pickupResponse.json().catch(() => []);
+          pickupRows = Array.isArray(pickupsData) ? pickupsData : [];
+        } else {
+          const data = await readResponsePayload(pickupResponse);
+          errors.push(data?.message || `Unable to load pickups (${pickupResponse.status}).`);
+        }
+      } else {
+        errors.push(pickupsResult.reason?.message || "Unable to load pickups.");
+      }
+
+      let requestRows = [];
+      if (requestsResult.status === "fulfilled") {
+        const requestResponse = requestsResult.value;
+        if (requestResponse.ok) {
+          const requestsData = await requestResponse.json().catch(() => []);
+          requestRows = Array.isArray(requestsData) ? requestsData : [];
+        } else {
+          const data = await readResponsePayload(requestResponse);
+          errors.push(data?.message || `Unable to load requests (${requestResponse.status}).`);
+        }
+      } else {
+        errors.push(requestsResult.reason?.message || "Unable to load requests.");
+      }
 
       const normalizedPickups = pickupRows.map(normalizeMission);
       const pickupRequestIds = new Set(
@@ -146,6 +180,9 @@ const VolunteerAcceptMission = () => {
       });
 
       setMissions(combined);
+      if (errors.length) {
+        setError(errors.join(" "));
+      }
     } catch (loadError) {
       if (loadError instanceof TypeError) {
         setError("Unable to reach server. Please check your connection and try again.");
@@ -154,6 +191,7 @@ const VolunteerAcceptMission = () => {
       }
     } finally {
       setIsLoading(false);
+      isLoadingRef.current = false;
     }
   }, []);
 
