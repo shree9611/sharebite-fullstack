@@ -4,17 +4,17 @@
 
 @layer base {
   :root {
-    --color-primary: #2563eb;
-    --color-primary-dark: #1d4ed8;
-    --color-primary-soft: #eff6ff;
+    --color-primary: #ff8a00;
+    --color-primary-dark: #e07600;
+    --color-primary-soft: #fff3e0;
     --color-accent: #16a34a;
     --color-accent-soft: #f0fdf4;
-    --color-bg: #ffffff;
+    --color-bg: #fff3e0;
     --color-surface: #ffffff;
-    --color-surface-alt: #f8fafc;
-    --color-border: #e2e8f0;
-    --color-text-main: #0f172a;
-    --color-text-muted: #475569;
+    --color-surface-alt: #fffaf2;
+    --color-border: #f2d4b2;
+    --color-text-main: #2b1b0e;
+    --color-text-muted: #6b4e3d;
   }
 }
 
@@ -28,6 +28,12 @@
     @apply overflow-x-hidden;
     background-color: var(--color-bg);
     color: var(--color-text-main);
+  }
+  a {
+    color: var(--color-primary);
+  }
+  a:hover {
+    color: var(--color-primary-dark);
   }
   #root {
     @apply min-h-screen;

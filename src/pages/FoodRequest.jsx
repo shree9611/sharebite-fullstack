@@ -158,21 +158,21 @@ const FoodRequest = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#fffdf7]">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-background-light">
       <div className="max-w-2xl w-full py-8 sm:py-12">
         <div className="text-center mb-8">
           <div className="flex justify-center items-center gap-2 mb-2">
-            <span className="material-symbols-outlined text-[#10b981] text-4xl">volunteer_activism</span>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">ShareBite</h1>
+            <span className="material-symbols-outlined text-primary text-4xl">volunteer_activism</span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-text-main">ShareBite</h1>
           </div>
-          <p className="text-slate-500 font-medium">Food Request Form</p>
+          <p className="text-text-muted font-medium">Food Request Form</p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-6 sm:p-8 md:p-12">
           <form className="space-y-8" onSubmit={handleSubmit}>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <div className="rounded-xl border border-border bg-surface-alt p-4 text-sm text-text-main">
               {selectedFoodImage ? (
-                <div className="mb-3 h-36 w-full rounded-xl overflow-hidden border border-slate-200 bg-white">
+                <div className="mb-3 h-36 w-full rounded-xl overflow-hidden border border-border bg-white">
                   <img src={selectedFoodImage} alt={donation?.foodName || "Selected food"} className="h-full w-full object-cover" />
                 </div>
               ) : null}
@@ -182,11 +182,11 @@ const FoodRequest = () => {
             </div>
 
             <div className="space-y-3">
-              <label className="block text-sm font-semibold text-slate-700" htmlFor="people-count">
+              <label className="block text-sm font-semibold text-text-main" htmlFor="people-count">
                 How many people need food?
               </label>
               <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">groups</span>
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted/70">groups</span>
                 <input
                   id="people-count"
                   type="number"
@@ -195,23 +195,23 @@ const FoodRequest = () => {
                   value={peopleCount}
                   onChange={(event) => setPeopleCount(event.target.value)}
                   placeholder="Enter number"
-                  className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 focus:ring-[#10b981] focus:border-[#10b981] outline-none"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl border border-border focus:ring-primary/40 focus:border-primary outline-none"
                   required
                 />
               </div>
               {hasQuantityLimit ? (
-                <p className="text-xs text-slate-500">Available quantity: {availableQuantity}</p>
+                <p className="text-xs text-text-muted">Available quantity: {availableQuantity}</p>
               ) : null}
             </div>
 
             <div className="space-y-3">
-              <label className="block text-sm font-semibold text-slate-700">Preferred Food Type</label>
+              <label className="block text-sm font-semibold text-text-main">Preferred Food Type</label>
               <div className="flex gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setFoodPreference("veg")}
                   className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                    foodPreference === "veg" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
+                    foodPreference === "veg" ? "bg-primary text-white border-primary" : "border-border text-text-muted"
                   }`}
                 >
                   Veg
@@ -220,7 +220,7 @@ const FoodRequest = () => {
                   type="button"
                   onClick={() => setFoodPreference("non-veg")}
                   className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                    foodPreference === "non-veg" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
+                    foodPreference === "non-veg" ? "bg-primary text-white border-primary" : "border-border text-text-muted"
                   }`}
                 >
                   Non-Veg
@@ -229,7 +229,7 @@ const FoodRequest = () => {
                   type="button"
                   onClick={() => setFoodPreference("any")}
                   className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                    foodPreference === "any" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
+                    foodPreference === "any" ? "bg-primary text-white border-primary" : "border-border text-text-muted"
                   }`}
                 >
                   Any
@@ -238,7 +238,7 @@ const FoodRequest = () => {
             </div>
 
             <div className="space-y-4">
-              <label className="block text-sm font-semibold text-slate-700">Logistics Preference</label>
+              <label className="block text-sm font-semibold text-text-main">Logistics Preference</label>
               <div className="flex gap-3">
                 <button
                   type="button"
@@ -248,7 +248,7 @@ const FoodRequest = () => {
                     setLocationStatus("");
                   }}
                   className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                    logistics === "pickup" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
+                    logistics === "pickup" ? "bg-primary text-white border-primary" : "border-border text-text-muted"
                   }`}
                 >
                   Self-Pickup
@@ -263,7 +263,7 @@ const FoodRequest = () => {
                     }
                   }}
                   className={`px-4 py-2 rounded-full border text-sm font-semibold ${
-                    logistics === "delivery" ? "bg-[#10b981] text-white border-[#10b981]" : "border-slate-200 text-slate-600"
+                    logistics === "delivery" ? "bg-primary text-white border-primary" : "border-border text-text-muted"
                   }`}
                 >
                   Request Delivery
@@ -277,17 +277,17 @@ const FoodRequest = () => {
                     value={address}
                     onChange={(event) => setAddress(event.target.value)}
                     placeholder="Delivery address is auto-filled. You can edit if needed."
-                    className="w-full p-3 rounded-2xl border border-slate-200 focus:ring-[#10b981] focus:border-[#10b981] outline-none"
+                    className="w-full p-3 rounded-2xl border border-border focus:ring-primary/40 focus:border-primary outline-none"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => detectAndFillLocation("delivery")}
-                    className="text-xs font-semibold text-[#10b981] hover:text-[#059669]"
+                    className="text-xs font-semibold text-primary hover:text-primary-dark"
                   >
                     Refresh Current Location
                   </button>
-                  {locationStatus ? <p className="text-xs text-slate-500">{locationStatus}</p> : null}
+                  {locationStatus ? <p className="text-xs text-text-muted">{locationStatus}</p> : null}
                 </div>
               )}
             </div>
@@ -296,7 +296,7 @@ const FoodRequest = () => {
             {success ? <p className="text-sm text-green-700">{success}</p> : null}
 
             <button
-              className="w-full bg-[#10b981] hover:bg-[#059669] text-white font-bold py-4 rounded-2xl transition-all disabled:opacity-60"
+              className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-4 rounded-2xl transition-all disabled:opacity-60"
               type="submit"
               disabled={isSubmitting || !donationId}
             >
