@@ -212,7 +212,7 @@ const AccountDetails = () => {
   
   {/* Logo + Brand */}
   <div className="flex items-center gap-2">
-    <span className="material-symbols-outlined text-green-500 text-3xl">
+    <span className="material-symbols-outlined text-primary text-3xl">
       volunteer_activism
     </span>
     <h2 className="text-2xl font-extrabold text-[#111815]">

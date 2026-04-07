@@ -244,7 +244,7 @@ const RegistrationStep2 = () => {
         <div className="mx-auto w-full max-w-[1040px] rounded-3xl border border-teal-100 bg-white shadow-[0_25px_70px_-45px_rgba(13,148,136,0.45)]">
           <header className="flex items-center justify-between px-4 sm:px-6 md:px-10 py-5 border-b border-[#eef3f1] bg-white">
             <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-green-500 text-[26px]">
+              <span className="material-symbols-outlined text-primary text-[26px]">
                 volunteer_activism
               </span>
               <span className="font-bold text-[#111815]">{t("ShareBite")}</span>

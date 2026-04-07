@@ -275,7 +275,7 @@ const VolunteerAcceptMission = () => {
       <header className="border-b border-[#efe8d8] bg-[#fffdf7] px-4 sm:px-6 md:px-10 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 font-bold text-lg relative">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-green-500">volunteer_activism</span>
+            <span className="material-symbols-outlined text-primary">volunteer_activism</span>
             {t("ShareBite")}
           </div>
           <div className="relative flex items-center gap-2">

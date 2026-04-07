@@ -76,7 +76,7 @@ const CommunityFeedback = () => {
           <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
             <div className="flex items-center justify-between gap-2 font-bold text-lg relative">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-green-500">
+                <span className="material-symbols-outlined text-primary">
                   volunteer_activism
                 </span>
                 {t("ShareBite")}
@@ -142,28 +142,28 @@ const CommunityFeedback = () => {
             <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e6eee9] w-full sm:w-64 shrink-0">
               <nav className="flex flex-col gap-2 text-lg font-extrabold text-[#7a9087]">
                 <Link
-                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/donate") ? "bg-green-50 text-green-600" : ""}`}
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/donate") ? "bg-primary/10 text-primary" : ""}`}
                   to="/donor/donate"
                 >
-                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/donate") ? "text-green-600" : ""}`}>
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/donate") ? "text-primary" : ""}`}>
                     add_circle
                   </span>
                   {t("Donate Food")}
                 </Link>
                 <Link
-                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/approvals") ? "bg-green-50 text-green-600" : ""}`}
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/approvals") ? "bg-primary/10 text-primary" : ""}`}
                   to="/donor/approvals"
                 >
-                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/approvals") ? "text-green-600" : ""}`}>
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/approvals") ? "text-primary" : ""}`}>
                     verified
                   </span>
                   {t("Request Approval")}
                 </Link>
                 <Link
-                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/feedback") ? "bg-green-50 text-green-600" : ""}`}
+                  className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/feedback") ? "bg-primary/10 text-primary" : ""}`}
                   to="/donor/feedback"
                 >
-                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/feedback") ? "text-green-600" : ""}`}>
+                  <span className={`material-symbols-outlined text-[22px] ${isActive("/donor/feedback") ? "text-primary" : ""}`}>
                     forum
                   </span>
                   {t("Community Feedback")}
@@ -175,7 +175,7 @@ const CommunityFeedback = () => {
             <div className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="material-symbols-outlined text-green-500 text-3xl">
+                  <span className="material-symbols-outlined text-primary text-3xl">
                     volunteer_activism
                   </span>
                   <h2 className="text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight font-display">

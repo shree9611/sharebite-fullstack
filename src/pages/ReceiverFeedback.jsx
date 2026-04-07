@@ -138,7 +138,7 @@ const ReceiverFeedback = () => {
             <div className="flex flex-col w-full max-w-none flex-1">
               <header className="flex items-center justify-between whitespace-nowrap px-2 py-1">
                 <div className="flex items-center gap-2 font-bold text-lg text-[#111815]">
-                  <span className="material-symbols-outlined text-green-500">
+                  <span className="material-symbols-outlined text-primary">
                     volunteer_activism
                   </span>
                   {t("ShareBite")}
@@ -275,7 +275,7 @@ const ReceiverFeedback = () => {
                         >
                           <span
                             className={`material-symbols-outlined text-4xl cursor-pointer ${
-                              value <= foodRating ? "text-green-600" : "text-[#dbe6e1]"
+                              value <= foodRating ? "text-primary" : "text-[#dbe6e1]"
                             }`}
                           >
                             star
@@ -303,7 +303,7 @@ const ReceiverFeedback = () => {
                         >
                           <span
                             className={`material-symbols-outlined text-4xl cursor-pointer ${
-                              value <= deliveryRating ? "text-green-600" : "text-[#dbe6e1]"
+                              value <= deliveryRating ? "text-primary" : "text-[#dbe6e1]"
                             }`}
                           >
                             star
@@ -370,7 +370,7 @@ const ReceiverFeedback = () => {
                   {selectedRequest?.logistics === "delivery" ? (
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
-                        className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-white border-none"
+                        className="rounded text-primary focus:ring-primary/30 h-5 w-5 bg-white border-none"
                         type="checkbox"
                         checked={deliveryReached}
                         onChange={(event) => setDeliveryReached(event.target.checked)}
@@ -383,7 +383,7 @@ const ReceiverFeedback = () => {
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       defaultChecked
-                      className="rounded text-green-600 focus:ring-green-300 h-5 w-5 bg-white border-none"
+                      className="rounded text-primary focus:ring-primary/30 h-5 w-5 bg-white border-none"
                       type="checkbox"
                     />
                     <span className="text-[#111815] text-sm">
@@ -392,7 +392,7 @@ const ReceiverFeedback = () => {
                   </label>
                   <div className="flex flex-col sm:flex-row gap-4">
                     <button
-                      className="flex-1 bg-green-600 hover:bg-green-600/90 text-[#111815] font-black text-base sm:text-lg py-4 rounded-xl transition-all shadow-lg shadow-green-200 flex items-center justify-center gap-2"
+                      className="flex-1 bg-primary hover:bg-primary-dark text-white font-black text-base sm:text-lg py-4 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
                       type="button"
                       disabled={isSubmitting}
                       onClick={handleSubmitFeedback}
@@ -409,11 +409,11 @@ const ReceiverFeedback = () => {
                   <p className="text-sm text-red-600">{submitError}</p>
                 ) : null}
                 {submitSuccess ? (
-                  <p className="text-sm text-green-600">{submitSuccess}</p>
+                  <p className="text-sm text-primary">{submitSuccess}</p>
                 ) : null}
               </div>
-              <div className="flex items-center gap-4 p-6 bg-green-50 rounded-xl border border-green-100 italic text-[#111815]">
-                <span className="material-symbols-outlined text-green-600 text-3xl">
+              <div className="flex items-center gap-4 p-6 bg-primary/10 rounded-xl border border-primary/20 italic text-[#111815]">
+                <span className="material-symbols-outlined text-primary text-3xl">
                   format_quote
                 </span>
                 <p className="text-base">
@@ -428,13 +428,13 @@ const ReceiverFeedback = () => {
                 {t("Receiver Footer Line")}
               </p>
               <div className="flex gap-6">
-                <a className="text-[#618979] text-sm hover:text-green-600">
+                <a className="text-[#618979] text-sm hover:text-primary">
                   {t("Privacy Policy")}
                 </a>
-                <a className="text-[#618979] text-sm hover:text-green-600">
+                <a className="text-[#618979] text-sm hover:text-primary">
                   {t("Terms of Service")}
                 </a>
-                <a className="text-[#618979] text-sm hover:text-green-600">
+                <a className="text-[#618979] text-sm hover:text-primary">
                   {t("Help Center")}
                 </a>
               </div>

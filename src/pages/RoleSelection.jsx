@@ -29,12 +29,12 @@ const RoleSelection = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
+    <div className="min-h-screen bg-background-light text-text-main">
 
       {/* Header */}
-      <header className="flex items-center justify-between px-4 sm:px-6 md:px-10 py-5 border-b bg-white">
+      <header className="flex items-center justify-between px-4 sm:px-6 md:px-10 py-5 border-b border-border bg-surface">
         <div className="flex items-center gap-2 font-bold text-lg">
-          <span className="material-symbols-outlined text-green-500">
+          <span className="material-symbols-outlined text-primary">
             volunteer_activism
           </span>
           {t("ShareBite")}
@@ -49,7 +49,7 @@ const RoleSelection = () => {
           <h1 className="text-2xl sm:text-3xl font-extrabold mb-2">
             {t("Join Community")}
           </h1>
-          <p className="text-sm sm:text-base text-gray-500 mb-8 sm:mb-10">
+          <p className="text-sm sm:text-base text-text-muted mb-8 sm:mb-10">
             {t("Choose Role Subtitle")}
           </p>
 
@@ -74,8 +74,8 @@ const RoleSelection = () => {
                     className={`mx-auto mb-4 h-12 w-12 rounded-full flex items-center justify-center
                       ${
                         isSelected
-                          ? "bg-green-500 text-white"
-                          : "bg-gray-100 text-gray-400"
+                          ? "bg-primary text-white"
+                          : "bg-surface-alt text-text-muted/70"
                       }
                     `}
                   >
@@ -85,7 +85,7 @@ const RoleSelection = () => {
                   </div>
 
                   <h3 className="font-semibold mb-1">{role.title}</h3>
-                  <p className="text-sm text-gray-500">{role.desc}</p>
+                  <p className="text-sm text-text-muted">{role.desc}</p>
                 </div>
               );
             })}
@@ -98,14 +98,14 @@ const RoleSelection = () => {
       state: { role: selectedRole },
     })
   }
-  className="w-full sm:w-auto px-10 py-3 rounded-full bg-green-500 text-white font-semibold shadow hover:brightness-110 transition"
+  className="w-full sm:w-auto px-10 py-3 rounded-full bg-primary text-white font-semibold shadow hover:bg-primary-dark transition"
 >
   {t("Continue")} {t("As")} {t(`Role ${selectedRole}`)} →
 </button>
 
 
           {/* Footer Icons */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 mt-12 text-sm text-gray-500">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 mt-12 text-sm text-text-muted">
             <span className="flex items-center gap-1">
               <span className="material-symbols-outlined text-base">eco</span>
               {t("Zero Waste Policy")}

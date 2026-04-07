@@ -174,27 +174,27 @@ const Login = () => {
       setIsSubmitting(false);
     }
   };
-  return (
-    <div className="min-h-screen bg-white flex flex-col">
+	  return (
+	    <div className="min-h-screen bg-background-light text-text-main flex flex-col">
 
       {/* NAVBAR */}
-      <header className="bg-white border-b px-4 sm:px-6 md:px-10 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2 font-bold text-lg">
-          <span className="material-symbols-outlined text-green-500">
-            volunteer_activism
-          </span>
-          {t("ShareBite")}
-        </div>
+	      <header className="bg-surface border-b border-border px-4 sm:px-6 md:px-10 py-5 flex items-center justify-between">
+	        <div className="flex items-center gap-2 font-bold text-lg">
+	          <span className="material-symbols-outlined text-primary">
+	            volunteer_activism
+	          </span>
+	          {t("ShareBite")}
+	        </div>
 
-        <Link to="/account-details">
-          <button className="px-6 h-10 rounded-full bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200 transition">
-            {t("Sign Up")}
-          </button>
-        </Link>
-      </header>
+	        <Link to="/account-details">
+	          <button className="px-6 h-10 rounded-full bg-surface-alt text-text-main text-sm font-bold hover:bg-primary/10 transition">
+	            {t("Sign Up")}
+	          </button>
+	        </Link>
+	      </header>
 
       {/* MAIN */}
-      <main className="flex flex-1 flex-col lg:flex-row">
+	      <main className="flex flex-1 flex-col lg:flex-row">
 
         {/* LEFT IMAGE */}
         <div className="hidden lg:flex w-1/2 relative overflow-hidden">
@@ -215,13 +215,13 @@ const Login = () => {
         </div>
 
         {/* RIGHT FORM */}
-        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10 lg:py-0">
-          <div className="w-full max-w-md bg-white border border-teal-200 shadow-lg shadow-teal-100/50 rounded-2xl p-6 sm:p-8">
+	        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10 lg:py-0">
+	          <div className="w-full max-w-md bg-surface border border-border shadow-lg shadow-primary/10 rounded-2xl p-6 sm:p-8">
 
-            <h2 className="text-2xl sm:text-3xl font-bold mb-2">{t("Welcome Back")}</h2>
-            <p className="text-gray-600 mb-8">
-              {t("Login Subtitle")}
-            </p>
+	            <h2 className="text-2xl sm:text-3xl font-bold mb-2">{t("Welcome Back")}</h2>
+	            <p className="text-text-muted mb-8">
+	              {t("Login Subtitle")}
+	            </p>
 
             {!showReset ? (
               <form className="space-y-5" onSubmit={handleSubmit}>
@@ -231,29 +231,29 @@ const Login = () => {
                 <label className="text-sm font-semibold">
                   {t("Email Address")}
                 </label>
-                <input
-                  type="email"
-                  placeholder={t("Email Placeholder")}
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border focus:ring-2 focus:ring-primary/40"
-                />
-              </div>
+	                <input
+	                  type="email"
+	                  placeholder={t("Email Placeholder")}
+	                  value={email}
+	                  onChange={(event) => setEmail(event.target.value)}
+	                  className="w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border border-border focus:ring-2 focus:ring-primary/40"
+	                />
+	              </div>
 
               {/* Password */}
               <div>
                 <label className="text-sm font-semibold">{t("Password")}</label>
-                <input
-                  type="password"
-                  placeholder={t("Password Login Placeholder")}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className={`w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border focus:ring-2 focus:ring-primary/40 ${
-                    showPasswordError
-                      ? "border-red-500 focus:ring-red-200"
-                      : "border-gray-200"
-                  }`}
-                />
+	                <input
+	                  type="password"
+	                  placeholder={t("Password Login Placeholder")}
+	                  value={password}
+	                  onChange={(event) => setPassword(event.target.value)}
+	                  className={`w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border focus:ring-2 focus:ring-primary/40 ${
+	                    showPasswordError
+	                      ? "border-red-500 focus:ring-red-200"
+	                      : "border-border"
+	                  }`}
+	                />
                 {showPasswordError && (
                   <p className="mt-2 text-xs text-red-600">
                     {t("Password Error")}
@@ -261,12 +261,12 @@ const Login = () => {
                 )}
               </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 text-gray-600">
-                  <input
-                    type="checkbox"
-                    className="accent-primary"
-                    checked={rememberMe}
+	              <div className="flex items-center justify-between text-sm">
+	                <label className="flex items-center gap-2 text-text-muted">
+	                  <input
+	                    type="checkbox"
+	                    className="accent-primary"
+	                    checked={rememberMe}
                     onChange={(event) => setRememberMe(event.target.checked)}
                   />
                   {t("Remember Me")}
@@ -286,7 +286,7 @@ const Login = () => {
 <button
   type="submit"
   disabled={isSubmitting}
-  className="w-full sm:w-auto sm:px-20 py-3 rounded-full bg-green-600 text-white font-semibold shadow hover:brightness-110 transition"
+  className="w-full sm:w-auto sm:px-20 py-3 rounded-full bg-primary text-white font-semibold shadow hover:bg-primary-dark transition"
 >
   {isSubmitting ? "Logging in..." : t("Login")}
 </button>
@@ -294,15 +294,15 @@ const Login = () => {
 
 {/* Divider */}
 <div className="flex items-center gap-4 my-6">
-  <div className="flex-1 h-px bg-gray-300"></div>
-  <span className="text-sm text-gray-500">{t("Or Continue With")}</span>
-  <div className="flex-1 h-px bg-gray-300"></div>
+  <div className="flex-1 h-px bg-border"></div>
+  <span className="text-sm text-text-muted">{t("Or Continue With")}</span>
+  <div className="flex-1 h-px bg-border"></div>
 </div>
 
 {/* Social Login */}
 <div className="flex flex-col sm:flex-row gap-4">
   {/* Google */}
-  <button className="flex-1 h-12 sm:h-14 border rounded-full flex items-center justify-center gap-2 hover:bg-gray-50 transition">
+  <button className="flex-1 h-12 sm:h-14 border border-border rounded-full flex items-center justify-center gap-2 hover:bg-surface-alt transition">
     <img
       src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
       alt="Google"
@@ -312,11 +312,11 @@ const Login = () => {
   </button>
 </div>
 
-              <div className="text-center text-sm text-gray-600 mt-6">
-                {t("No Account")}{" "}
-                <Link to="/account-details" className="text-primary font-bold">
-                  {t("Create Account Link")}
-                </Link>
+	              <div className="text-center text-sm text-text-muted mt-6">
+	                {t("No Account")}{" "}
+	                <Link to="/account-details" className="text-primary font-bold">
+	                  {t("Create Account Link")}
+	                </Link>
               </div>
               </form>
             ) : (
@@ -325,40 +325,40 @@ const Login = () => {
                   <label className="text-sm font-semibold">
                     {t("Email Address")}
                   </label>
-                  <input
-                    type="email"
-                    placeholder={t("Email Placeholder")}
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    className="w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border focus:ring-2 focus:ring-primary/40"
-                  />
-                </div>
+	                  <input
+	                    type="email"
+	                    placeholder={t("Email Placeholder")}
+	                    value={email}
+	                    onChange={(event) => setEmail(event.target.value)}
+	                    className="w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border border-border focus:ring-2 focus:ring-primary/40"
+	                  />
+	                </div>
 
                 <div>
                   <label className="text-sm font-semibold">
                     {t("Create New Password")}
                   </label>
-                  <input
-                    type="password"
-                    placeholder={t("Password Strong Placeholder")}
-                    value={resetPassword}
-                    onChange={(event) => setResetPassword(event.target.value)}
-                    className="w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border focus:ring-2 focus:ring-primary/40"
-                  />
-                </div>
+	                  <input
+	                    type="password"
+	                    placeholder={t("Password Strong Placeholder")}
+	                    value={resetPassword}
+	                    onChange={(event) => setResetPassword(event.target.value)}
+	                    className="w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border border-border focus:ring-2 focus:ring-primary/40"
+	                  />
+	                </div>
 
                 <div>
                   <label className="text-sm font-semibold">
                     {t("Confirm Password")}
                   </label>
-                  <input
-                    type="password"
-                    placeholder={t("Confirm Password Placeholder")}
-                    value={resetConfirm}
-                    onChange={(event) => setResetConfirm(event.target.value)}
-                    className="w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border focus:ring-2 focus:ring-primary/40"
-                  />
-                </div>
+	                  <input
+	                    type="password"
+	                    placeholder={t("Confirm Password Placeholder")}
+	                    value={resetConfirm}
+	                    onChange={(event) => setResetConfirm(event.target.value)}
+	                    className="w-full h-12 sm:h-14 mt-1 px-4 rounded-xl border border-border focus:ring-2 focus:ring-primary/40"
+	                  />
+	                </div>
 
                 {resetError && (
                   <p className="text-xs text-red-600">{resetError}</p>
@@ -369,22 +369,22 @@ const Login = () => {
                   </p>
                 )}
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 py-3 rounded-full bg-green-600 text-white font-semibold shadow hover:brightness-110 transition"
-                  >
-                    {isSubmitting ? "Updating..." : t("Update Password")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowReset(false)}
-                    className="px-4 py-3 rounded-full border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition"
-                  >
-                    {t("Back to Login")}
-                  </button>
-                </div>
+	                <div className="flex items-center gap-3">
+	                  <button
+	                    type="submit"
+	                    disabled={isSubmitting}
+	                    className="flex-1 py-3 rounded-full bg-primary text-white font-semibold shadow hover:bg-primary-dark transition"
+	                  >
+	                    {isSubmitting ? "Updating..." : t("Update Password")}
+	                  </button>
+	                  <button
+	                    type="button"
+	                    onClick={() => setShowReset(false)}
+	                    className="px-4 py-3 rounded-full border border-border text-text-muted font-semibold hover:bg-surface-alt transition"
+	                  >
+	                    {t("Back to Login")}
+	                  </button>
+	                </div>
               </form>
             )}
 

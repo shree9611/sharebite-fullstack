@@ -8,7 +8,7 @@ export default function Registration() {
       {/* NAVBAR (same for both steps) */}
       <header className="flex items-center justify-between px-4 sm:px-6 md:px-10 py-5 bg-white border-b">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-green-500 text-3xl">
+          <span className="material-symbols-outlined text-primary text-3xl">
             volunteer_activism
           </span>
           <h1 className="text-xl font-bold">ShareBite</h1>

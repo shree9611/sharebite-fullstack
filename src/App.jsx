@@ -23,89 +23,97 @@ const Profile = lazy(() => import("./pages/Profile"));
 export default function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-sm text-[#7a9087]">Loading...</div>}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/disclaimer" element={<Disclaimer />} />
-          <Route path="/roles" element={<RoleSelection />} />
-          <Route path="/account-details" element={<AccountDetails />} />
-          <Route path="/registration-step-2" element={<RegistrationStep2 />} />
-          <Route path="/registration-success" element={<RegistrationSuccess />} />
-          <Route
-            path="/dashboard"
-            element={
-              <RoleProtectedRoute allowedRoles={["Receiver"]}>
-                <UserDashboard />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-requests"
-            element={
-              <RoleProtectedRoute allowedRoles={["Receiver"]}>
-                <MyRequests />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/food-request"
-            element={
-              <RoleProtectedRoute allowedRoles={["Receiver"]}>
-                <FoodRequest />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/donor/donate"
-            element={
-              <RoleProtectedRoute allowedRoles={["Donor"]}>
-                <DonateFood />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/donor/approvals"
-            element={
-              <RoleProtectedRoute allowedRoles={["Donor"]}>
-                <RequestApproval />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/donor/feedback"
-            element={
-              <RoleProtectedRoute allowedRoles={["Donor"]}>
-                <CommunityFeedback />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/volunteer/acceptmission"
-            element={
-              <RoleProtectedRoute allowedRoles={["Volunteer"]}>
-                <VolunteerAcceptMission />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="/receiver/feedback"
-            element={
-              <RoleProtectedRoute allowedRoles={["Receiver"]}>
-                <ReceiverFeedback />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register-access" element={<RegisterAccess />} />
-          <Route
-            path="/profile"
-            element={
-              <RoleProtectedRoute allowedRoles={["Donor", "Receiver", "Volunteer"]}>
-                <Profile />
-              </RoleProtectedRoute>
-            }
-          />
-        </Routes>
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center bg-background-light text-sm text-text-muted">
+            Loading...
+          </div>
+        }
+      >
+        <div className="min-h-screen bg-background-light text-text-main">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/roles" element={<RoleSelection />} />
+            <Route path="/account-details" element={<AccountDetails />} />
+            <Route path="/registration-step-2" element={<RegistrationStep2 />} />
+            <Route path="/registration-success" element={<RegistrationSuccess />} />
+            <Route
+              path="/dashboard"
+              element={
+                <RoleProtectedRoute allowedRoles={["Receiver"]}>
+                  <UserDashboard />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-requests"
+              element={
+                <RoleProtectedRoute allowedRoles={["Receiver"]}>
+                  <MyRequests />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/food-request"
+              element={
+                <RoleProtectedRoute allowedRoles={["Receiver"]}>
+                  <FoodRequest />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/donor/donate"
+              element={
+                <RoleProtectedRoute allowedRoles={["Donor"]}>
+                  <DonateFood />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/donor/approvals"
+              element={
+                <RoleProtectedRoute allowedRoles={["Donor"]}>
+                  <RequestApproval />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/donor/feedback"
+              element={
+                <RoleProtectedRoute allowedRoles={["Donor"]}>
+                  <CommunityFeedback />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/volunteer/acceptmission"
+              element={
+                <RoleProtectedRoute allowedRoles={["Volunteer"]}>
+                  <VolunteerAcceptMission />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/receiver/feedback"
+              element={
+                <RoleProtectedRoute allowedRoles={["Receiver"]}>
+                  <ReceiverFeedback />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register-access" element={<RegisterAccess />} />
+            <Route
+              path="/profile"
+              element={
+                <RoleProtectedRoute allowedRoles={["Donor", "Receiver", "Volunteer"]}>
+                  <Profile />
+                </RoleProtectedRoute>
+              }
+            />
+          </Routes>
+        </div>
       </Suspense>
     </BrowserRouter>
   );
