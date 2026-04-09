@@ -305,7 +305,7 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f4f5f2] px-4 py-10 sm:px-6 lg:px-10">
+      <div className="min-h-screen bg-transparent px-4 py-10 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-5xl rounded-3xl border border-[#dde7dc] bg-white p-6 text-sm text-[#6f7368] shadow-sm">
           Loading profile...
         </div>
@@ -314,7 +314,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f5f2] px-4 py-8 sm:px-6 md:py-10 lg:px-10">
+    <div className="min-h-screen bg-transparent px-4 py-8 sm:px-6 md:py-10 lg:px-10">
       <div className="mx-auto max-w-5xl rounded-3xl border border-[#dde7dc] bg-white p-5 shadow-[0_20px_50px_-30px_rgba(24,66,33,0.35)] sm:p-8">
         <div className="flex justify-end">
           <button

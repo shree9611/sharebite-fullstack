@@ -212,7 +212,7 @@ const MyRequests = () => {
   }, [activeRequests.length, pastRequests.length]);
 
   return (
-    <div className="bg-[#fffdf7] text-[#111814] min-h-screen">
+    <div className="bg-transparent text-text-main min-h-screen">
       <div className="relative flex h-auto min-h-screen w-full flex-col">
         <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[#efe8d8] bg-[#fffdf7] px-4 sm:px-6 md:px-10 py-5">
           <div className="flex items-center gap-4">

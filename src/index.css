@@ -24,11 +24,15 @@
     display: none;
   }
 
+  html,
   body {
     @apply overflow-x-hidden;
     background-color: var(--color-bg) !important;
     background-image: none !important;
     color: var(--color-text-main);
+  }
+  #root {
+    background-color: transparent !important;
   }
   a {
     color: var(--color-primary);

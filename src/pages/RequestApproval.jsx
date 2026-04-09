@@ -113,7 +113,7 @@ const RequestApproval = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-transparent text-text-main">
       <header className="border-b border-[#e7efe9] bg-white px-6 py-4">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-2 text-lg font-bold text-[#1b1f23]">

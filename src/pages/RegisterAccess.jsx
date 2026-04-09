@@ -7,7 +7,7 @@ export default function RegisterAccess() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-display">
+    <div className="min-h-screen flex flex-col bg-transparent text-text-main font-display">
 
       {/* NAVBAR */}
       <header className="w-full bg-white border-b px-4 sm:px-6 md:px-10 py-5 flex items-center justify-between">
