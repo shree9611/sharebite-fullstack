@@ -1,18 +1,37 @@
-# root
-.git/
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# frontend
+# Dependencies / build output
+node_modules
+dist/
+dist-ssr
+*.local
+
+# App data / caches
+.npm-cache/
+uploads/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Optional monorepo folders
 frontend/node_modules/
 frontend/dist/
 frontend/.env
-
-# backend
 backend/node_modules/
 backend/uploads/
 backend/.env
-
-# logs
-*.log
-npm-debug.log*
-node_modules
-dist/
