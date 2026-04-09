@@ -44,7 +44,7 @@ export default function Home() {
     }`;
 
   return (
-    <div className="overflow-x-hidden font-[Poppins] bg-background-light text-text-main scroll-smooth">
+    <div className="overflow-x-hidden font-[Poppins] bg-transparent text-text-main scroll-smooth">
       <header className="sticky top-0 z-50 w-full bg-background-light/95 backdrop-blur border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-4 sm:h-20 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 font-bold text-lg">

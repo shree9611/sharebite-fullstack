@@ -175,7 +175,7 @@ const Login = () => {
     }
   };
 	  return (
-	    <div className="min-h-screen bg-background-light text-text-main flex flex-col">
+	    <div className="min-h-screen bg-transparent text-text-main flex flex-col">
 
       {/* NAVBAR */}
 	      <header className="bg-surface border-b border-border px-4 sm:px-6 md:px-10 py-5 flex items-center justify-between">
@@ -194,7 +194,7 @@ const Login = () => {
 	      </header>
 
       {/* MAIN */}
-	      <main className="flex flex-1 flex-col lg:flex-row">
+      <main className="flex flex-1 flex-col lg:flex-row">
 
         {/* LEFT IMAGE */}
         <div className="hidden lg:flex w-1/2 relative overflow-hidden">

@@ -10,6 +10,7 @@
     --color-accent: #16a34a;
     --color-accent-soft: #f0fdf4;
     --color-bg: #fff3e0;
+    --color-bg-2: #ffedd5;
     --color-surface: #ffffff;
     --color-surface-alt: #fffaf2;
     --color-border: #f2d4b2;
@@ -27,6 +28,8 @@
   body {
     @apply overflow-x-hidden;
     background-color: var(--color-bg);
+    background-image: linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface-alt) 45%, var(--color-bg-2) 100%);
+    background-attachment: fixed;
     color: var(--color-text-main);
   }
   a {

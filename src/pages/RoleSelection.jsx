@@ -29,7 +29,7 @@ const RoleSelection = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background-light text-text-main">
+    <div className="min-h-screen bg-transparent text-text-main">
 
       {/* Header */}
       <header className="flex items-center justify-between px-4 sm:px-6 md:px-10 py-5 border-b border-border bg-surface">
