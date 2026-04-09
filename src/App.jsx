@@ -25,12 +25,12 @@ export default function App() {
     <BrowserRouter>
       <Suspense
         fallback={
-          <div className="min-h-screen flex items-center justify-center bg-transparent text-sm text-text-muted">
+          <div className="min-h-screen flex items-center justify-center bg-background-light text-sm text-text-muted">
             Loading...
           </div>
         }
       >
-        <div className="min-h-screen bg-transparent text-text-main">
+        <div className="min-h-screen bg-background-light text-text-main">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
