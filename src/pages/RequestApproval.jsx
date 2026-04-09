@@ -114,7 +114,7 @@ const RequestApproval = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-transparent text-text-main">
-      <header className="border-b border-[#e7efe9] bg-white px-6 py-4">
+      <header className="border-b border-border bg-background-light px-6 py-4">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-2 text-lg font-bold text-[#1b1f23]">
             <span className="material-symbols-outlined text-green-600">volunteer_activism</span>
@@ -125,7 +125,7 @@ const RequestApproval = () => {
             <button
               type="button"
               onClick={() => navigate("/profile")}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e6eee9] bg-white text-[#7a9087]"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background-light text-text-muted"
               aria-label="Profile"
             >
               {resolveProfileImage(profile) ? (
@@ -143,7 +143,7 @@ const RequestApproval = () => {
       </header>
 
       <div className="flex flex-1">
-        <aside className="w-64 shrink-0 border-r border-[#e7efe9] bg-white p-4">
+        <aside className="w-64 shrink-0 border-r border-border bg-background-light p-4">
           <nav className="space-y-2 text-sm font-bold text-[#5a6f65]">
             <Link
               to="/donor/donate"

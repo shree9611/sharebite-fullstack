@@ -73,7 +73,7 @@ const CommunityFeedback = () => {
     <div className="bg-transparent min-h-screen text-text-main">
       <div className="flex flex-col min-h-screen">
         <main className="flex-1">
-          <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">
+          <header className="border-b border-border bg-background-light px-4 sm:px-6 md:px-10 py-5">
             <div className="flex items-center justify-between gap-2 font-bold text-lg relative">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">
@@ -84,7 +84,7 @@ const CommunityFeedback = () => {
               <div className="relative flex items-center gap-2">
                 <NotificationBell />
                 <button
-                  className="flex items-center justify-center rounded-full h-9 w-9 bg-white border border-[#e6eee9] text-[#7a9087]"
+                  className="flex items-center justify-center rounded-full h-9 w-9 bg-background-light border border-border text-text-muted"
                   onClick={() => navigate("/profile")}
                   type="button"
                 >
@@ -97,7 +97,7 @@ const CommunityFeedback = () => {
                   )}
                 </button>
                 {showProfile && (
-                  <div className="absolute right-0 top-12 w-72 rounded-2xl border border-[#e6eee9] bg-white shadow-lg overflow-hidden z-10">
+                  <div className="absolute right-0 top-12 w-72 rounded-2xl border border-border bg-background-light shadow-lg overflow-hidden z-10">
                     <div className="h-16 bg-slate-50" />
                     <div className="-mt-8 flex flex-col items-center px-4 pb-4">
                       <div className="h-16 w-16 rounded-full bg-white border-4 border-white shadow flex items-center justify-center text-[#7a9087]">
@@ -139,7 +139,7 @@ const CommunityFeedback = () => {
             </div>
           </header>
           <div className="flex flex-col sm:flex-row">
-            <aside className="bg-white px-4 sm:px-6 md:px-8 py-4 border-r border-[#e6eee9] w-full sm:w-64 shrink-0">
+            <aside className="bg-background-light px-4 sm:px-6 md:px-8 py-4 border-r border-border w-full sm:w-64 shrink-0">
               <nav className="flex flex-col gap-2 text-lg font-extrabold text-[#7a9087]">
                 <Link
                   className={`hover:text-[#111814] transition-colors flex items-center gap-2 px-3 py-2 rounded-xl ${isActive("/donor/donate") ? "bg-primary/10 text-primary" : ""}`}
