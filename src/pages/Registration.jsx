@@ -4,7 +4,7 @@ export default function Registration() {
   const [step, setStep] = useState(1);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-transparent text-text-main">
       {/* NAVBAR (same for both steps) */}
       <header className="flex items-center justify-between px-4 sm:px-6 md:px-10 py-5 bg-white border-b">
         <div className="flex items-center gap-3">

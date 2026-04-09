@@ -70,7 +70,7 @@ const CommunityFeedback = () => {
     ));
   };
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-transparent min-h-screen text-text-main">
       <div className="flex flex-col min-h-screen">
         <main className="flex-1">
           <header className="border-b bg-white px-4 sm:px-6 md:px-10 py-5">

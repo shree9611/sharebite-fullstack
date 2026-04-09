@@ -205,7 +205,7 @@ const AccountDetails = () => {
     };
 
   return (
-    <div className="bg-white min-h-screen text-[#111815] transition-colors duration-300">
+    <div className="bg-transparent min-h-screen text-text-main transition-colors duration-300">
 
     {/* Header */}
 <header className="flex items-center justify-between border-b border-[#e0e5e3] px-4 sm:px-6 md:px-10 py-5 bg-white">

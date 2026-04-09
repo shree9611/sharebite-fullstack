@@ -131,7 +131,7 @@ const ReceiverFeedback = () => {
     }
   };
   return (
-    <div className="bg-white min-h-screen text-[#111815]">
+    <div className="bg-transparent min-h-screen text-text-main">
       <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
         <div className="flex h-full grow flex-col">
           <div className="px-4 sm:px-6 md:px-10 flex justify-center py-5 bg-white border-b border-solid border-[#f0f4f3]">

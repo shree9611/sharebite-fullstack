@@ -239,7 +239,7 @@ const RegistrationStep2 = () => {
     }
   };
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-transparent min-h-screen text-text-main">
       <div className="min-h-screen w-full py-8 sm:py-10 px-4 sm:px-6 md:px-10 lg:px-16">
         <div className="mx-auto w-full max-w-[1040px] rounded-3xl border border-teal-100 bg-white shadow-[0_25px_70px_-45px_rgba(13,148,136,0.45)]">
           <header className="flex items-center justify-between px-4 sm:px-6 md:px-10 py-5 border-b border-[#eef3f1] bg-white">

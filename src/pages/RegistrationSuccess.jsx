@@ -16,7 +16,7 @@ const RegistrationSuccess = () => {
     navigate("/dashboard", { state: { role } });
   };
   return (
-    <div className="bg-white min-h-screen text-[#111815]">
+    <div className="bg-transparent min-h-screen text-text-main">
       <div className="min-h-screen w-full py-8 sm:py-10 px-4 sm:px-6">
         <div className="mx-auto w-full max-w-[860px] rounded-3xl border border-[#e4ece8] bg-white shadow-[0_30px_80px_-60px_rgba(0,0,0,0.5)]">
           <header className="flex items-center gap-2 px-4 sm:px-6 md:px-10 py-5 border-b border-[#eef3f1] bg-white">
