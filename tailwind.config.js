@@ -17,7 +17,7 @@ export default {
           soft: "#F0FDF4",
         },
         "accent-orange": "#FF8A00",
-        "background-light": "#FFD8A8",
+        "background-light": "#FFE5C2",
         surface: "#FFFFFF",
         "surface-alt": "#F8FAFC",
         border: "#E2E8F0",
